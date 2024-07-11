@@ -3,11 +3,12 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 	"tts/utils"
 )
 
 func GetVoiceList(c *gin.Context) {
-	locale := c.Query("locale")
+	locale := c.Query("l")
 	voices, err := utils.VoiceList()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -17,14 +18,29 @@ func GetVoiceList(c *gin.Context) {
 	if locale != "" {
 		filteredVoices := make([]interface{}, 0)
 		for _, voice := range voices {
-			if voice.(map[string]interface{})["Locale"].(string) == locale {
+			if strings.Contains(voice.(map[string]interface{})["Locale"].(string), locale) {
 				filteredVoices = append(filteredVoices, voice)
 			}
 		}
 		voices = filteredVoices
 	}
 
-	c.JSON(http.StatusOK, gin.H{"voices": voices})
+	_, detail := c.GetQuery("d")
+	if detail {
+		c.JSON(http.StatusOK, gin.H{"voices": voices})
+	} else {
+		voiceSimpleList := make([]map[string]string, 0)
+		for _, voice := range voices {
+			localName := voice.(map[string]interface{})["LocalName"].(string)
+			shortName := voice.(map[string]interface{})["ShortName"].(string)
+			voiceSimpleList = append(voiceSimpleList, map[string]string{
+				"LocalName": localName,
+				"ShortName": shortName,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{"voices": voiceSimpleList})
+	}
+
 }
 
 func SynthesizeVoice(c *gin.Context) {
