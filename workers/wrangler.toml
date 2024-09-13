@@ -1,0 +1,5 @@
+name = "wstrans"
+main = "src/index.js"
+compatibility_date = "2024-04-15"
+workers_dev = true
+node_compat = true
