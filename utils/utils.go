@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"html"
 	"io"
 	"net/http"
 	"net/url"
@@ -159,6 +160,8 @@ func GetVoice(text, voiceName, rate, pitch, outputFormat string) ([]byte, error)
 
 // GetSsml 生成 SSML 格式的文本
 func GetSsml(text, voiceName, rate, pitch string) string {
+	// 对文本进行转义
+	text = html.EscapeString(text)
 	return fmt.Sprintf(`
    <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" version="1.0" xml:lang="zh-CN">
      <voice name="%s">
