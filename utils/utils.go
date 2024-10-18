@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -48,10 +47,6 @@ const (
 	defaultPitch         = "0"
 	defaultOutputFormat  = "audio-24khz-48kbitrate-mono-mp3"
 	defaultStyle         = "general"
-)
-
-var (
-	errEndpoint = errors.New("failed to get endpoint")
 )
 
 // GetEndpoint 获取语音合成服务的端点信息
@@ -220,17 +215,4 @@ func VoiceList() ([]interface{}, error) {
 	voiceListCache = result
 
 	return result, nil
-}
-
-func ByteCountIEC(b int64) string {
-	const unit = 1024
-	if b < unit {
-		return fmt.Sprintf("%d B", b)
-	}
-	div, exp := int64(unit), 0
-	for n := b / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
