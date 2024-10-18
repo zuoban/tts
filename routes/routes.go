@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"tts/handlers"
+
+	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter() *gin.Engine {
@@ -14,7 +15,9 @@ func SetupRouter() *gin.Engine {
 	router.GET("/voices", handlers.GetVoiceList)
 	router.POST("/tts", handlers.SynthesizeVoicePost)
 	router.GET("/tts", handlers.SynthesizeVoice)
+	router.GET("/v1/audio/speech", handlers.SynthesizeVoiceOpenAI)
 	router.GET("/", handlers.Index)
+	router.GET("/doc", handlers.ApiDoc)
 
 	return router
 }

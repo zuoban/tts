@@ -47,6 +47,7 @@ const (
 	defaultRate          = "0"
 	defaultPitch         = "0"
 	defaultOutputFormat  = "audio-24khz-48kbitrate-mono-mp3"
+	defaultStyle         = "general"
 )
 
 var (
@@ -110,8 +111,7 @@ func Sign(urlStr string) string {
 }
 
 // GetVoice 获取语音合成结果
-// GetVoice 获取语音合成结果
-func GetVoice(text, voiceName, rate, pitch, outputFormat string) ([]byte, error) {
+func GetVoice(text, voiceName, rate, pitch, outputFormat, style string) ([]byte, error) {
 	if voiceName == "" {
 		voiceName = defaultVoiceName
 	}
@@ -123,6 +123,10 @@ func GetVoice(text, voiceName, rate, pitch, outputFormat string) ([]byte, error)
 	}
 	if outputFormat == "" {
 		outputFormat = defaultOutputFormat
+	}
+
+	if style == "" {
+		style = defaultStyle
 	}
 
 	endpoint, err := GetEndpoint()
@@ -137,7 +141,7 @@ func GetVoice(text, voiceName, rate, pitch, outputFormat string) ([]byte, error)
 		"X-Microsoft-OutputFormat": outputFormat,
 	}
 
-	ssml := GetSsml(text, voiceName, rate, pitch)
+	ssml := GetSsml(text, voiceName, rate, pitch, style)
 
 	req, err := http.NewRequest("POST", u, bytes.NewBufferString(ssml))
 	if err != nil {
@@ -159,18 +163,20 @@ func GetVoice(text, voiceName, rate, pitch, outputFormat string) ([]byte, error)
 }
 
 // GetSsml 生成 SSML 格式的文本
-func GetSsml(text, voiceName, rate, pitch string) string {
+func GetSsml(text, voiceName, rate, pitch, style string) string {
 	// 对文本进行转义
 	text = html.EscapeString(text)
 	return fmt.Sprintf(`
    <speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" version="1.0" xml:lang="zh-CN">
      <voice name="%s">
-       <mstts:express-as style="general" styledegree="1.0" role="default">
-         <prosody rate="%s%%" pitch="%s%%" volume="50">%s</prosody>
+       <mstts:express-as style="%s" styledegree="1.0" role="default">
+         <prosody rate="%s%%" pitch="%s%%" volume="medium">
+			%s
+		</prosody>
        </mstts:express-as>
      </voice>
    </speak>
- `, voiceName, rate, pitch, text)
+ `, voiceName, style, rate, pitch, text)
 }
 
 // VoiceList 获取可用的语音列表

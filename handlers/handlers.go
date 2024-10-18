@@ -50,7 +50,7 @@ func SynthesizeVoice(c *gin.Context) {
 	pitch := c.DefaultQuery("p", "0")
 	outputFormat := c.DefaultQuery("o", "audio-24khz-48kbitrate-mono-mp3")
 
-	voice, err := utils.GetVoice(text, voiceName, rate, pitch, outputFormat)
+	voice, err := utils.GetVoice(text, voiceName, rate, pitch, outputFormat, c.Query("s"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -65,12 +65,25 @@ func Index(c *gin.Context) {
 	})
 }
 
+func ApiDoc(c *gin.Context) {
+	c.HTML(http.StatusOK, "api-doc.html", gin.H{
+		"title": "TTS",
+	})
+}
+
 type SynthesizeVoiceRequest struct {
 	Text         string `json:"t"`
 	VoiceName    string `json:"v"`
 	Rate         string `json:"r"`
 	Pitch        string `json:"p"`
 	OutputFormat string `json:"o"`
+	Style        string `json:"s"`
+}
+
+type SynthesizeVoiceOpenAIRequest struct {
+	Model string `json:"model"`
+	Input string `json:"input"`
+	Voice string `json:"voice"`
 }
 
 func SynthesizeVoicePost(c *gin.Context) {
@@ -80,11 +93,27 @@ func SynthesizeVoicePost(c *gin.Context) {
 		return
 	}
 
-	voice, err := utils.GetVoice(request.Text, request.VoiceName, request.Rate, request.Pitch, request.OutputFormat)
+	voice, err := utils.GetVoice(request.Text, request.VoiceName, request.Rate, request.Pitch, request.OutputFormat, request.Style)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	c.Data(http.StatusOK, "audio/mpeg", voice)
+}
+
+func SynthesizeVoiceOpenAI(c *gin.Context) {
+	var request SynthesizeVoiceOpenAIRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	voice, err := utils.GetVoice(request.Input, request.Voice, c.Query("r"), c.Query("p"), c.Query("o"), c.Query("s"))
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	c.Data(http.StatusOK, "audio/mpeg", voice)
 }
