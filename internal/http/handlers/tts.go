@@ -153,6 +153,7 @@ func (h *TTSHandler) HandleTTS(w http.ResponseWriter, r *http.Request) {
 			Voice: q.Get("v"),
 			Rate:  q.Get("r"),
 			Pitch: q.Get("p"),
+			Style: q.Get("s"),
 		}
 	case http.MethodPost:
 		// 从POST JSON体获取
@@ -174,6 +175,7 @@ func (h *TTSHandler) HandleTTS(w http.ResponseWriter, r *http.Request) {
 				Voice: r.FormValue("voice"),
 				Rate:  r.FormValue("rate"),
 				Pitch: r.FormValue("pitch"),
+				Style: r.FormValue("style"),
 			}
 		}
 	default:

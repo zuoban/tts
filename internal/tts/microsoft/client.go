@@ -25,7 +25,7 @@ const (
 	ttsEndpoint    = "https://%s.tts.speech.microsoft.com/cognitiveservices/v1"
 	ssmlTemplate   = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang='%s'>
     <voice name='%s'>
-        <mstts:express-as style="general" styledegree="1.0" role="default">
+        <mstts:express-as style="%s" styledegree="1.0" role="default">
             <prosody rate='%s%%' pitch='%s%%' volume="medium">
                 %s
             </prosody>
@@ -227,6 +227,11 @@ func (c *Client) createTTSRequest(ctx context.Context, req models.TTSRequest) (*
 		voice = c.defaultVoice
 	}
 
+	style := req.Style
+	if req.Style == "" {
+		style = "general"
+	}
+
 	rate := req.Rate
 	if rate == "" {
 		rate = c.defaultRate
@@ -249,7 +254,7 @@ func (c *Client) createTTSRequest(ctx context.Context, req models.TTSRequest) (*
 	escapedText := html.EscapeString(req.Text)
 
 	// 准备SSML内容
-	ssml := fmt.Sprintf(ssmlTemplate, locale, voice, rate, pitch, escapedText)
+	ssml := fmt.Sprintf(ssmlTemplate, locale, voice, style, rate, pitch, escapedText)
 
 	// 获取端点信息
 	endpoint, err := c.getEndpoint(ctx)

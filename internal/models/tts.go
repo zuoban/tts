@@ -6,6 +6,7 @@ type TTSRequest struct {
 	Voice string `json:"voice"` // 语音ID
 	Rate  string `json:"rate"`  // 语速 (-100% 到 +100%)
 	Pitch string `json:"pitch"` // 语调 (-100% 到 +100%)
+	Style string `json:"style"` // 说话风格
 }
 
 // TTSResponse 表示一个语音合成响应

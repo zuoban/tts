@@ -35,14 +35,21 @@
                     </div>
 
                     <div class="setting-group">
+                        <label for="style">风格:</label>
+                        <select id="style">
+                            <option value="loading">加载中...</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
                         <label for="rate">语速:</label>
-                        <input type="range" id="rate" min="-50" max="50" value="0">
+                        <input type="range" id="rate" min="-100" max="100" value="0">
                         <span id="rateValue">0%</span>
                     </div>
 
                     <div class="setting-group">
                         <label for="pitch">语调:</label>
-                        <input type="range" id="pitch" min="-50" max="50" value="0">
+                        <input type="range" id="pitch" min="-100" max="100" value="0">
                         <span id="pitchValue">0%</span>
                     </div>
                 </div>
@@ -75,7 +82,8 @@
             basePath: "{{.BasePath}}",
             defaultVoice: "{{.DefaultVoice}}",
             defaultRate: "{{.DefaultRate}}",
-            defaultPitch: "{{.DefaultPitch}}"
+            defaultPitch: "{{.DefaultPitch}}",
+            defaultStyle: "{{.DefaultStyle}}"
         };
     </script>
     <script src="{{.BasePath}}/static/js/app.js"></script>
