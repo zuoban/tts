@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="fastRequestFreeCurrentProjectConfig">
-    <option name="domain" value="http://localhost:8080" />
-    <option name="enableEnv" value="dev" />
-    <option name="enableProject" value="coin-trans" />
-  </component>
-</project>
