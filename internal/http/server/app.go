@@ -66,8 +66,6 @@ func (a *App) Start() error {
 	case err := <-errChan:
 		return err
 	case <-quit:
-		log.Println("接收到退出信号，正在优雅关闭...")
-
 		// 创建一个超时上下文用于优雅关闭
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
