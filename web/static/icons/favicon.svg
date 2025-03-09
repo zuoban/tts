@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <!-- 背景圆形 -->
+    <circle cx="16" cy="16" r="15" fill="#4A86E8" />
+
+    <!-- 文字"T"符号 -->
+    <text x="10" y="17" font-family="Arial" font-size="12" font-weight="bold" fill="white">T</text>
+
+    <!-- 音波效果 -->
+    <g fill="white">
+        <rect x="20" y="10" width="1.5" height="12" rx="0.75" />
+        <rect x="23" y="8" width="1.5" height="16" rx="0.75" />
+        <rect x="26" y="11" width="1.5" height="10" rx="0.75" />
+    </g>
+
+    <!-- 装饰性圆环 -->
+    <circle cx="16" cy="16" r="15" fill="none" stroke="white" stroke-width="0.5" />
+</svg>
