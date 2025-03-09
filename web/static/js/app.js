@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const speakButton = document.getElementById('speak');
     const downloadButton = document.getElementById('download');
     const copyLinkButton = document.getElementById('copyLink');
+    const copyHttpTtsLinkButton = document.getElementById('copyHttpTtsLink');
     const audioPlayer = document.getElementById('audioPlayer');
     const resultSection = document.getElementById('resultSection');
     const charCount = document.getElementById('charCount');
@@ -151,30 +152,54 @@ document.addEventListener('DOMContentLoaded', function() {
             if (lastAudioUrl) {
                 // 获取完整的URL，包括域名部分
                 const fullUrl = new URL(lastAudioUrl, window.location.origin).href;
-                navigator.clipboard.writeText(fullUrl).then(() => {
-                    alert('链接已复制到剪贴板');
-                }).catch(err => {
-                    console.error('复制失败:', err);
-                    // 兼容处理
-                    const textArea = document.createElement('textarea');
-                    textArea.value = fullUrl;
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    
-                    try {
-                        document.execCommand('copy');
-                        alert('链接已复制到剪贴板');
-                    } catch (err) {
-                        console.error('复制失败:', err);
-                    }
-                    
-                    document.body.removeChild(textArea);
-                });
+                copyToClipboard(fullUrl);
             }
+        });
+
+        // 复制HttpTTS链接按钮点击事件
+        copyHttpTtsLinkButton.addEventListener('click', function() {
+            const text = textInput.value.trim();
+            if (!text) {
+                alert('请输入要转换的文本');
+                return;
+            }
+
+            const voice = voiceSelect.value;
+            const style = styleSelect.value;
+            const rate = rateInput.value;
+            const pitch = pitchInput.value;
+
+            // 构建HttpTTS链接
+            const httpTtsLink = `${window.location.origin}${config.basePath}/tts?t={{java.encodeURI(speakText)}}&v=${voice}&r={{speakSpeed*4}}&p=${pitch}&s=${style}`;
+
+            copyToClipboard(httpTtsLink);
         });
     }
     
+    // 复制内容到剪贴板的通用函数
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('链接已复制到剪贴板');
+        }).catch(err => {
+            console.error('复制失败:', err);
+            // 兼容处理
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                alert('链接已复制到剪贴板');
+            } catch (err) {
+                console.error('复制失败:', err);
+            }
+
+            document.body.removeChild(textArea);
+        });
+    }
+
     // 生成语音
     async function generateSpeech() {
         const text = textInput.value.trim();
