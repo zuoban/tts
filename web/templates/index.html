@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本转语音 - TTS服务</title>
+    <link rel="stylesheet" href="{{.BasePath}}/static/css/style.css">
+    <meta name="description" content="基于Microsoft Azure语音服务的在线文本转语音工具">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>文本转语音 (TTS)</h1>
+            <p>将文本转换为自然流畅的语音</p>
+            <nav>
+                <a href="{{.BasePath}}/" class="active">主页</a>
+                <a href="{{.BasePath}}/api-doc">API文档</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="card">
+                <h2>输入文本</h2>
+                <div class="input-group">
+                    <textarea id="text" placeholder="输入要转换的文本..." rows="6" maxlength="5000"></textarea>
+                    <div class="char-counter"><span id="charCount">0</span>/5000</div>
+                </div>
+
+                <div class="settings">
+                    <div class="setting-group">
+                        <label for="voice">语音:</label>
+                        <select id="voice">
+                            <option value="loading">加载中...</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="rate">语速:</label>
+                        <input type="range" id="rate" min="-50" max="50" value="0">
+                        <span id="rateValue">0%</span>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="pitch">语调:</label>
+                        <input type="range" id="pitch" min="-50" max="50" value="0">
+                        <span id="pitchValue">0%</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="speak" class="primary-button">转换为语音</button>
+                </div>
+            </section>
+
+            <section class="card" id="resultSection" style="display:none;">
+                <h2>语音输出</h2>
+                <div class="audio-player">
+                    <audio id="audioPlayer" controls></audio>
+                    <div class="audio-controls">
+                        <button id="download" class="secondary-button">下载音频</button>
+                        <button id="copyLink" class="secondary-button">复制链接</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 TTS服务 | <a href="{{.BasePath}}/api-doc">API文档</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // 存储一些全局配置
+        const config = {
+            basePath: "{{.BasePath}}",
+            defaultVoice: "{{.DefaultVoice}}",
+            defaultRate: "{{.DefaultRate}}",
+            defaultPitch: "{{.DefaultPitch}}"
+        };
+    </script>
+    <script src="{{.BasePath}}/static/js/app.js"></script>
+</body>
+</html>

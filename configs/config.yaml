@@ -1,0 +1,27 @@
+server:
+  port: 8080
+  read_timeout: 30
+  write_timeout: 30
+  base_path: ""
+
+tts:
+  region: "eastasia"
+  default_voice: "zh-CN-XiaoxiaoNeural"
+  default_rate: "0"
+  default_pitch: "0"
+  default_format: "audio-24khz-48kbitrate-mono-mp3"
+  max_text_length: 65535
+  request_timeout: 30
+  max_concurrent: 10
+  segment_threshold: 300
+  min_sentence_length: 200
+  max_sentence_length: 300
+
+  # OpenAI 到微软 TTS 中文语音的映射
+  voice_mapping:
+    alloy: "zh-CN-XiaoyiNeural"       # 中性女声
+    echo: "zh-CN-YunxiNeural"         # 年轻男声
+    fable: "zh-CN-XiaochenNeural"     # 儿童声
+    onyx: "zh-CN-YunjianNeural"       # 成熟男声
+    nova: "zh-CN-XiaohanNeural"       # 活力女声
+    shimmer: "zh-CN-XiaomoNeural"     # 温柔女声
