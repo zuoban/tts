@@ -149,13 +149,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // 复制链接按钮点击事件
         copyLinkButton.addEventListener('click', function() {
             if (lastAudioUrl) {
-                navigator.clipboard.writeText(lastAudioUrl).then(() => {
+                // 获取完整的URL，包括域名部分
+                const fullUrl = new URL(lastAudioUrl, window.location.origin).href;
+                navigator.clipboard.writeText(fullUrl).then(() => {
                     alert('链接已复制到剪贴板');
                 }).catch(err => {
                     console.error('复制失败:', err);
                     // 兼容处理
                     const textArea = document.createElement('textarea');
-                    textArea.value = lastAudioUrl;
+                    textArea.value = fullUrl;
                     document.body.appendChild(textArea);
                     textArea.focus();
                     textArea.select();
