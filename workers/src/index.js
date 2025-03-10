@@ -2,12 +2,21 @@ const encoder = new TextEncoder();
 let expiredAt = null;
 let endpoint = null;
 let clientId = '76a75279-2ffa-4c3d-8db8-7b47252aa41c';
+const API_KEY = 'your-secret-api-key'; // 添加 API 密钥常量，可以修改为你想要的值
 
 async function handleRequest(request) {
   const requestUrl = new URL(request.url);
   const path = requestUrl.pathname;
 
   if (path === '/tts') {
+    // 从请求参数获取 API 密钥
+    const apiKey = requestUrl.searchParams.get('api_key');
+
+    // 验证 API 密钥
+    if (!validateApiKey(apiKey)) {
+      return new Response('Unauthorized: Invalid API key', { status: 401 });
+    }
+
     const text = requestUrl.searchParams.get('t') || '';
     const voiceName = requestUrl.searchParams.get('v') || 'zh-CN-XiaoxiaoMultilingualNeural';
     const rate =  Number(requestUrl.searchParams.get('r')) || 0;
@@ -65,10 +74,68 @@ async function handleRequest(request) {
 
   const baseUrl = request.url.split('://')[0] + "://" +requestUrl.host;
   return new Response(`
-  <ol>
-  <li> /tts?t=[text]&v=[voice]&r=[rate]&p=[pitch]&o=[outputFormat] <a href="${baseUrl}/tts?t=hello, world&v=zh-CN-XiaoxiaoMultilingualNeural&r=0&p=0&o=audio-24khz-48kbitrate-mono-mp3">try</a> </li>
-  <li> /voices?l=[locate, like zh|zh-CN]&f=[format, 0/1/empty 0(TTS-Server)|1(MultiTTS)] <a href="${baseUrl}/voices?l=zh&f=1">try</a> </li>
-  </ol>
+  <html>
+  <head>
+    <title>Microsoft TTS API</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+      h1, h2 { color: #0078d7; }
+      .endpoint { background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+      .param { margin-left: 20px; }
+      .param-name { font-weight: bold; color: #333; }
+      .required { color: #d13438; }
+      .example { margin-top: 10px; background-color: #e6f3ff; padding: 10px; border-radius: 3px; }
+      .note { background-color: #fff4e5; padding: 10px; border-radius: 3px; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <h1>Microsoft TTS API 接口说明</h1>
+
+    <div class="endpoint">
+      <h2>1. 文本转语音 API</h2>
+      <p><code>/tts</code> - 将文本转换为语音</p>
+
+      <div class="param">
+        <p><span class="param-name">api_key</span> <span class="required">[必填]</span>: API访问密钥</p>
+        <p><span class="param-name">t</span> <span class="required">[必填]</span>: 要转换的文本内容</p>
+        <p><span class="param-name">v</span> <span>[可选]</span>: 语音名称，默认为 'zh-CN-XiaoxiaoMultilingualNeural'</p>
+        <p><span class="param-name">r</span> <span>[可选]</span>: 语速调整，范围-100到100，默认为0</p>
+        <p><span class="param-name">p</span> <span>[可选]</span>: 音调调整，范围-100到100，默认为0</p>
+        <p><span class="param-name">o</span> <span>[可选]</span>: 输出格式，默认为 'audio-24khz-48kbitrate-mono-mp3'</p>
+        <p><span class="param-name">d</span> <span>[可选]</span>: 是否作为下载文件返回，设为任意值时启用</p>
+      </div>
+
+      <div class="example">
+        <p>示例: <a href="${baseUrl}/tts?api_key=api-key&t=你好，世界&v=zh-CN-XiaoxiaoMultilingualNeural&r=0&p=0">尝试</a></p>
+        <code>${baseUrl}/tts?api_key=api-key&t=你好，世界&v=zh-CN-XiaoxiaoMultilingualNeural&r=0&p=0</code>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <h2>2. 获取可用语音列表</h2>
+      <p><code>/voices</code> - 获取所有可用的语音列表</p>
+
+      <div class="param">
+        <p><span class="param-name">l</span> <span>[可选]</span>: 按区域筛选，如 'zh'、'zh-CN'、'en' 等</p>
+        <p><span class="param-name">f</span> <span>[可选]</span>: 返回格式，0=TTS-Server格式，1=MultiTTS格式，默认=完整JSON</p>
+      </div>
+
+      <div class="example">
+        <p>示例 (中文语音): <a href="${baseUrl}/voices?l=zh">尝试</a></p>
+        <code>${baseUrl}/voices?l=zh</code>
+      </div>
+    </div>
+
+    <div class="note">
+      <p><strong>重要提示:</strong></p>
+      <ul>
+        <li>所有对 <code>/tts</code> 接口的请求必须提供有效的 <code>api_key</code> 参数</li>
+        <li>语音合成结果会直接作为音频流返回，除非指定了 <code>d</code> 参数</li>
+        <li>请注意中文文本需要进行 URL 编码</li>
+      </ul>
+    </div>
+  </body>
+  </html>
   `, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' }});
 }
 
@@ -223,4 +290,9 @@ async function bytesToBase64(bytes) {
 
 function uuid(){
   return crypto.randomUUID().replace(/-/g, '')
+}
+
+// API 密钥验证函数
+function validateApiKey(apiKey) {
+  return apiKey === API_KEY;
 }
