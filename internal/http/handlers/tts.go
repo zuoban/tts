@@ -93,6 +93,7 @@ func (h *TTSHandler) HandleOpenAITTS(w http.ResponseWriter, r *http.Request) {
 		Voice: msVoice,
 		Rate:  msRate,
 		Pitch: h.config.TTS.DefaultPitch,
+		Style: openaiReq.Model,
 	}
 
 	log.Printf("OpenAI TTS请求: model=%s, voice=%s → %s, speed=%.2f → %s, 文本长度=%d",
