@@ -36,8 +36,13 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (http.Handler, erro
 	// 设置语音列表API路由
 	mux.HandleFunc("/voices", voicesHandler.HandleVoices)
 
-	mux.HandleFunc("/v1/audio/speech", ttsHandler.HandleOpenAITTS)
-	mux.HandleFunc("/audio/speech", ttsHandler.HandleOpenAITTS)
+	// 创建OpenAI兼容接口的处理器，添加验证中间件
+	openAIHandler := http.HandlerFunc(ttsHandler.HandleOpenAITTS)
+	authenticatedHandler := middleware.OpenAIAuth(cfg.OpenAI.ApiKey, openAIHandler)
+
+	// 应用OpenAI兼容的路由
+	mux.Handle("/v1/audio/speech", authenticatedHandler)
+	mux.Handle("/audio/speech", authenticatedHandler)
 
 	// 设置静态文件服务
 	fs := http.FileServer(http.Dir("./web/static"))
