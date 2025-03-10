@@ -2,8 +2,10 @@ package utils
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -24,11 +26,21 @@ const (
 	endpointURL          = "https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0"
 	userAgent            = "okhttp/4.5.0"
 	clientVersion        = "4.0.530a 5fe1dc6c"
-	userId               = "0f04d16a175c411e"
 	homeGeographicRegion = "zh-Hans-CN"
-	clientTraceId        = "aab069b9-70a7-4844-a734-96cd78d94be9"
 	voiceDecodeKey       = "oik6PdDdMnOXemTbwvMn9de/h9lFnfBaCWbGMMZqqoSaQaqUOqjVGm5NqsmjcBI1x+sS9ugjB55HEJWRiFXYFw=="
 )
+
+func generateUserID() string {
+	// 创建一个字节切片来存储随机数据
+	bytes := make([]byte, 8) // 8 字节 = 64 位 = 16 位十六进制字符串
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return ""
+	}
+	// 将字节切片转换为十六进制字符串
+	userID := hex.EncodeToString(bytes)
+	return userID
+}
 
 // GetEndpoint 获取语音合成服务的端点信息
 func GetEndpoint() (map[string]interface{}, error) {
@@ -36,9 +48,9 @@ func GetEndpoint() (map[string]interface{}, error) {
 	headers := map[string]string{
 		"Accept-Language":        "zh-Hans",
 		"X-ClientVersion":        clientVersion,
-		"X-UserId":               userId,
+		"X-UserId":               generateUserID(),
 		"X-HomeGeographicRegion": homeGeographicRegion,
-		"X-ClientTraceId":        clientTraceId,
+		"X-ClientTraceId":        uuid.New().String(),
 		"X-MT-Signature":         signature,
 		"User-Agent":             userAgent,
 		"Content-Type":           "application/json; charset=utf-8",
