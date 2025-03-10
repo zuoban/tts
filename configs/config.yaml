@@ -16,6 +16,7 @@ tts:
   segment_threshold: 300
   min_sentence_length: 200
   max_sentence_length: 300
+  api_key: 'zuoban'
 
   # OpenAI 到微软 TTS 中文语音的映射
   voice_mapping:

@@ -27,6 +27,11 @@
                     <div class="char-counter"><span id="charCount">0</span>/5000</div>
                 </div>
 
+                <div id="api-key-group" style="display: none;" class="api-key-container">
+                    <label for="api-key">API Key:</label>
+                    <input type="password" id="api-key" placeholder="请输入有效的API Key以继续操作">
+                </div>
+
                 <div class="settings">
                     <div class="setting-group">
                         <label for="voice">语音:</label>
@@ -41,14 +46,16 @@
                             <option value="loading">加载中...</option>
                         </select>
                     </div>
+                </div>
 
-                    <div class="setting-group">
+                <div class="settings-row">
+                    <div class="setting-group half-width">
                         <label for="rate">语速:</label>
                         <input type="range" id="rate" min="-100" max="100" value="0">
                         <span id="rateValue">0%</span>
                     </div>
 
-                    <div class="setting-group">
+                    <div class="setting-group half-width">
                         <label for="pitch">语调:</label>
                         <input type="range" id="pitch" min="-100" max="100" value="0">
                         <span id="pitchValue">0%</span>

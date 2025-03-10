@@ -116,6 +116,46 @@ textarea:focus {
     color: #7f8c8d;
 }
 
+/* API Key 输入框样式 */
+#api-key-group {
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+    padding: 12px 15px;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+}
+
+.api-key-container {
+    display: flex;
+    align-items: center;
+}
+
+.api-key-container label {
+    width: 80px; /* 增加标签宽度 */
+    flex-shrink: 0; /* 防止标签被压缩 */
+    margin-bottom: 0; /* 覆盖默认的底部边距 */
+}
+
+#api-key {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+#api-key:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+#api-key::placeholder {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
 /* 设置区域 */
 .settings {
     display: grid;
@@ -260,12 +300,24 @@ footer a:hover {
     .settings {
         grid-template-columns: 1fr;
     }
-    
+
     header h1 {
         font-size: 2rem;
     }
-    
+
     .card {
         padding: 15px;
     }
+}
+
+.settings-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+}
+
+.half-width {
+    width: 48%;
 }

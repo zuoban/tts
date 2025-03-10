@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const rateValue = document.getElementById('rateValue');
     const pitchInput = document.getElementById('pitch');
     const pitchValue = document.getElementById('pitchValue');
+    const apiKeyInput = document.getElementById('api-key');
+    const apiKeyGroup = document.getElementById('api-key-group');
     const speakButton = document.getElementById('speak');
     const downloadButton = document.getElementById('download');
     const copyLinkButton = document.getElementById('copyLink');
@@ -168,9 +170,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const style = styleSelect.value;
             const rate = rateInput.value;
             const pitch = pitchInput.value;
+            const apiKey = apiKeyInput.value.trim();
 
             // 构建HttpTTS链接
-            const httpTtsLink = `${window.location.origin}${config.basePath}/tts?t={{java.encodeURI(speakText)}}&v=${voice}&r={{speakSpeed*4}}&p=${pitch}&s=${style}`;
+            let httpTtsLink = `${window.location.origin}${config.basePath}/tts?t={{java.encodeURI(speakText)}}&v=${voice}&r={{speakSpeed*4}}&p=${pitch}&s=${style}`;
+
+            // 添加API Key参数（如果有）
+            if (apiKey) {
+                httpTtsLink += `&api_key=${apiKey}`;
+            }
 
             copyToClipboard(httpTtsLink);
         });
@@ -212,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const style = styleSelect.value;
         const rate = rateInput.value;
         const pitch = pitchInput.value;
+        const apiKey = apiKeyInput.value.trim();
         
         // 禁用按钮，显示加载状态
         speakButton.disabled = true;
@@ -227,11 +236,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 p: pitch
             });
             
+            // 添加API Key参数（如果有）
+            if (apiKey) {
+                params.append('api_key', apiKey);
+            }
+
             const url = `${config.basePath}/tts?${params.toString()}`;
             
+            // 使用fetch发送请求以便捕获HTTP状态码
+            const response = await fetch(url);
+
+            if (response.status === 401) {
+                // 显示API Key输入框
+                apiKeyGroup.style.display = 'flex';
+                alert('请输入有效的API Key以继续操作');
+                throw new Error('需要API Key授权');
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP错误: ${response.status}`);
+            }
+
+            // 获取音频blob
+            const blob = await response.blob();
+            const audioUrl = URL.createObjectURL(blob);
+
             // 更新音频播放器
-            audioPlayer.src = url;
-            lastAudioUrl = url;
+            audioPlayer.src = audioUrl;
+            lastAudioUrl = url; // 保存原始URL用于下载和复制链接
             
             // 显示结果区域
             resultSection.style.display = 'block';
@@ -240,7 +272,9 @@ document.addEventListener('DOMContentLoaded', function() {
             audioPlayer.play();
         } catch (error) {
             console.error('生成语音失败:', error);
-            alert('生成语音失败，请重试');
+            if (error.message !== '需要API Key授权') {
+                alert('生成语音失败，请重试');
+            }
         } finally {
             // 恢复按钮状态
             speakButton.disabled = false;

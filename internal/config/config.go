@@ -30,6 +30,7 @@ type ServerConfig struct {
 
 // TTSConfig 包含Microsoft TTS API配置
 type TTSConfig struct {
+	ApiKey            string            `mapstructure:"api_key"`
 	Region            string            `mapstructure:"region"`
 	DefaultVoice      string            `mapstructure:"default_voice"`
 	DefaultRate       string            `mapstructure:"default_rate"`

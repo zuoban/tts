@@ -30,8 +30,10 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (http.Handler, erro
 	// 设置API文档路由
 	mux.HandleFunc("/api-doc", pagesHandler.HandleAPIDoc)
 
-	// 设置TTS API路由
-	mux.HandleFunc("/tts", ttsHandler.HandleTTS)
+	// 设置TTS API路由 - 添加认证中间件
+	ttsHandlerFunc := http.HandlerFunc(ttsHandler.HandleTTS)
+	authenticatedTTSHandler := middleware.TTSAuth(cfg.TTS.ApiKey, ttsHandlerFunc)
+	mux.Handle("/tts", authenticatedTTSHandler)
 
 	// 设置语音列表API路由
 	mux.HandleFunc("/voices", voicesHandler.HandleVoices)
