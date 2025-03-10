@@ -52,11 +52,6 @@ type Client struct {
 	endpointExpiry time.Time
 }
 
-func (c *Client) HandleOpenAITTS(w http.ResponseWriter, r *http.Request) {
-	//TODO implement me
-	panic("implement me")
-}
-
 // NewClient 创建一个新的Microsoft TTS客户端
 func NewClient(cfg *config.Config) *Client {
 	client := &Client{
@@ -94,7 +89,7 @@ func (c *Client) getEndpoint(ctx context.Context) (map[string]interface{}, error
 	// 更新缓存
 	c.endpointMu.Lock()
 	c.endpoint = endpoint
-	c.endpointExpiry = time.Now().Add(45 * time.Minute) // 令牌有效期通常是1小时，提前刷新
+	c.endpointExpiry = time.Now().Add(30 * time.Minute) // 令牌有效期通常是1小时，提前刷新
 	c.endpointMu.Unlock()
 
 	return endpoint, nil

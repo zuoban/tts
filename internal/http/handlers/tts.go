@@ -221,7 +221,6 @@ func (h *TTSHandler) HandleTTS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 非流式模式处理（保持原有逻辑）
 	synthStart := time.Now()
 	resp, err := h.ttsService.SynthesizeSpeech(r.Context(), req)
 	synthTime := time.Since(synthStart)
