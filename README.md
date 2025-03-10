@@ -25,7 +25,8 @@ docker run -d -p 8080:8080 --name=tts zuoban/zb-tts
 
 1. 创建一个新的 Cloudflare Worker
 2. 复制以下脚本内容到 Worker
-   [worker.js](https://raw.githubusercontent.com/zuoban/tts/main/web/templates/worker.js)
+   [worker.js](https://raw.githubusercontent.com/zuoban/tts/refs/heads/main/workers/src/index.js)
+3. 修改 API_KEY 配置
 
 ## API 使用示例
 
