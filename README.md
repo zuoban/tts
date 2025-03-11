@@ -15,7 +15,7 @@
 
 ###### Docker 部署 Docker 部署
 
-``````shell
+```shell
 docker run -d -p 8080:8080 --name=tts zuoban/zb-ttsdocker run -d -p 8080:8080 --name=tts zuoban/zb-tts
 ```
 
