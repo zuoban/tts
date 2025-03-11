@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html"
 	"io"
 	"log"
 	"net/http"
@@ -50,10 +49,16 @@ type Client struct {
 	endpoint       map[string]interface{}
 	endpointMu     sync.RWMutex
 	endpointExpiry time.Time
+	ssmProcessor   *config.SSMLProcessor
 }
 
 // NewClient 创建一个新的Microsoft TTS客户端
 func NewClient(cfg *config.Config) *Client {
+	// 从Viper配置中创建SSML处理器
+	ssmProcessor, err := config.NewSSMLProcessor(&cfg.SSML)
+	if err != nil {
+		log.Fatalf("创建SSML处理器失败: %v", err)
+	}
 	client := &Client{
 		defaultVoice:  cfg.TTS.DefaultVoice,
 		defaultRate:   cfg.TTS.DefaultRate,
@@ -65,6 +70,7 @@ func NewClient(cfg *config.Config) *Client {
 		},
 		voicesCacheExpiry: time.Time{}, // 初始时缓存为空
 		endpointExpiry:    time.Time{}, // 初始时端点为空
+		ssmProcessor:      ssmProcessor,
 	}
 
 	return client
@@ -245,8 +251,7 @@ func (c *Client) createTTSRequest(ctx context.Context, req models.TTSRequest) (*
 	}
 
 	// 对文本进行HTML转义，防止XML解析错误
-
-	escapedText := html.EscapeString(req.Text)
+	escapedText := c.ssmProcessor.EscapeSSML(req.Text)
 
 	// 准备SSML内容
 	ssml := fmt.Sprintf(ssmlTemplate, locale, voice, style, rate, pitch, escapedText)

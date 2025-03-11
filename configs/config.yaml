@@ -28,3 +28,30 @@ tts:
     shimmer: "zh-CN-XiaomoNeural"     # 温柔女声
 openai:
   api_key: ''
+
+ssml:
+  preserve_tags:
+    - name: break
+      pattern: <break\s+[^>]*/>
+    - name: speak
+      pattern: <speak>|</speak>
+    - name: prosody
+      pattern: <prosody\s+[^>]*>|</prosody>
+    - name: emphasis
+      pattern: <emphasis\s+[^>]*>|</emphasis>
+    - name: voice
+      pattern: <voice\s+[^>]*>|</voice>
+    - name: say-as
+      pattern: <say-as\s+[^>]*>|</say-as>
+    - name: phoneme
+      pattern: <phoneme\s+[^>]*>|</phoneme>
+    - name: audio
+      pattern: <audio\s+[^>]*>|</audio>
+    - name: p
+      pattern: <p>|</p>
+    - name: s
+      pattern: <s>|</s>
+    - name: sub
+      pattern: <sub\s+[^>]*>|</sub>
+    - name: mstts
+      pattern: <mstts:[^>]*>|</mstts:[^>]*>

@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"html"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -13,6 +15,7 @@ type Config struct {
 	Server ServerConfig `mapstructure:"server"`
 	TTS    TTSConfig    `mapstructure:"tts"`
 	OpenAI OpenAIConfig `mapstructure:"openai"`
+	SSML   SSMLConfig   `mapstructure:"ssml"`
 }
 
 // OpenAIConfig 包含OpenAI API配置
@@ -88,4 +91,70 @@ func Load(configPath string) (*Config, error) {
 // Get 返回已加载的配置
 func Get() *Config {
 	return &config
+}
+
+// TagPattern 定义标签模式及其名称
+type TagPattern struct {
+	Name    string `mapstructure:"name"`    // 标签名称，用于日志和调试
+	Pattern string `mapstructure:"pattern"` // 标签的正则表达式模式
+}
+
+// SSMLConfig 存储SSML标签配置
+type SSMLConfig struct {
+	// PreserveTags 包含所有需要保留的标签的正则表达式模式
+	PreserveTags []TagPattern `mapstructure:"preserve_tags"`
+}
+
+// SSMLProcessor 处理SSML内容
+type SSMLProcessor struct {
+	config       *SSMLConfig
+	patternCache map[string]*regexp.Regexp
+}
+
+// NewSSMLProcessor 从配置对象创建SSMLProcessor
+func NewSSMLProcessor(config *SSMLConfig) (*SSMLProcessor, error) {
+	processor := &SSMLProcessor{
+		config:       config,
+		patternCache: make(map[string]*regexp.Regexp),
+	}
+
+	// 预编译正则表达式
+	for _, tagPattern := range config.PreserveTags {
+		regex, err := regexp.Compile(tagPattern.Pattern)
+		if err != nil {
+			return nil, fmt.Errorf("编译正则表达式'%s'失败: %w", tagPattern.Name, err)
+		}
+		processor.patternCache[tagPattern.Name] = regex
+	}
+
+	return processor, nil
+}
+
+// EscapeSSML 转义SSML内容，但保留配置的标签
+func (p *SSMLProcessor) EscapeSSML(ssml string) string {
+	// 使用占位符替换标签
+	placeholders := make(map[string]string)
+	processedSSML := ssml
+
+	counter := 0
+
+	// 处理所有配置的标签
+	for name, pattern := range p.patternCache {
+		processedSSML = pattern.ReplaceAllStringFunc(processedSSML, func(match string) string {
+			placeholder := fmt.Sprintf("__SSML_PLACEHOLDER_%s_%d__", name, counter)
+			placeholders[placeholder] = match
+			counter++
+			return placeholder
+		})
+	}
+
+	// 对处理后的文本进行HTML转义
+	escapedContent := html.EscapeString(processedSSML)
+
+	// 恢复所有标签占位符
+	for placeholder, tag := range placeholders {
+		escapedContent = strings.Replace(escapedContent, placeholder, tag, 1)
+	}
+
+	return escapedContent
 }
