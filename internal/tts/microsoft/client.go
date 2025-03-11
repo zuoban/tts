@@ -95,7 +95,7 @@ func (c *Client) getEndpoint(ctx context.Context) (map[string]interface{}, error
 	// 更新缓存
 	c.endpointMu.Lock()
 	c.endpoint = endpoint
-	c.endpointExpiry = time.Now().Add(30 * time.Minute) // 令牌有效期通常是1小时，提前刷新
+	c.endpointExpiry = time.Now().Add(5 * time.Minute)
 	c.endpointMu.Unlock()
 
 	return endpoint, nil
