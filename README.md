@@ -26,7 +26,9 @@ docker run -d -p 8080:8080 --name=tts zuoban/zb-ttsdocker run -d -p 8080:8080 --
 1. 创建一个新的 Cloudflare Worker
 2. 复制以下脚本内容到 Worker
    [worker.js](https://github.com/zuoban/tts/blob/main/workers/src/index.js)
-3. 修改 API_KEY 配置
+3. 添加环境变量 `API_KEY`
+   - Workers & Pages -> Your Worker -> Settings -> Variables and Secrets -> Add
+   - Type: `Secret`,  Name: `API_KEY`, Value: `YOUR_API_KEY`
 
 ## API 使用示例
 
@@ -54,6 +56,8 @@ curl -X POST "http://localhost:8080/v1/audio/speech" \
     "voice": "zh-CN-XiaoxiaoNeural"
   }'
 ```
+- model 对应 TTS 服务的 `style` 参数
+- voice 对应 TTS 服务的 `voice` 参数
 
 ## 配置选项
 
@@ -69,7 +73,7 @@ docker run -d -p 8080:8080 -v /path/to/config.yaml:/app/configs/config.yaml --na
 
 ### 配置文件详解
 
-TTS 服务使用 YAML 格式的配置文件，默认位置为 `/app/config.yaml`。以下是配置文件的主要选项：
+TTS 服务使用 YAML 格式的配置文件，默认位置为 `/app/configs/config.yaml`。以下是配置文件的主要选项：
 
 ```yaml
 server:
