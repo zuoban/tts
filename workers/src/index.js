@@ -1,6 +1,10 @@
 const encoder = new TextEncoder();
 let expiredAt = null;
 let endpoint = null;
+// 添加缓存相关变量
+let voiceListCache = null;
+let voiceListCacheTime = null;
+const VOICE_CACHE_DURATION =4 *60 * 60 * 1000; // 4小时，单位毫秒
 
 // 定义需要保留的 SSML 标签模式
 const preserveTags = [
@@ -200,11 +204,55 @@ async function handleRequest(request) {
                       placeholder="请输入要转换的文本"></textarea>
                   </div>
 
-                  <div>
-                    <label for="voice" class="block text-sm font-medium text-gray-700">选择语音</label>
-                    <select id="voice" name="voice"
-                      class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
-                    </select>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label for="voice" class="block text-sm font-medium text-gray-700">选择语音</label>
+                      <select id="voice" name="voice"
+                        class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
+                      </select>
+                    </div>
+
+                    <div>
+                      <label for="style" class="block text-sm font-medium text-gray-700">语音风格</label>
+                      <select id="style" name="style"
+                        class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
+                        <option value="general" selected>标准</option>
+                        <option value="advertisement_upbeat">广告热情</option>
+                        <option value="affectionate">亲切</option>
+                        <option value="angry">愤怒</option>
+                        <option value="assistant">助理</option>
+                        <option value="calm">平静</option>
+                        <option value="chat">随意</option>
+                        <option value="cheerful">愉快</option>
+                        <option value="customerservice">客服</option>
+                        <option value="depressed">沮丧</option>
+                        <option value="disgruntled">不满</option>
+                        <option value="documentary-narration">纪录片解说</option>
+                        <option value="embarrassed">尴尬</option>
+                        <option value="empathetic">共情</option>
+                        <option value="envious">羡慕</option>
+                        <option value="excited">兴奋</option>
+                        <option value="fearful">恐惧</option>
+                        <option value="friendly">友好</option>
+                        <option value="gentle">温柔</option>
+                        <option value="hopeful">希望</option>
+                        <option value="lyrical">抒情</option>
+                        <option value="narration-professional">专业叙述</option>
+                        <option value="narration-relaxed">轻松叙述</option>
+                        <option value="newscast">新闻播报</option>
+                        <option value="newscast-casual">随意新闻</option>
+                        <option value="newscast-formal">正式新闻</option>
+                        <option value="poetry-reading">诗朗诵</option>
+                        <option value="sad">悲伤</option>
+                        <option value="serious">严肃</option>
+                        <option value="shouting">大喊</option>
+                        <option value="sports_commentary">体育解说</option>
+                        <option value="sports_commentary_excited">激动体育解说</option>
+                        <option value="whispering">低语</option>
+                        <option value="terrified">恐慌</option>
+                        <option value="unfriendly">冷漠</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -274,13 +322,14 @@ async function handleRequest(request) {
             </div>
             <div class="px-4 py-5 sm:p-6">
               <h4 class="text-base font-medium text-gray-900 mb-2">文本转语音 API</h4>
-              <code class="text-sm block bg-gray-50 p-2 rounded mb-2 overflow-auto">/tts?api_key={key}&t={text}&v={voice}&r={rate}&p={pitch}</code>
+              <code class="text-sm block bg-gray-50 p-2 rounded mb-2 overflow-auto">/tts?api_key={key}&t={text}&v={voice}&r={rate}&p={pitch}&s={style}</code>
               <ul class="list-disc pl-5 text-sm space-y-1">
                 <li><span class="text-red-600">api_key</span>: API密钥 [必填]</li>
                 <li><span class="text-red-600">t</span>: 文本内容 [必填]</li>
                 <li>v: 语音名称 [可选]</li>
                 <li>r: 语速调整 (-100~100) [可选]</li>
                 <li>p: 音调调整 (-100~100) [可选]</li>
+                <li>s: 语音风格 (general, cheerful, sad等) [可选]</li>
               </ul>
 
               <h4 class="text-base font-medium text-gray-900 mt-6 mb-2">OpenAI 兼容接口</h4>
@@ -382,6 +431,33 @@ curl ${baseUrl}/v1/audio/speech \\
       // 存储所有语音数据
       let allVoices = [];
 
+      // 在表单提交事件监听器之前添加语音选择变更事件监听
+      document.addEventListener('DOMContentLoaded', function() {
+        // 添加对语音选择变化的监听
+        document.getElementById('voice').addEventListener('change', function() {
+          updateStyleOptions(this.value);
+        });
+
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabLinks.forEach(link => {
+          link.addEventListener('click', () => {
+            tabLinks.forEach(l => {
+              l.classList.remove('text-ms-blue', 'border-ms-blue');
+              l.classList.add('text-gray-500');
+            });
+            link.classList.add('text-ms-blue', 'border-ms-blue');
+            link.classList.remove('text-gray-500');
+
+            const targetId = link.getAttribute('data-tab');
+            tabContents.forEach(tc => {
+              tc.style.display = (tc.id === targetId) ? '' : 'none';
+            });
+          });
+        });
+      });
+
       document.getElementById('ttsForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -393,6 +469,7 @@ curl ${baseUrl}/v1/audio/speech \\
         const voice = document.getElementById('voice').value;
         const rate = document.getElementById('rate').value;
         const pitch = document.getElementById('pitch').value;
+        const style = document.getElementById('style').value; // 获取选择的风格
 
         if (!text) {
           showError('请输入要转换的文本', '文本内容不能为空');
@@ -404,7 +481,7 @@ curl ${baseUrl}/v1/audio/speech \\
           return;
         }
 
-        const url = \`${baseUrl}/tts?api_key=\${apiKey}&t=\${text}&v=\${voice}&r=\${rate}&p=\${pitch}\`;
+        const url = \`${baseUrl}/tts?api_key=\${apiKey}&t=\${text}&v=\${voice}&r=\${rate}&p=\${pitch}&s=\${style}\`;
 
         try {
           const response = await fetch(url);
@@ -450,6 +527,69 @@ curl ${baseUrl}/v1/audio/speech \\
 
         // 滚动到错误信息
         errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // 更新风格选项的函数
+      function updateStyleOptions(voiceName) {
+        const styleSelect = document.getElementById('style');
+        // 清空现有选项
+        styleSelect.innerHTML = '';
+
+        // 默认添加标准风格
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'general';
+        defaultOption.text = '标准';
+        styleSelect.appendChild(defaultOption);
+
+        // 查找选定的语音对象
+        const selectedVoice = allVoices.find(v => v.ShortName === voiceName);
+
+        if (selectedVoice && selectedVoice.StyleList && selectedVoice.StyleList.length > 0) {
+          // 对风格列表进行排序
+          const styles = [...selectedVoice.StyleList].sort();
+
+          // 为每个风格创建选项
+          styles.forEach(style => {
+            // 跳过已经添加的"general"
+            if (style.toLowerCase() === 'general') return;
+
+            const option = document.createElement('option');
+            option.value = style;
+            // 根据风格名称进行本地化显示
+            option.text = getStyleDisplayName(style);
+            styleSelect.appendChild(option);
+          });
+        }
+      }
+
+      // 风格名称本地化显示
+      function getStyleDisplayName(styleName) {
+        const styleMap = {
+          'angry': '愤怒',
+          'cheerful': '欢快',
+          'sad': '悲伤',
+          'fearful': '恐惧',
+          'disgruntled': '不满',
+          'serious': '严肃',
+          'affectionate': '深情',
+          'gentle': '温柔',
+          'embarrassed': '尴尬',
+          'assistant': '助手',
+          'calm': '平静',
+          'chat': '聊天',
+          'excited': '兴奋',
+          'friendly': '友好',
+          'hopeful': '希望',
+          'narration-professional': '专业叙述',
+          'newscast': '新闻播报',
+          'newscast-casual': '随性新闻',
+          'poetry-reading': '诗歌朗诵',
+          'shouting': '喊叫',
+          'sports-commentary': '体育解说',
+          'whispering': '低语'
+        };
+
+        return styleMap[styleName.toLowerCase()] || styleName;
       }
 
       // 加载可用语音列表
@@ -500,6 +640,9 @@ curl ${baseUrl}/v1/audio/speech \\
             if (voiceSelect.querySelector(\`option[value="\${defaultVoice}"]\`)) {
               voiceSelect.value = defaultVoice;
             }
+
+            // 加载初始选择语音的风格选项
+            updateStyleOptions(voiceSelect.value);
           } else {
             console.error('获取语音列表失败：', response.status);
             showDefaultVoices();
@@ -563,31 +706,19 @@ curl ${baseUrl}/v1/audio/speech \\
 
         // 默认选择晓晓多语言
         voiceSelect.value = "zh-CN-XiaoxiaoMultilingualNeural";
+
+        // 设置默认风格
+        const styleSelect = document.getElementById('style');
+        styleSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'general';
+        defaultOption.text = '标准';
+        styleSelect.appendChild(defaultOption);
       }
 
       // 页面加载完成后加载语音列表
       window.onload = loadVoices;
 
-      document.addEventListener('DOMContentLoaded', function() {
-        const tabLinks = document.querySelectorAll('.tab-link');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabLinks.forEach(link => {
-          link.addEventListener('click', () => {
-            tabLinks.forEach(l => {
-              l.classList.remove('text-ms-blue', 'border-ms-blue');
-              l.classList.add('text-gray-500');
-            });
-            link.classList.add('text-ms-blue', 'border-ms-blue');
-            link.classList.remove('text-gray-500');
-
-            const targetId = link.getAttribute('data-tab');
-            tabContents.forEach(tc => {
-              tc.style.display = (tc.id === targetId) ? '' : 'none';
-            });
-          });
-        });
-      });
     </script>
   </body>
   </html>
@@ -597,6 +728,8 @@ curl ${baseUrl}/v1/audio/speech \\
 addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request));
 });
+
+
 
 async function getEndpoint() {
   const endpointUrl = 'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0';
@@ -653,6 +786,14 @@ function getSsml(text, voiceName, rate, pitch, style = 'general') {
 }
 
 function voiceList() {
+  // 检查缓存是否有效
+  if (voiceListCache && voiceListCacheTime && (Date.now() - voiceListCacheTime) < VOICE_CACHE_DURATION) {
+    console.log('使用缓存的语音列表数据，剩余有效期：',
+      Math.round((VOICE_CACHE_DURATION - (Date.now() - voiceListCacheTime)) / 60000), '分钟');
+    return Promise.resolve(voiceListCache);
+  }
+
+  console.log('获取新的语音列表数据');
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.26',
     'X-Ms-Useragent': 'SpeechStudio/2021.05.001',
@@ -663,14 +804,14 @@ function voiceList() {
 
   return fetch('https://eastus.api.speech.microsoft.com/cognitiveservices/voices/list', {
     headers: headers,
-    cf: {
-      // Always cache this fetch regardless of content type
-      // for a max of 5 seconds before revalidating the resource
-      cacheTtl: 600,
-      cacheEverything: true,
-      cacheKey: "mstrans-voice-list",
-    },
-  }).then(res => res.json());
+  })
+  .then(res => res.json())
+  .then(data => {
+    // 更新缓存
+    voiceListCache = data;
+    voiceListCacheTime = Date.now();
+    return data;
+  });
 }
 
 async function hmacSha256(key, data) {
