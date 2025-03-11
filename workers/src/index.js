@@ -86,6 +86,11 @@ async function handleRequest(request) {
     return response;
   }
 
+  // 添加 OpenAI 兼容接口路由
+  if (path === '/v1/audio/speech' || path === '/audio/speech') {
+    return await handleOpenAITTS(request);
+  }
+
   if(path === '/voices') {
     const l = (requestUrl.searchParams.get('l') || '').toLowerCase();
     const f = requestUrl.searchParams.get('f');
@@ -260,7 +265,7 @@ async function handleRequest(request) {
                   <div class="flex">
                     <div class="flex-shrink-0">
                       <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293-1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                       </svg>
                     </div>
                     <div class="ml-3">
@@ -301,7 +306,7 @@ async function handleRequest(request) {
                   </div>
                   <div class="ml-3 flex-1 md:flex md:justify-between">
                     <p class="text-sm text-blue-700">
-                      支持 SSML 标签，可以精确控制语音合成效果
+                      支持 SSML 标签和 OpenAI 兼容接口
                     </p>
                   </div>
                 </div>
@@ -324,6 +329,31 @@ async function handleRequest(request) {
                 <li>r: 语速调整 (-100~100) [可选]</li>
                 <li>p: 音调调整 (-100~100) [可选]</li>
               </ul>
+
+              <h4 class="text-base font-medium text-gray-900 mt-6 mb-2">OpenAI 兼容接口</h4>
+              <code class="text-sm block bg-gray-50 p-2 rounded mb-2 overflow-auto">/v1/audio/speech 或 /audio/speech</code>
+              <p class="text-sm mb-2">使用方式与 OpenAI TTS API 相同，支持以下参数：</p>
+              <ul class="list-disc pl-5 text-sm space-y-1">
+                <li><span class="text-red-600">model</span>: 模型名称 [必填]</li>
+                <li><span class="text-red-600">input</span>: 文本内容 [必填]</li>
+                <li>voice: 声音类型 (alloy, echo, fable, onyx, nova, shimmer)</li>
+                <li>speed: 语速 (0.25~4.0)</li>
+                <li>response_format: 输出格式 (mp3, opus)</li>
+              </ul>
+
+              <div class="mt-2 bg-gray-50 p-2 rounded">
+                <p class="text-xs text-gray-600 mb-1">示例请求:</p>
+                <code class="text-xs block overflow-auto whitespace-pre-wrap">
+curl ${baseUrl}/v1/audio/speech \\
+  -H "Authorization: Bearer your-secret-api-key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "tts-1",
+    "input": "这是一个语音合成测试",
+    "voice": "alloy"
+  }'
+                </code>
+              </div>
 
               <h4 class="text-base font-medium text-gray-900 mt-6 mb-2">获取语音列表 API</h4>
               <code class="text-sm block bg-gray-50 p-2 rounded mb-2 overflow-auto">/voices?l={locale}&f={format}</code>
@@ -719,5 +749,90 @@ async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', ra
     return resp;
   } else {
     return new Response(response.statusText, { status: response.status });
+  }
+}
+
+// 处理 OpenAI 格式的文本转语音请求
+async function handleOpenAITTS(request) {
+  // 验证请求方法是否为 POST
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  // 验证 API 密钥
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized: Missing or invalid API key' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const apiKey = authHeader.replace('Bearer ', '');
+  if (!validateApiKey(apiKey)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized: Invalid API key' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    // 解析请求体 JSON
+    const requestData = await request.json();
+
+    // 验证必要参数
+    if (!requestData.model || !requestData.input) {
+      return new Response(JSON.stringify({ error: 'Bad request: Missing required parameters' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 提取参数
+    const text = requestData.input;
+    // 映射 voice 参数 (可选择添加 model 到 voice 的映射逻辑)
+    let voiceName = 'zh-CN-XiaoxiaoMultilingualNeural'; // 默认声音
+    if (requestData.voice) {
+      // OpenAI的voice参数有alloy, echo, fable, onyx, nova, shimmer
+      // 可以根据需要进行映射
+      const voiceMap = {
+        'alloy': 'zh-CN-XiaoxiaoMultilingualNeural',
+        'echo': 'zh-CN-YunxiNeural',
+        'fable': 'zh-CN-XiaomoNeural',
+        'onyx': 'zh-CN-YunjianNeural',
+        'nova': 'zh-CN-XiaochenNeural',
+        'shimmer': 'en-US-AriaNeural'
+      };
+      voiceName = voiceMap[requestData.voice] || requestData.voice;
+    }
+
+    // 速度和音调映射 (OpenAI 使用 0.25-4.0，我们使用 -100 到 100)
+    let rate = 0;
+    if (requestData.speed) {
+      // 映射 0.25-4.0 到 -100 到 100 范围
+      // 1.0 是正常速度，对应 rate=0
+      rate = Math.round((requestData.speed - 1.0) * 100);
+      // 限制范围
+      rate = Math.max(-100, Math.min(100, rate));
+    }
+
+    // 设置输出格式
+    const outputFormat = requestData.response_format === 'opus' ?
+      'audio-48khz-192kbitrate-mono-opus' :
+      'audio-24khz-48kbitrate-mono-mp3';
+
+    // 调用 TTS API
+    const ttsResponse = await getVoice(text, voiceName, rate, 0, outputFormat, false);
+
+    return ttsResponse;
+  } catch (error) {
+    console.error('OpenAI TTS API error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error: ' + error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
