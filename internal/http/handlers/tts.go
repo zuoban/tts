@@ -65,12 +65,9 @@ func (h *TTSHandler) HandleOpenAITTS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 映射OpenAI声音到Microsoft声音
-	msVoice := h.config.TTS.DefaultVoice
-	if openaiReq.Voice != "" {
-		// 检查是否有配置映射
-		if mappedVoice, exists := h.config.TTS.VoiceMapping[openaiReq.Voice]; exists {
-			msVoice = mappedVoice
-		}
+	msVoice := openaiReq.Voice
+	if openaiReq.Voice != "" && h.config.TTS.VoiceMapping[openaiReq.Voice] != "" {
+		msVoice = h.config.TTS.VoiceMapping[openaiReq.Voice]
 	}
 
 	// 转换速度参数到微软格式
