@@ -64,7 +64,7 @@ curl -X POST "http://localhost:8080/v1/audio/speech" \
 docker run -d -p 9000:9000 -e PORT=9000 --name=tts zuoban/zb-tts
 
 # 使用配置文件
-docker run -d -p 8080:8080 -v /path/to/config.yaml:/configs/config.yaml --name=tts zuoban/zb-tts
+docker run -d -p 8080:8080 -v /path/to/config.yaml:/app/configs/config.yaml --name=tts zuoban/zb-tts
 ```
 
 ### 配置文件详解
