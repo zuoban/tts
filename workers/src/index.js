@@ -87,9 +87,10 @@ async function handleRequest(request) {
     const voiceName = requestUrl.searchParams.get('v') || 'zh-CN-XiaoxiaoMultilingualNeural';
     const rate =  Number(requestUrl.searchParams.get('r')) || 0;
     const pitch = Number(requestUrl.searchParams.get('p')) || 0;
+    const style = requestUrl.searchParams.get('s') || 'general';
     const outputFormat = requestUrl.searchParams.get('o') || 'audio-24khz-48kbitrate-mono-mp3';
     const download = requestUrl.searchParams.get('d') || false;
-    const response = await getVoice(text, voiceName, rate, pitch, outputFormat, download);
+    const response = await getVoice(text, voiceName, rate, pitch, style, outputFormat, download);
     return response;
   }
 
@@ -107,40 +108,11 @@ async function handleRequest(request) {
       response = response.filter(item => item.Locale.toLowerCase().includes(l));
     }
 
-    if(f === "0") {
-      response = response.map(item => {
-        return `
-- !!org.nobody.multitts.tts.speaker.Speaker
-  avatar: ''
-  code: ${item.ShortName}
-  desc: ''
-  extendUI: ''
-  gender:${item.Gender === 'Female' ? '0' : '1'}
-  name: ${item.LocalName}
-  note: 'wpm: ${item.WordsPerMinute||''}'
-  param: ''
-  sampleRate: ${item.SampleRateHertz|| '24000'}
-  speed: 1.5
-  type: 1
-  volume: 1`
-    })
-      return new Response(response.join('\n'), headers={
-        'Content-Type': 'application/html; charset=utf-8'
-      });
-    }else if(f === "1"){
-      const map = new Map(response.map(item => [item.ShortName, item.LocalName]))
-      return new Response(JSON.stringify(Object.fromEntries(map)), {
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8'
-        }
-      });
-    }else {
-      return new Response(JSON.stringify(response), {
-        headers:{
-        'Content-Type': 'application/json; charset=utf-8'
-        }
-      });
-    }
+    return new Response(JSON.stringify(response), {
+      headers:{
+      'Content-Type': 'application/json; charset=utf-8'
+      }
+    });
   }
 
   const baseUrl = request.url.split('://')[0] + "://" +requestUrl.host;
@@ -205,11 +177,6 @@ async function handleRequest(request) {
                   <!-- 添加错误提示区域 -->
                   <div id="apiErrorAlert" class="rounded-md bg-red-50 p-4" style="display: none;">
                     <div class="flex">
-                      <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293-1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                      </div>
                       <div class="ml-3">
                         <h3 class="text-sm font-medium text-red-800" id="apiErrorTitle">错误</h3>
                         <div class="mt-2 text-sm text-red-700">
@@ -233,34 +200,11 @@ async function handleRequest(request) {
                       placeholder="请输入要转换的文本"></textarea>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <div class="flex justify-between mb-1">
-                        <label for="languageFilter" class="block text-sm font-medium text-gray-700">语言</label>
-                      </div>
-                      <select id="languageFilter" name="languageFilter"
-                        class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm"
-                        onchange="filterVoicesByLanguage()">
-                        <option value="zh">中文 (Chinese)</option>
-                        <option value="all">所有语言</option>
-                        <option value="en">英文 (English)</option>
-                        <option value="ja">日文 (Japanese)</option>
-                        <option value="ko">韩文 (Korean)</option>
-                        <option value="fr">法语 (French)</option>
-                        <option value="de">德语 (German)</option>
-                        <option value="es">西班牙语 (Spanish)</option>
-                        <option value="ru">俄语 (Russian)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <div class="flex justify-between mb-1">
-                        <label for="voice" class="block text-sm font-medium text-gray-700">选择语音</label>
-                      </div>
-                      <select id="voice" name="voice"
-                        class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
-                      </select>
-                    </div>
+                  <div>
+                    <label for="voice" class="block text-sm font-medium text-gray-700">选择语音</label>
+                    <select id="voice" name="voice"
+                      class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
+                    </select>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -437,7 +381,6 @@ curl ${baseUrl}/v1/audio/speech \\
     <script>
       // 存储所有语音数据
       let allVoices = [];
-      let languageGroups = new Map();
 
       document.getElementById('ttsForm').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -509,89 +452,6 @@ curl ${baseUrl}/v1/audio/speech \\
         errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
-      // 按语言筛选语音
-      function filterVoicesByLanguage() {
-        const languageFilter = document.getElementById('languageFilter').value;
-        const voiceSelect = document.getElementById('voice');
-
-        // 清空当前选项
-        voiceSelect.innerHTML = '';
-
-        if (languageFilter === 'all') {
-          // 显示所有语言，按语言分组
-          languageGroups.forEach((voices, locale) => {
-            const group = document.createElement('optgroup');
-            group.label = getLanguageDisplayName(locale);
-
-            voices.forEach(voice => {
-              const option = document.createElement('option');
-              option.value = voice.ShortName;
-              option.text = \`\${voice.LocalName || voice.DisplayName} (\${voice.Gender === 'Female' ? '女' : '男'})\`;
-              group.appendChild(option);
-            });
-
-            voiceSelect.appendChild(group);
-          });
-        } else {
-          // 显示特定语言
-          const voices = languageGroups.get(languageFilter) || [];
-          if (voices.length > 0) {
-            // 为选定的语言添加标记组
-            const group = document.createElement('optgroup');
-            group.label = getLanguageDisplayName(languageFilter);
-
-            voices.forEach(voice => {
-              const option = document.createElement('option');
-              option.value = voice.ShortName;
-              option.text = \`\${voice.LocalName || voice.DisplayName} (\${voice.Gender === 'Female' ? '女' : '男'})\`;
-              group.appendChild(option);
-            });
-
-            voiceSelect.appendChild(group);
-
-            // 如果有声音，默认选择第一个
-            if (voices.length > 0) {
-              voiceSelect.value = voices[0].ShortName;
-            }
-          } else {
-            // 如果没有找到语音，显示提示
-            const option = document.createElement('option');
-            option.text = '没有找到语音';
-            option.disabled = true;
-            voiceSelect.appendChild(option);
-          }
-        }
-      }
-
-      // 获取语言显示名称
-      function getLanguageDisplayName(locale) {
-        const languageNames = {
-          'zh': '中文 (Chinese)',
-          'en': '英文 (English)',
-          'ja': '日文 (Japanese)',
-          'ko': '韩文 (Korean)',
-          'fr': '法语 (French)',
-          'de': '德语 (German)',
-          'es': '西班牙语 (Spanish)',
-          'it': '意大利语 (Italian)',
-          'pt': '葡萄牙语 (Portuguese)',
-          'ru': '俄语 (Russian)',
-          'ar': '阿拉伯语 (Arabic)',
-          'hi': '印地语 (Hindi)',
-          'th': '泰语 (Thai)',
-          'vi': '越南语 (Vietnamese)',
-          'id': '印尼语 (Indonesian)',
-          'ms': '马来语 (Malay)',
-          'nl': '荷兰语 (Dutch)',
-          'pl': '波兰语 (Polish)',
-          'tr': '土耳其语 (Turkish)'
-        };
-
-        // 提取主要语言代码（如zh-CN中的zh）
-        const mainCode = locale.split('-')[0];
-        return languageNames[mainCode] || locale;
-      }
-
       // 加载可用语音列表
       async function loadVoices() {
         try {
@@ -599,27 +459,47 @@ curl ${baseUrl}/v1/audio/speech \\
           if (response.ok) {
             allVoices = await response.json();
 
-            // 按语言对语音进行分组
-            allVoices.forEach(voice => {
-              const locale = voice.Locale.split('-')[0]; // 提取主要语言代码
-              if (!languageGroups.has(locale)) {
-                languageGroups.set(locale, []);
-              }
-              languageGroups.get(locale).push(voice);
-            });
+            // 按语言对语音分组并排序
+            const zhVoices = allVoices.filter(voice => voice.Locale.startsWith('zh-'));
+            const enVoices = allVoices.filter(voice => voice.Locale.startsWith('en-'));
+            const jaVoices = allVoices.filter(voice => voice.Locale.startsWith('ja-'));
 
-            // 对每种语言的语音按名称排序
-            languageGroups.forEach((voices, locale) => {
-              voices.sort((a, b) => {
-                const nameA = a.LocalName || a.DisplayName;
-                const nameB = b.LocalName || b.DisplayName;
-                return nameA.localeCompare(nameB);
-              });
-            });
+            // 其他所有语言
+            const otherVoices = allVoices.filter(voice =>
+              !voice.Locale.startsWith('zh-') &&
+              !voice.Locale.startsWith('en-') &&
+              !voice.Locale.startsWith('ja-')
+            );
 
-            // 默认显示中文语音
-            filterVoicesByLanguage();
+            // 清空语音选择下拉框
+            const voiceSelect = document.getElementById('voice');
+            voiceSelect.innerHTML = '';
 
+            // 添加中文语音组
+            if(zhVoices.length > 0) {
+              addVoiceGroup(voiceSelect, '中文 (Chinese)', zhVoices);
+            }
+
+            // 添加英文语音组
+            if(enVoices.length > 0) {
+              addVoiceGroup(voiceSelect, '英文 (English)', enVoices);
+            }
+
+            // 添加日文语音组
+            if(jaVoices.length > 0) {
+              addVoiceGroup(voiceSelect, '日文 (Japanese)', jaVoices);
+            }
+
+            // 添加其他语音组
+            if(otherVoices.length > 0) {
+              addVoiceGroup(voiceSelect, '其他语言 (Other Languages)', otherVoices);
+            }
+
+            // 默认选择晓晓多语言
+            const defaultVoice = 'zh-CN-XiaoxiaoMultilingualNeural';
+            if (voiceSelect.querySelector(\`option[value="\${defaultVoice}"]\`)) {
+              voiceSelect.value = defaultVoice;
+            }
           } else {
             console.error('获取语音列表失败：', response.status);
             showDefaultVoices();
@@ -630,6 +510,28 @@ curl ${baseUrl}/v1/audio/speech \\
         }
       }
 
+      // 添加语音组到下拉框
+      function addVoiceGroup(select, groupName, voices) {
+        const group = document.createElement('optgroup');
+        group.label = groupName;
+
+        // 对语音按名称排序
+        voices.sort((a, b) => {
+          const nameA = a.LocalName || a.DisplayName;
+          const nameB = b.LocalName || b.DisplayName;
+          return nameA.localeCompare(nameB);
+        });
+
+        voices.forEach(voice => {
+          const option = document.createElement('option');
+          option.value = voice.ShortName;
+          option.text = \`\${voice.LocalName || voice.DisplayName} (\${voice.Gender === 'Female' ? '女' : '男'})\`;
+          group.appendChild(option);
+        });
+
+        select.appendChild(group);
+      }
+
       // 加载默认语音列表
       function showDefaultVoices() {
         document.getElementById('voiceLoadError').style.display = 'block';
@@ -637,6 +539,7 @@ curl ${baseUrl}/v1/audio/speech \\
         voiceSelect.innerHTML = '';
 
         const defaultVoices = [
+          { value: "zh-CN-XiaoxiaoMultilingualNeural", text: "晓晓多语言(女) - zh-CN-XiaoxiaoMultilingualNeural" },
           { value: "zh-CN-XiaoxiaoNeural", text: "晓晓(女) - zh-CN-XiaoxiaoNeural" },
           { value: "zh-CN-YunxiNeural", text: "云希(男) - zh-CN-YunxiNeural" },
           { value: "zh-CN-XiaomoNeural", text: "晓墨(女) - zh-CN-XiaomoNeural" },
@@ -658,10 +561,8 @@ curl ${baseUrl}/v1/audio/speech \\
 
         voiceSelect.appendChild(group);
 
-        // 默认选择第一个语音
-        if (defaultVoices.length > 0) {
-          voiceSelect.value = defaultVoices[0].value;
-        }
+        // 默认选择晓晓多语言
+        voiceSelect.value = "zh-CN-XiaoxiaoMultilingualNeural";
       }
 
       // 页面加载完成后加载语音列表
@@ -746,9 +647,9 @@ function dateFormat() {
   return formattedDate.toLowerCase();
 }
 
-function getSsml(text, voiceName, rate, pitch) {
+function getSsml(text, voiceName, rate, pitch, style = 'general') {
   text = escapeSSML(text);
-  return `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" version="1.0" xml:lang="zh-CN"> <voice name="${voiceName}"> <mstts:express-as style="general" styledegree="1.0" role="default"> <prosody rate="${rate}%" pitch="${pitch}%" volume="50">${text}</prosody> </mstts:express-as> </voice> </speak>`;
+  return `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" version="1.0" xml:lang="zh-CN"> <voice name="${voiceName}"> <mstts:express-as style="${style}" styledegree="1.0" role="default"> <prosody rate="${rate}%" pitch="${pitch}%" volume="50">${text}</prosody> </mstts:express-as> </voice> </speak>`;
 }
 
 function voiceList() {
@@ -807,7 +708,7 @@ function validateApiKey(apiKey) {
   return apiKey === expectedApiKey;
 }
 
-async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', rate = 0, pitch = 0, outputFormat='audio-24khz-48kbitrate-mono-mp3', download=false) {
+async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', rate = 0, pitch = 0, style = 'general', outputFormat='audio-24khz-48kbitrate-mono-mp3', download=false) {
   // get expiredAt from endpoint.t (jwt token)
   if (!expiredAt || Date.now() / 1000 > expiredAt - 60) {
     endpoint = await getEndpoint();
@@ -829,7 +730,7 @@ async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', ra
     'User-Agent': 'okhttp/4.5.0',
     'X-Microsoft-OutputFormat': outputFormat
   };
-  const ssml = getSsml(text, voiceName, rate, pitch);
+  const ssml = getSsml(text, voiceName, rate, pitch, style);
 
   const response = await fetch(url, {
     method: 'POST',
