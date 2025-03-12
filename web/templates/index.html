@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="bg-[#0f1a2f]">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,47 +7,1077 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="{{.BasePath}}/static/icons/favicon.svg">
     <meta name="description" content="基于Microsoft Azure语音服务的在线文本转语音工具">
+    <script src="{{.BasePath}}/static/js/app.js"></script>
+    <style>
+        html, body {
+            background-color: #0f1a2f; /* 确保即使在滚动时也有深色背景 */
+        }
+
+        /* 固定渐变背景，移除动画效果 */
+        .bg-gradient-animated {
+            background: linear-gradient(-45deg, #0f1a2f, #2d3748, #1a365d, #0d2f62);
+            background-size: 400% 400%;
+            position: relative;
+        }
+
+        /* 激光效果 - 修复宽度和溢出问题 */
+        .laser-container {
+            position: fixed; /* 改为fixed定位，使激光效果固定在视口中 */
+            top: 0;
+            left: 0;
+            width: 100vw; /* 使用视口宽度单位而非百分比 */
+            height: 100vh; /* 使用视口高度单位 */
+            z-index: 0;
+            opacity: 0.7;
+            pointer-events: none; /* 确保不会拦截鼠标事件 */
+            overflow: hidden; /* 防止激光光束溢出 */
+        }
+
+        .laser-beam {
+            position: absolute;
+            background: linear-gradient(to right, transparent, rgba(0, 195, 255, 0.5), transparent);
+            height: 2px;
+            width: 150vw; /* 增加宽度确保激光覆盖旋转后的视口 */
+            transform-origin: 0 0;
+            left: -25vw; /* 偏移，确保即使旋转也能覆盖整个屏幕 */
+        }
+
+        .laser-beam:nth-child(2n) {
+            background: linear-gradient(to right, transparent, rgba(255, 0, 200, 0.5), transparent);
+        }
+
+        .laser-beam:nth-child(3n) {
+            background: linear-gradient(to right, transparent, rgba(0, 255, 170, 0.5), transparent);
+        }
+
+        .laser-beam:nth-child(5n) {
+            background: linear-gradient(to right, transparent, rgba(255, 250, 0, 0.3), transparent);
+        }
+
+        /* 移除霓虹光效果动画 */
+        .glow {
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        .glow:nth-child(1) {
+            top: -30%;
+            left: -10%;
+            background: linear-gradient(45deg, #ff00c8, #0084ff);
+        }
+
+        .glow:nth-child(2) {
+            bottom: -30%;
+            right: -10%;
+            background: linear-gradient(-45deg, #00f2ff, #8f00ff);
+        }
+
+        /* 内容区域 - 确保不溢出 */
+        .content-area {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 1rem;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            width: 100%;
+            max-width: 100%; /* 确保不超出父容器 */
+            overflow: hidden; /* 防止子元素溢出 */
+        }
+
+        /* 毛玻璃按钮效果 */
+        .btn-frosted {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .btn-frosted:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* 毛玻璃面板效果 */
+        .panel-frosted {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 为滑块输入元素添加毛玻璃效果 - 更新样式 */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(13, 47, 98, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 10px;
+            height: 8px;
+            outline: none;
+            margin: 10px 0;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 滑块填充效果 */
+        input[type="range"]::-webkit-slider-runnable-track {
+            -webkit-appearance: none;
+            height: 8px;
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: rgba(13, 47, 98, 0.2);
+            height: 8px;
+            border-radius: 10px;
+        }
+
+        /* Chrome/Safari滑块拇指 */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            margin-top: -5px; /* 用于垂直居中 */
+            position: relative;
+            z-index: 2;
+            transition: all 0.2s ease;
+        }
+
+        /* Firefox滑块拇指 */
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        /* 滑块交互效果 */
+        input[type="range"]:hover::-webkit-slider-thumb {
+            transform: scale(1.1);
+            box-shadow: 0 3px 8px rgba(59, 130, 246, 0.5);
+        }
+
+        input[type="range"]:hover::-moz-range-thumb {
+            transform: scale(1.1);
+            box-shadow: 0 3px 8px rgba(59, 130, 246, 0.5);
+        }
+
+        input[type="range"]:active::-webkit-slider-thumb {
+            transform: scale(1.2);
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        }
+
+        input[type="range"]:active::-moz-range-thumb {
+            transform: scale(1.2);
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        }
+
+        /* 滑块值显示区域 */
+        .range-value {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            min-width: 40px;
+            text-align: center;
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* 滑块中央光晕效果 */
+        input[type="range"].rate-slider::-webkit-slider-thumb::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 25px;
+            height: 25px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, rgba(59, 130, 246, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        /* 标签文本增强样式 */
+        .slider-label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .slider-label span {
+            margin-left: 8px;
+            font-size: 0.75rem;
+            color: rgba(107, 114, 128, 0.7);
+        }
+
+        /* 防止表格和代码块溢出 */
+        .overflow-x-auto {
+            max-width: 100%; /* 确保不超过父容器 */
+        }
+
+        pre, code {
+            max-width: 100%;
+            word-break: break-word; /* 允许在必要时断词 */
+        }
+
+        /* 输入框与主题风格一致化 */
+        textarea, select {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #1a365d !important;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        textarea:focus, select:focus {
+            background: rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3) !important;
+            border: 1px solid rgba(59, 130, 246, 0.5) !important;
+        }
+
+        /* 选择框美化 */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a365d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1em;
+            padding-right: 2.5rem;
+        }
+
+        /* 选择框选项组样式 */
+        optgroup {
+            background-color: rgba(45, 55, 72, 0.95);
+            color: white;
+            font-weight: bold;
+        }
+
+        option {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #2d3748;
+            padding: 8px;
+        }
+
+        /* 自定义音频播放器 */
+        audio {
+            filter: hue-rotate(200deg) saturate(110%) brightness(90%);
+            border-radius: 24px;
+            height: 36px;
+            background: rgba(26, 54, 93, 0.1);
+        }
+
+        /* 更新分割线样式 */
+        .border-b {
+            border-image: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.3), transparent) 1;
+        }
+
+        /* 加载中状态优化 */
+        .loading-text {
+            position: relative;
+            color: #3b82f6;
+        }
+
+        .loading-text:after {
+            content: "...";
+            position: absolute;
+            width: 24px;
+            text-align: left;
+            animation: loading-dots 1.5s infinite;
+        }
+
+        @keyframes loading-dots {
+            0% {
+                content: ".";
+            }
+            33% {
+                content: "..";
+            }
+            66% {
+                content: "...";
+            }
+        }
+
+        /* API Key输入区域科技感增强 */
+        #api-key-group {
+            background: linear-gradient(to right, rgba(13, 47, 98, 0.05), rgba(59, 130, 246, 0.05), rgba(13, 47, 98, 0.05));
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        /* 文本输入框字数计数器增强 */
+        .char-counter {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-weight: 500;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        /* 添加脉冲动画到主按钮 */
+        #speak {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #speak:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 4px;
+            box-shadow: 0 0 15px 3px rgba(59, 130, 246, 0.6);
+            opacity: 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.3;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* 重新设计的按钮基础样式 */
+        .btn-neo {
+            position: relative;
+            overflow: hidden;
+            background: rgba(13, 47, 98, 0.6);
+            color: #dbeafe;
+            border: none;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 6px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+            inset 0 -1px 0 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* 按钮边框发光效果 */
+        .btn-neo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 6px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(147, 197, 253, 0.3), rgba(59, 130, 246, 0.1));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* 按钮悬浮效果 */
+        .btn-neo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+            0 0 10px 2px rgba(59, 130, 246, 0.4);
+            background: rgba(26, 86, 219, 0.7);
+            color: #ffffff;
+        }
+
+        /* 按钮点击效果 */
+        .btn-neo:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.2),
+            inset 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+            background: rgba(30, 64, 175, 0.8);
+        }
+
+        /* 主按钮变体 */
+        .btn-neo-primary {
+            background: linear-gradient(180deg, rgba(37, 99, 235, 0.8), rgba(30, 64, 175, 0.9));
+            color: white;
+        }
+
+        .btn-neo-primary:hover {
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.95));
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3),
+            0 0 20px 5px rgba(59, 130, 246, 0.4);
+        }
+
+        /* 次要按钮变体 */
+        .btn-neo-secondary {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.7));
+            color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .btn-neo-secondary:hover {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.6), rgba(30, 41, 59, 0.8));
+        }
+
+        /* 带脉冲光环效果的按钮 */
+        .btn-neo-pulse::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 6px;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* 禁用状态 */
+        .btn-neo:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 带图标的按钮 */
+        .btn-neo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-neo-icon svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-neo-icon:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* 重新设计的Tab栏样式 - 更加和谐 */
+        .tab-bar {
+            display: flex;
+            justify-content: center;
+            background: rgba(13, 47, 98, 0.15); /* 更轻微的背景色 */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 10px;
+            padding: 4px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+            0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            max-width: 380px;
+            margin: 0 auto;
+            z-index: 1;
+        }
+
+        .tab-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 10px;
+            padding: 1px;
+            background: rgba(255, 255, 255, 0.2); /* 更微妙的边框 */
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            z-index: -1;
+        }
+
+        .tab-item {
+            position: relative;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            padding: 8px 18px;
+            flex-grow: 1;
+            text-align: center;
+            transition: all 0.25s ease;
+            border-radius: 6px;
+            z-index: 2;
+            letter-spacing: 0.01em;
+        }
+
+        .tab-item:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .tab-item.active {
+            color: #1a365d; /* 更深的文字颜色，与主题对比 */
+            font-weight: 600;
+        }
+
+        .tab-indicator {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9); /* 纯白色指示器 */
+            border-radius: 6px;
+            height: calc(100% - 8px);
+            z-index: 1;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            top: 4px;
+            left: 4px;
+            bottom: 4px;
+        }
+
+        /* Tab中的图标样式 - 简化 */
+        .tab-icon {
+            display: inline-flex;
+            vertical-align: middle;
+            margin-right: 6px;
+            height: 18px;
+            width: 18px;
+            transition: transform 0.2s ease;
+            opacity: 0.9;
+        }
+
+        .tab-item:hover .tab-icon {
+            transform: scale(1.1);
+        }
+
+        .tab-item.active .tab-icon {
+            color: #1a365d; /* 图标颜色与文本匹配 */
+        }
+
+        /* 简化下方线条效果 */
+        .tab-item::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            transition: transform 0.2s ease;
+            opacity: 0;
+        }
+
+        .tab-item.active::after {
+            opacity: 0; /* 移除活动状态下的额外线条，保持简洁 */
+        }
+
+        /* 重新设计的API Key输入组件 */
+        .api-key-container {
+            position: relative;
+            background: rgba(15, 26, 47, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: inset 0 0 0 1px rgba(30, 64, 175, 0.1),
+            0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .api-key-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.3));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            z-index: 0;
+            opacity: 0.7;
+        }
+
+        .api-key-container:hover::before {
+            opacity: 1;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.4));
+        }
+
+        .api-key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .api-key-title {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .api-key-icon {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-right: 0.75rem;
+            color: #3b82f6;
+        }
+
+        .api-key-input-wrapper {
+            position: relative;
+            margin-bottom: 0.75rem;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 0.75rem 3rem 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            background: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s ease;
+            color: #1e293b;
+            font-family: monospace;
+            letter-spacing: 0.05em;
+        }
+
+        .api-key-input:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .api-key-toggle {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .api-key-toggle:hover {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .api-key-status {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+        }
+
+        .api-key-status.valid {
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .api-key-status.invalid {
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .api-key-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .api-key-button {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .api-key-save {
+            background: linear-gradient(180deg, rgba(37, 99, 235, 0.9), rgba(30, 64, 175, 1));
+            color: white;
+        }
+
+        .api-key-save:hover {
+            background: linear-gradient(180deg, rgba(37, 99, 235, 1), rgba(30, 64, 175, 0.9));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-key-clear {
+            background: transparent;
+            color: #64748b;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        .api-key-clear:hover {
+            background: rgba(100, 116, 139, 0.1);
+            color: #475569;
+        }
+
+        .api-key-test {
+            background: transparent;
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .api-key-test:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+        }
+
+        .api-key-notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            max-width: 350px;
+        }
+
+        .api-key-notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .api-key-notification.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .api-key-notification.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .api-key-notification.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        /* 管理API按钮增强 */
+        .manage-api-btn {
+            background: rgba(59, 130, 246, 0.08);
+            color: #3b82f6;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        .manage-api-btn:hover {
+            background: rgba(59, 130, 246, 0.15);
+            color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .manage-api-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 自定义通知系统 */
+        .custom-alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            pointer-events: none;
+            width: 360px;
+            max-width: calc(100vw - 40px);
+        }
+
+        .custom-alert {
+            position: relative;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateX(20px) translateY(-5px);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-start;
+            padding: 0;
+        }
+
+        .custom-alert.show {
+            opacity: 1;
+            transform: translateX(0) translateY(0);
+        }
+
+        .custom-alert-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+            height: 100%;
+            padding: 16px 0 16px 16px;
+        }
+
+        .custom-alert-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .custom-alert-content {
+            padding: 16px;
+            flex: 1;
+        }
+
+        .custom-alert-message {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .custom-alert-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        .custom-alert-close:hover {
+            opacity: 1;
+        }
+
+        .custom-alert-close svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .custom-alert-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .custom-alert-progress::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            transform-origin: left;
+            transform: scaleX(0);
+        }
+
+        .custom-alert.info .custom-alert-icon {
+            color: #3b82f6;
+        }
+
+        .custom-alert.info .custom-alert-progress::after {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        }
+
+        .custom-alert.success .custom-alert-icon {
+            color: #10b981;
+        }
+
+        .custom-alert.success .custom-alert-progress::after {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .custom-alert.error .custom-alert-icon {
+            color: #ef4444;
+        }
+
+        .custom-alert.error .custom-alert-progress::after {
+            background: linear-gradient(90deg, #ef4444, #b91c1c);
+        }
+
+        .custom-alert.warning .custom-alert-icon {
+            color: #f59e0b;
+        }
+
+        .custom-alert.warning .custom-alert-progress::after {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .custom-alert-content h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .custom-alert-content p {
+            margin: 0;
+            color: #64748b;
+        }
+
+        @keyframes progress {
+            from {
+                transform: scaleX(0);
+            }
+            to {
+                transform: scaleX(1);
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 p-4 font-sans">
-    <div class="max-w-4xl mx-auto">
+<body class="bg-gradient-animated text-gray-800 font-sans min-h-screen">
+<!-- 激光效果 -->
+<div class="laser-container">
+    <div class="glow"></div>
+    <div class="glow"></div>
+</div>
+
+<div class="max-w-4xl mx-auto p-4 relative">
+    <div class="content-area p-6 shadow-xl my-8">
         <header class="text-center mb-8 py-4">
             <h1 class="text-4xl font-bold mb-2 text-gray-800">文本转语音 (TTS)</h1>
             <p class="text-xl text-gray-600 mb-4">将文本转换为自然流畅的语音</p>
-            <nav class="flex justify-center mt-4">
-                <a href="{{.BasePath}}/" class="mx-2 px-3 py-1 rounded bg-blue-500 text-white">主页</a>
-                <a href="{{.BasePath}}/api-doc" class="mx-2 px-3 py-1 rounded text-blue-500 hover:bg-blue-500 hover:text-white transition-colors">API文档</a>
-            </nav>
+
+            <!-- 新Tab栏设计 -->
+            <div class="tab-bar mt-6">
+                <span class="tab-indicator" style="width: 50%;"></span>
+                <a href="{{.BasePath}}/" class="tab-item active">
+                        <span class="tab-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                        </span>
+                    主页
+                </a>
+                <a href="{{.BasePath}}/api-doc" class="tab-item">
+                        <span class="tab-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                            </svg>
+                        </span>
+                    API文档
+                </a>
+            </div>
         </header>
 
         <main>
-            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div id="api-key-group" class="mb-6 border-b border-gray-200 pb-4">
-                    <div class="flex flex-col md:flex-row md:items-end gap-3">
-                        <div class="flex-grow">
-                            <label for="api-key" class="block mb-1 font-semibold text-gray-700">API Key:</label>
-                            <div class="relative">
-                                <input type="password" id="api-key" placeholder="请输入有效的API Key以继续操作"
-                                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <button id="toggle-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-blue-500 focus:outline-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                </button>
+            <section class="panel-frosted bg-white rounded-lg shadow-md p-6 mb-6">
+                <!-- 替换原有的API Key管理按钮 -->
+                <div class="flex justify-end mb-4">
+                    <button id="toggle-api-key" class="manage-api-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                        </svg>
+                        管理API Key
+                    </button>
+                </div>
+
+                <!-- 替换API Key输入区域 -->
+                <div id="api-key-group" class="api-key-container mb-6 hidden">
+                    <div class="api-key-header">
+                        <div class="api-key-title">
+                            <div class="api-key-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                                </svg>
                             </div>
+                            <span>API Key 设置</span>
                         </div>
-                        <div class="flex flex-wrap md:flex-nowrap gap-2" id="api-key-buttons">
-                            <!-- 按钮将通过JS添加 -->
-                        </div>
+                    </div>
+
+                    <div class="api-key-input-wrapper">
+                        <input type="password" id="api-key" class="api-key-input" placeholder="输入您的API Key"
+                               autocomplete="off">
+                        <button id="toggle-password" class="api-key-toggle" title="显示/隐藏密钥">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
                 <h2 class="text-xl font-bold mb-4 pb-2 border-b border-gray-200 text-gray-800">输入文本</h2>
                 <div class="relative mb-4">
-                    <textarea id="text" placeholder="输入要转换的文本..." rows="6" maxlength="5000"
-                        class="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        <textarea id="text" placeholder="输入要转换的文本..." rows="6" maxlength="5000"
+                                  class="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                     <div class="absolute bottom-2 right-2 text-sm text-gray-500">
-                        <span id="charCount">0</span>/5000
+                        <span id="charCount" class="char-counter">0</span><span class="text-gray-500">/5000</span>
                     </div>
                 </div>
 
@@ -55,53 +1085,90 @@
                     <div class="flex flex-col">
                         <label for="voice" class="mb-1 font-semibold text-gray-700">语音:</label>
                         <select id="voice"
-                            class="p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="loading">加载中...</option>
+                                class="p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="loading" class="loading-text">加载中</option>
                         </select>
                     </div>
 
                     <div class="flex flex-col">
                         <label for="style" class="mb-1 font-semibold text-gray-700">风格:</label>
                         <select id="style"
-                            class="p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                class="p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="loading">加载中...</option>
                         </select>
                     </div>
                 </div>
 
+                <!-- 修改滑块组件HTML结构，以适应新样式 -->
                 <div class="flex flex-wrap -mx-2">
                     <div class="w-full md:w-1/2 px-2 mb-4">
-                        <label for="rate" class="mb-1 font-semibold text-gray-700">语速:</label>
+                        <div class="slider-label">
+                            <label for="rate" class="font-semibold text-gray-700">语速:</label>
+                            <span>(调节语音的快慢程度)</span>
+                        </div>
                         <div class="flex items-center">
                             <input type="range" id="rate" min="-100" max="100" value="0"
-                                class="w-full mr-2 focus:outline-none">
-                            <span id="rateValue" class="text-sm text-gray-600 w-10">0%</span>
+                                   class="w-full mr-2 focus:outline-none rate-slider">
+                            <span id="rateValue" class="text-sm text-gray-600 range-value">0%</span>
                         </div>
                     </div>
 
                     <div class="w-full md:w-1/2 px-2 mb-4">
-                        <label for="pitch" class="mb-1 font-semibold text-gray-700">语调:</label>
+                        <div class="slider-label">
+                            <label for="pitch" class="font-semibold text-gray-700">语调:</label>
+                            <span>(调节语音的高低音)</span>
+                        </div>
                         <div class="flex items-center">
                             <input type="range" id="pitch" min="-100" max="100" value="0"
-                                class="w-full mr-2 focus:outline-none">
-                            <span id="pitchValue" class="text-sm text-gray-600 w-10">0%</span>
+                                   class="w-full mr-2 focus:outline-none pitch-slider">
+                            <span id="pitchValue" class="text-sm text-gray-600 range-value">0%</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex justify-center mt-6">
-                    <button id="speak" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">转换为语音</button>
+                    <button id="speak" class="btn-neo btn-neo-primary btn-neo-pulse btn-neo-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                             stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                        转换为语音
+                    </button>
                 </div>
             </section>
 
-            <section id="resultSection" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <section id="resultSection" class="panel-frosted bg-white rounded-lg shadow-md p-6 mb-6 hidden">
                 <h2 class="text-xl font-bold mb-4 pb-2 border-b border-gray-200 text-gray-800">语音输出</h2>
                 <div class="flex flex-col items-center">
                     <audio id="audioPlayer" controls class="w-full mb-4"></audio>
                     <div class="flex flex-wrap justify-center">
-                        <button id="download" class="m-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">下载音频</button>
-                        <button id="copyLink" class="m-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">复制链接</button>
-                        <button id="copyHttpTtsLink" class="m-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">复制HttpTTS链接</button>
+                        <button id="download" class="btn-neo btn-neo-secondary btn-neo-icon m-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            下载音频
+                        </button>
+
+                        <button id="copyLink" class="btn-neo btn-neo-secondary btn-neo-icon m-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                            </svg>
+                            复制链接
+                        </button>
+
+                        <button id="copyHttpTtsLink" class="btn-neo btn-neo-secondary btn-neo-icon m-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                            </svg>
+                            复制HttpTTS链接
+                        </button>
                     </div>
                 </div>
             </section>
@@ -111,17 +1178,141 @@
             <p>© 2025 TTS服务 | <a href="{{.BasePath}}/api-doc" class="text-blue-500 hover:underline">API文档</a></p>
         </footer>
     </div>
+</div>
 
-    <script>
-        // 存储一些全局配置
-        const config = {
-            basePath: "{{.BasePath}}",
-            defaultVoice: "{{.DefaultVoice}}",
-            defaultRate: "{{.DefaultRate}}",
-            defaultPitch: "{{.DefaultPitch}}",
-            defaultStyle: "{{.DefaultStyle}}"
-        };
-    </script>
-    <script src="{{.BasePath}}/static/js/app.js"></script>
+<!-- 自定义通知容器 -->
+<div id="custom-alert-container" class="custom-alert-container"></div>
+
+<script>
+    // 存储一些全局配置
+    const config = {
+        basePath: "{{.BasePath}}",
+        defaultVoice: "{{.DefaultVoice}}",
+        defaultRate: "{{.DefaultRate}}",
+        defaultPitch: "{{.DefaultPitch}}",
+        defaultStyle: "{{.DefaultStyle}}"
+    };
+
+    // 添加动态激光效果
+    document.addEventListener('DOMContentLoaded', function () {
+        const laserContainer = document.querySelector('.laser-container');
+
+        // 清除任何现有的激光束
+        while (laserContainer.lastChild) {
+            laserContainer.removeChild(laserContainer.lastChild);
+        }
+
+        // 保留发光效果
+        const glow1 = document.createElement('div');
+        glow1.className = 'glow';
+        glow1.style.top = '-30%';
+        glow1.style.left = '-10%';
+        laserContainer.appendChild(glow1);
+
+        const glow2 = document.createElement('div');
+        glow2.className = 'glow';
+        glow2.style.bottom = '-30%';
+        glow2.style.right = '-10%';
+        laserContainer.appendChild(glow2);
+
+        // 添加更随机方向的激光束，同时确保不会导致水平溢出
+        const laserCount = 8;
+        for (let i = 0; i < laserCount; i++) {
+            const laser = document.createElement('div');
+            laser.className = 'laser-beam';
+
+            // 随机高度
+            const height = Math.random() * 2 + 1;
+            laser.style.height = `${height}px`;
+
+            // 随机位置
+            laser.style.top = `${Math.random() * 100}%`;
+
+            // 随机角度 (限制角度范围，防止水平溢出)
+            const angle = Math.random() * 160 + 10; // 10-170度，避免接近水平的角度
+
+            // 静态定位，不使用动画
+            laser.style.transform = `rotate(${angle}deg)`;
+
+            // 随机不透明度
+            laser.style.opacity = Math.random() * 0.5 + 0.3;
+
+            laserContainer.appendChild(laser);
+        }
+
+        // 监听窗口大小变化，确保页面元素适应
+        window.addEventListener('resize', function () {
+            // 强制刷新激光和背景元素的布局
+            document.body.classList.add('layout-refresh');
+            setTimeout(() => document.body.classList.remove('layout-refresh'), 100);
+        });
+    });
+
+    // 增强滑块交互效果
+    document.addEventListener('DOMContentLoaded', function () {
+        // 为滑块增加视觉反馈
+        const rateSlider = document.getElementById('rate');
+        const pitchSlider = document.getElementById('pitch');
+
+        function updateSliderBackground(slider) {
+            // 计算填充百分比
+            const min = parseFloat(slider.min);
+            const max = parseFloat(slider.max);
+            const val = parseFloat(slider.value);
+            const percentage = ((val - min) / (max - min)) * 100;
+
+            // 创建渐变背景，从中间的0点向两边扩散
+            let gradient;
+            if (val < 0) {
+                // 负值 - 从中点到左侧
+                const middlePos = 50; // 0值在滑块中间
+                const fillPos = middlePos + (percentage / 2); // 填充位置
+                gradient = `linear-gradient(to right, rgba(59, 130, 246, 0.1) ${fillPos}%, rgba(13, 47, 98, 0.2) ${fillPos}%)`;
+            } else {
+                // 正值或0 - 从中点到右侧
+                const middlePos = 50; // 0值在滑块中间
+                const fillPos = middlePos + (percentage / 2); // 填充位置
+                gradient = `linear-gradient(to right, rgba(13, 47, 98, 0.2) ${middlePos}%, rgba(59, 130, 246, 0.15) ${middlePos}%, rgba(59, 130, 246, 0.3) ${fillPos}%)`;
+            }
+
+            slider.style.background = gradient;
+        }
+
+        // 初始化滑块背景
+        updateSliderBackground(rateSlider);
+        updateSliderBackground(pitchSlider);
+
+        // 滑块值变化时更新背景
+        rateSlider.addEventListener('input', function () {
+            updateSliderBackground(this);
+        });
+
+        pitchSlider.addEventListener('input', function () {
+            updateSliderBackground(this);
+        });
+    });
+
+    // Tab栏交互效果
+    document.addEventListener('DOMContentLoaded', function () {
+        // 初始化Tab指示器的位置
+        const tabBar = document.querySelector('.tab-bar');
+        const activeTab = tabBar.querySelector('.active');
+        const indicator = tabBar.querySelector('.tab-indicator');
+
+        // 设置指示器初始位置和宽度来匹配活动tab
+        if (indicator && activeTab) {
+            indicator.style.width = `${activeTab.offsetWidth}px`;
+            indicator.style.transform = `translateX(${activeTab.offsetLeft}px)`;
+        }
+
+        // 当窗口大小改变时调整指示器
+        window.addEventListener('resize', function () {
+            if (indicator && activeTab) {
+                indicator.style.width = `${activeTab.offsetWidth}px`;
+                indicator.style.transform = `translateX(${activeTab.offsetLeft}px)`;
+            }
+        });
+    });
+</script>
 </body>
 </html>
