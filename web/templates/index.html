@@ -4,84 +4,111 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文本转语音 - TTS服务</title>
-    <link rel="stylesheet" href="{{.BasePath}}/static/css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/svg+xml" href="{{.BasePath}}/static/icons/favicon.svg">
     <meta name="description" content="基于Microsoft Azure语音服务的在线文本转语音工具">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>文本转语音 (TTS)</h1>
-            <p>将文本转换为自然流畅的语音</p>
-            <nav>
-                <a href="{{.BasePath}}/" class="active">主页</a>
-                <a href="{{.BasePath}}/api-doc">API文档</a>
+<body class="bg-gray-50 text-gray-800 p-4 font-sans">
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-8 py-4">
+            <h1 class="text-4xl font-bold mb-2 text-gray-800">文本转语音 (TTS)</h1>
+            <p class="text-xl text-gray-600 mb-4">将文本转换为自然流畅的语音</p>
+            <nav class="flex justify-center mt-4">
+                <a href="{{.BasePath}}/" class="mx-2 px-3 py-1 rounded bg-blue-500 text-white">主页</a>
+                <a href="{{.BasePath}}/api-doc" class="mx-2 px-3 py-1 rounded text-blue-500 hover:bg-blue-500 hover:text-white transition-colors">API文档</a>
             </nav>
         </header>
 
         <main>
-            <section class="card">
-                <h2>输入文本</h2>
-                <div class="input-group">
-                    <textarea id="text" placeholder="输入要转换的文本..." rows="6" maxlength="5000"></textarea>
-                    <div class="char-counter"><span id="charCount">0</span>/5000</div>
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div id="api-key-group" class="mb-6 border-b border-gray-200 pb-4">
+                    <div class="flex flex-col md:flex-row md:items-end gap-3">
+                        <div class="flex-grow">
+                            <label for="api-key" class="block mb-1 font-semibold text-gray-700">API Key:</label>
+                            <div class="relative">
+                                <input type="password" id="api-key" placeholder="请输入有效的API Key以继续操作"
+                                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <button id="toggle-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600 hover:text-blue-500 focus:outline-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap md:flex-nowrap gap-2" id="api-key-buttons">
+                            <!-- 按钮将通过JS添加 -->
+                        </div>
+                    </div>
                 </div>
 
-                <div id="api-key-group" style="display: none;" class="api-key-container">
-                    <label for="api-key">API Key:</label>
-                    <input type="password" id="api-key" placeholder="请输入有效的API Key以继续操作">
+                <h2 class="text-xl font-bold mb-4 pb-2 border-b border-gray-200 text-gray-800">输入文本</h2>
+                <div class="relative mb-4">
+                    <textarea id="text" placeholder="输入要转换的文本..." rows="6" maxlength="5000"
+                        class="w-full p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    <div class="absolute bottom-2 right-2 text-sm text-gray-500">
+                        <span id="charCount">0</span>/5000
+                    </div>
                 </div>
 
-                <div class="settings">
-                    <div class="setting-group">
-                        <label for="voice">语音:</label>
-                        <select id="voice">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="flex flex-col">
+                        <label for="voice" class="mb-1 font-semibold text-gray-700">语音:</label>
+                        <select id="voice"
+                            class="p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="loading">加载中...</option>
                         </select>
                     </div>
 
-                    <div class="setting-group">
-                        <label for="style">风格:</label>
-                        <select id="style">
+                    <div class="flex flex-col">
+                        <label for="style" class="mb-1 font-semibold text-gray-700">风格:</label>
+                        <select id="style"
+                            class="p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="loading">加载中...</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="settings-row">
-                    <div class="setting-group half-width">
-                        <label for="rate">语速:</label>
-                        <input type="range" id="rate" min="-100" max="100" value="0">
-                        <span id="rateValue">0%</span>
+                <div class="flex flex-wrap -mx-2">
+                    <div class="w-full md:w-1/2 px-2 mb-4">
+                        <label for="rate" class="mb-1 font-semibold text-gray-700">语速:</label>
+                        <div class="flex items-center">
+                            <input type="range" id="rate" min="-100" max="100" value="0"
+                                class="w-full mr-2 focus:outline-none">
+                            <span id="rateValue" class="text-sm text-gray-600 w-10">0%</span>
+                        </div>
                     </div>
 
-                    <div class="setting-group half-width">
-                        <label for="pitch">语调:</label>
-                        <input type="range" id="pitch" min="-100" max="100" value="0">
-                        <span id="pitchValue">0%</span>
+                    <div class="w-full md:w-1/2 px-2 mb-4">
+                        <label for="pitch" class="mb-1 font-semibold text-gray-700">语调:</label>
+                        <div class="flex items-center">
+                            <input type="range" id="pitch" min="-100" max="100" value="0"
+                                class="w-full mr-2 focus:outline-none">
+                            <span id="pitchValue" class="text-sm text-gray-600 w-10">0%</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="actions">
-                    <button id="speak" class="primary-button">转换为语音</button>
+                <div class="flex justify-center mt-6">
+                    <button id="speak" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">转换为语音</button>
                 </div>
             </section>
 
-            <section class="card" id="resultSection" style="display:none;">
-                <h2>语音输出</h2>
-                <div class="audio-player">
-                    <audio id="audioPlayer" controls></audio>
-                    <div class="audio-controls">
-                        <button id="download" class="secondary-button">下载音频</button>
-                        <button id="copyLink" class="secondary-button">复制链接</button>
-                        <button id="copyHttpTtsLink" class="secondary-button">复制HttpTTS链接</button>
+            <section id="resultSection" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+                <h2 class="text-xl font-bold mb-4 pb-2 border-b border-gray-200 text-gray-800">语音输出</h2>
+                <div class="flex flex-col items-center">
+                    <audio id="audioPlayer" controls class="w-full mb-4"></audio>
+                    <div class="flex flex-wrap justify-center">
+                        <button id="download" class="m-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">下载音频</button>
+                        <button id="copyLink" class="m-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">复制链接</button>
+                        <button id="copyHttpTtsLink" class="m-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">复制HttpTTS链接</button>
                     </div>
                 </div>
             </section>
         </main>
 
-        <footer>
-            <p>© 2025 TTS服务 | <a href="{{.BasePath}}/api-doc">API文档</a></p>
+        <footer class="text-center mt-10 py-4 text-gray-600 text-sm">
+            <p>© 2025 TTS服务 | <a href="{{.BasePath}}/api-doc" class="text-blue-500 hover:underline">API文档</a></p>
         </footer>
     </div>
 
