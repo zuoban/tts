@@ -192,9 +192,30 @@ async function handleRequest(request) {
 
                   <div>
                     <label for="apiKey" class="block text-sm font-medium text-gray-700">API Key</label>
-                    <input type="text" id="apiKey" name="apiKey" required
-                      class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-ms-blue focus:border-ms-blue"
-                      placeholder="输入API Key" />
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                      <div id="apiKeyInputGroup" class="flex-grow flex relative">
+                        <input type="password" id="apiKey" name="apiKey" required
+                          class="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-ms-blue focus:border-ms-blue"
+                          placeholder="输入API Key" />
+                        <button type="button" id="toggleApiKeyVisibility" class="absolute inset-y-0 right-0 px-3 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                      </div>
+                      <button type="button" id="saveApiKey" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-ms-blue hover:bg-ms-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
+                        保存
+                      </button>
+                    </div>
+                    <div id="savedApiKeyInfo" style="display:none;" class="mt-2 flex items-center justify-between">
+                      <span class="text-sm text-green-600 flex items-center">
+                        API Key 已保存
+                      </span>
+                      <button type="button" id="editApiKey" class="text-sm text-ms-blue hover:text-ms-dark-blue">
+                        编辑
+                      </button>
+                    </div>
                   </div>
 
                   <div>
@@ -290,7 +311,7 @@ async function handleRequest(request) {
                     <div class="flex">
                       <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293-1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                          <path fill-rule="evenodd" d="M10 18a8 8 100-16 8 8 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293-1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                         </svg>
                       </div>
                       <div class="ml-3">
@@ -464,7 +485,8 @@ curl ${baseUrl}/v1/audio/speech \\
         // 隐藏先前的错误信息
         document.getElementById('apiErrorAlert').style.display = 'none';
 
-        const apiKey = document.getElementById('apiKey').value;
+        // 获取API Key (从输入框或localStorage)
+        const apiKey = document.getElementById('apiKey').value || localStorage.getItem('tts_api_key') || '';
         const text = encodeURIComponent(document.getElementById('text').value);
         const voice = document.getElementById('voice').value;
         const rate = document.getElementById('rate').value;
@@ -717,7 +739,64 @@ curl ${baseUrl}/v1/audio/speech \\
       }
 
       // 页面加载完成后加载语音列表
-      window.onload = loadVoices;
+      window.onload = function() {
+        loadVoices();
+
+        // API Key 相关功能
+        const apiKeyInput = document.getElementById('apiKey');
+        const saveApiKeyBtn = document.getElementById('saveApiKey');
+        const editApiKeyBtn = document.getElementById('editApiKey');
+        const savedApiKeyInfo = document.getElementById('savedApiKeyInfo');
+        const apiKeyInputGroup = document.getElementById('apiKeyInputGroup');
+        const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibility');
+
+        // 显示/隐藏API Key
+        toggleApiKeyVisibilityBtn.addEventListener('click', function() {
+          const type = apiKeyInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          apiKeyInput.setAttribute('type', type);
+
+          // 修改图标
+          if (type === 'text') {
+            this.innerHTML = \`<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+            </svg>\`;
+          } else {
+            this.innerHTML = \`<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>\`;
+          }
+        });
+
+        // 保存API Key到localStorage
+        saveApiKeyBtn.addEventListener('click', function() {
+          const apiKey = apiKeyInput.value.trim();
+          if (apiKey) {
+            localStorage.setItem('tts_api_key', apiKey);
+            apiKeyInputGroup.style.display = 'none';
+            saveApiKeyBtn.style.display = 'none';
+            savedApiKeyInfo.style.display = 'flex';
+          } else {
+            alert('请输入有效的API Key');
+          }
+        });
+
+        // 编辑已保存的API Key
+        editApiKeyBtn.addEventListener('click', function() {
+          apiKeyInputGroup.style.display = 'flex';
+          saveApiKeyBtn.style.display = 'inline-flex';
+          savedApiKeyInfo.style.display = 'none';
+        });
+
+        // 检查是否有保存的API Key
+        const savedApiKey = localStorage.getItem('tts_api_key');
+        if (savedApiKey) {
+          apiKeyInput.value = savedApiKey;
+          apiKeyInputGroup.style.display = 'none';
+          saveApiKeyBtn.style.display = 'none';
+          savedApiKeyInfo.style.display = 'flex';
+        }
+      };
 
     </script>
   </body>
