@@ -1,6 +1,4 @@
 function saveApiKey() {
-    console.log('Save API Key function called directly');
-
     const apiKeyInput = document.getElementById('api-key');
     const apiKeyGroup = document.getElementById('api-key-group');
 
@@ -18,8 +16,12 @@ function saveApiKey() {
                 apiKeyGroup.classList.add('hidden');
             }
         } else {
-            showCustomAlert('请输入有效的API Key', 'warning');
-            apiKeyInput.focus();
+            showCustomAlert('API Key 已清空', 'success');
+            localStorage.setItem('apiKey', '')
+            // 隐藏API Key输入区域
+            if (apiKeyGroup) {
+                apiKeyGroup.classList.add('hidden');
+            }
         }
     }
 }
@@ -60,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initVoicesList();
     initEventListeners();
     loadApiKeyFromLocalStorage(); // 加载API Key
-    updateApiKeyVisibility(); // 更新API Key区域的可见性
 
     // 更新字符计数
     textInput.addEventListener('input', function() {
@@ -450,20 +451,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 更新API Key区域的可见性
-    function updateApiKeyVisibility() {
-        // 确保元素存在
-        if (!apiKeyGroup) return;
-
-        // 如果有保存的API Key，则默认隐藏API Key输入区域
-        const apiKey = localStorage.getItem('apiKey');
-        if (apiKey && apiKey.trim() !== '') {
-            apiKeyGroup.classList.add('hidden');
-        } else {
-            apiKeyGroup.classList.remove('hidden');
-        }
-    }
-
     // 自定义音频播放器增强
     function enhanceAudioPlayer() {
         // 监听音频播放器出现在DOM中
@@ -699,13 +686,3 @@ const originalAlert = window.alert;
 window.alert = function(message) {
     showCustomAlert(message, 'info');
 };
-
-// 在页面加载后，添加一次性检查以确保按钮可点击
-window.addEventListener('load', function() {
-    console.log('Window loaded, checking save button...');
-    const saveBtn = document.getElementById('api-key-save');
-    if (saveBtn) {
-        console.log('Save button found, adding fallback click handler');
-        saveBtn.onclick = saveApiKey;
-    }
-});
