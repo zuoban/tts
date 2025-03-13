@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API文档 - TTS服务</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{.BasePath}}/static/js/tailwind.js"></script>
     <link rel="icon" type="image/svg+xml" href="{{.BasePath}}/static/icons/favicon.svg">
     <meta name="description" content="TTS服务API文档">
     <style>
@@ -14,7 +14,7 @@
 
         /* 固定渐变背景，移除动画效果 */
         .bg-gradient-animated {
-            background: linear-gradient(-45deg, #0f1a2f, #191e3a, #1a365d, #0d2f62);
+            background: linear-gradient(-45deg, #0f1a2f, #2d3748, #1a365d, #0d2f62);
             background-size: 400% 400%;
             position: relative;
         }
@@ -317,7 +317,7 @@
         }
     </style>
 </head>
-<body class="bg-gradient-animated text-gray-800 font-sans min-h-screen">
+<body class="bg-gradient-animated text-slate-800 font-sans min-h-screen">
     <!-- 激光效果 -->
     <div class="laser-container">
         <div class="glow"></div>
@@ -331,7 +331,7 @@
         <div class="laser-beam" style="top: 90%; animation-delay: 4s;"></div>
     </div>
 
-    <div class="max-w-4xl mx-auto p-4 relative">
+    <div class="max-w-4xl mx-auto p-4">
         <div class="content-area p-6 shadow-xl my-8">
             <header class="text-center mb-8 py-4">
                 <h1 class="text-4xl font-bold mb-2 text-gray-800">TTS服务 API文档</h1>
@@ -360,7 +360,7 @@
             </header>
 
             <main>
-                <section class="panel-frosted bg-white rounded-lg shadow-md p-6 mb-6">
+                <section class="panel-frosted bg-white/90 rounded-lg shadow-lg p-6 mb-8">
                     <h2 class="text-2xl font-bold mb-4 pb-2 border-b border-gray-200 text-gray-800">API概述</h2>
                     <p class="mb-3">TTS服务API提供了简单而强大的方式将文本转换为自然语音。我们支持多种语言和声音，并允许您调节语速、语调以适应不同场景需求。</p>
                     <p class="mb-3">基础URL: <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{{.BasePath}}</code></p>
