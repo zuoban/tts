@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 	"tts/internal/config"
+	"tts/internal/http/routes"
 )
 
 // App 表示整个TTS应用程序
@@ -26,13 +27,13 @@ func NewApp(configPath string) (*App, error) {
 	}
 
 	// 初始化服务
-	ttsService, err := InitializeServices(cfg)
+	ttsService, err := routes.InitializeServices(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("初始化服务失败: %w", err)
 	}
 
 	// 设置路由
-	handler, err := SetupRoutes(cfg, ttsService)
+	handler, err := routes.SetupRoutes(cfg, ttsService)
 	if err != nil {
 		return nil, fmt.Errorf("设置路由失败: %w", err)
 	}
