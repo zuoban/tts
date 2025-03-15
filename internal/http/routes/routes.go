@@ -1,18 +1,19 @@
 package routes
 
 import (
-	"net/http"
 	"tts/internal/config"
 	"tts/internal/http/handlers"
 	"tts/internal/http/middleware"
 	"tts/internal/tts"
 	"tts/internal/tts/microsoft"
+
+	"github.com/gin-gonic/gin"
 )
 
 // SetupRoutes 配置所有API路由
-func SetupRoutes(cfg *config.Config, ttsService tts.Service) (http.Handler, error) {
-	// 创建一个新的路由多路复用器
-	mux := http.NewServeMux()
+func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error) {
+	// 创建Gin路由
+	router := gin.New()
 
 	// 创建处理器
 	ttsHandler := handlers.NewTTSHandler(ttsService, cfg)
@@ -24,43 +25,41 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (http.Handler, erro
 		return nil, err
 	}
 
-	// 设置主页路由
-	mux.HandleFunc("/", pagesHandler.HandleIndex)
-
-	// 设置API文档路由
-	mux.HandleFunc("/api-doc", pagesHandler.HandleAPIDoc)
-
-	// 设置TTS API路由 - 添加认证中间件
-	ttsHandlerFunc := http.HandlerFunc(ttsHandler.HandleTTS)
-	authenticatedTTSHandler := middleware.TTSAuth(cfg.TTS.ApiKey, ttsHandlerFunc)
-	mux.Handle("/tts", authenticatedTTSHandler)
-
-	// 设置语音列表API路由
-	mux.HandleFunc("/voices", voicesHandler.HandleVoices)
-
-	// 创建OpenAI兼容接口的处理器，添加验证中间件
-	openAIHandler := http.HandlerFunc(ttsHandler.HandleOpenAITTS)
-	authenticatedHandler := middleware.OpenAIAuth(cfg.OpenAI.ApiKey, openAIHandler)
-
-	// 应用OpenAI兼容的路由
-	mux.Handle("/v1/audio/speech", authenticatedHandler)
-	mux.Handle("/audio/speech", authenticatedHandler)
-
-	// 设置静态文件服务
-	fs := http.FileServer(http.Dir("./web/static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	// 应用中间件
+	router.Use(middleware.Logger()) // 日志中间件
+	router.Use(middleware.CORS())   // CORS中间件
 
 	// 应用基础路径前缀
-	var handler http.Handler = mux
+	var baseRouter gin.IRoutes
 	if cfg.Server.BasePath != "" {
-		handler = http.StripPrefix(cfg.Server.BasePath, mux)
+		baseRouter = router.Group(cfg.Server.BasePath)
+	} else {
+		baseRouter = router
 	}
 
-	// 应用中间件
-	handler = middleware.Logger(handler) // 日志中间件
-	handler = middleware.CORS(handler)   // CORS中间件
+	// 设置静态文件服务
+	baseRouter.Static("/static", "./web/static")
 
-	return handler, nil
+	// 设置主页路由
+	baseRouter.GET("/", pagesHandler.HandleIndex)
+
+	// 设置API文档路由
+	baseRouter.GET("/api-doc", pagesHandler.HandleAPIDoc)
+
+	// 设置TTS API路由 - 添加认证中间件
+
+	baseRouter.POST("/tts", middleware.TTSAuth(cfg.TTS.ApiKey), ttsHandler.HandleTTS)
+	baseRouter.GET("/tts", middleware.TTSAuth(cfg.TTS.ApiKey), ttsHandler.HandleTTS)
+
+	// 设置语音列表API路由
+	baseRouter.GET("/voices", voicesHandler.HandleVoices)
+
+	// 设置OpenAI兼容接口的处理器，添加验证中间件
+	openAIHandler := middleware.OpenAIAuth(cfg.OpenAI.ApiKey)
+	baseRouter.POST("/v1/audio/speech", openAIHandler, ttsHandler.HandleOpenAITTS)
+	baseRouter.POST("/audio/speech", openAIHandler, ttsHandler.HandleOpenAITTS)
+
+	return router, nil
 }
 
 // InitializeServices 初始化所有服务

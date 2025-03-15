@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"html/template"
-	"net/http"
 	"path/filepath"
 
+	"github.com/gin-gonic/gin"
 	"tts/internal/config"
 )
 
@@ -29,13 +29,7 @@ func NewPagesHandler(templatesDir string, cfg *config.Config) (*PagesHandler, er
 }
 
 // HandleIndex 处理首页请求
-func (h *PagesHandler) HandleIndex(w http.ResponseWriter, r *http.Request) {
-	// 如果不是根路径，返回404
-	if r.URL.Path != "/" && r.URL.Path != "/index.html" {
-		http.NotFound(w, r)
-		return
-	}
-
+func (h *PagesHandler) HandleIndex(c *gin.Context) {
 	// 准备模板数据
 	data := map[string]interface{}{
 		"BasePath":     h.config.Server.BasePath,
@@ -45,17 +39,17 @@ func (h *PagesHandler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 设置内容类型
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	c.Header("Content-Type", "text/html; charset=utf-8")
 
 	// 渲染模板
-	if err := h.templates.ExecuteTemplate(w, "index.html", data); err != nil {
-		http.Error(w, "模板渲染失败: "+err.Error(), http.StatusInternalServerError)
+	if err := h.templates.ExecuteTemplate(c.Writer, "index.html", data); err != nil {
+		c.AbortWithStatusJSON(500, gin.H{"error": "模板渲染失败: " + err.Error()})
 		return
 	}
 }
 
 // HandleAPIDoc 处理API文档请求
-func (h *PagesHandler) HandleAPIDoc(w http.ResponseWriter, r *http.Request) {
+func (h *PagesHandler) HandleAPIDoc(c *gin.Context) {
 	// 准备模板数据
 	data := map[string]interface{}{
 		"BasePath":      h.config.Server.BasePath,
@@ -66,11 +60,11 @@ func (h *PagesHandler) HandleAPIDoc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 设置内容类型
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	c.Header("Content-Type", "text/html; charset=utf-8")
 
 	// 渲染模板
-	if err := h.templates.ExecuteTemplate(w, "api-doc.html", data); err != nil {
-		http.Error(w, "模板渲染失败: "+err.Error(), http.StatusInternalServerError)
+	if err := h.templates.ExecuteTemplate(c.Writer, "api-doc.html", data); err != nil {
+		c.AbortWithStatusJSON(500, gin.H{"error": "模板渲染失败: " + err.Error()})
 		return
 	}
 }

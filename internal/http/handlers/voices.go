@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"tts/internal/tts"
+
+	"github.com/gin-gonic/gin"
 )
 
 // VoicesHandler 处理语音列表请求
@@ -19,23 +20,17 @@ func NewVoicesHandler(service tts.Service) *VoicesHandler {
 }
 
 // HandleVoices 处理语音列表请求
-func (h *VoicesHandler) HandleVoices(w http.ResponseWriter, r *http.Request) {
+func (h *VoicesHandler) HandleVoices(c *gin.Context) {
 	// 从查询参数中获取语言筛选
-	locale := r.URL.Query().Get("locale")
+	locale := c.Query("locale")
 
 	// 获取语音列表
-	voices, err := h.ttsService.ListVoices(r.Context(), locale)
+	voices, err := h.ttsService.ListVoices(c.Request.Context(), locale)
 	if err != nil {
-		http.Error(w, "获取语音列表失败: "+err.Error(), http.StatusInternalServerError)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "获取语音列表失败: " + err.Error()})
 		return
 	}
 
-	// 设置内容类型
-	w.Header().Set("Content-Type", "application/json")
-
-	// 编码为JSON并返回
-	if err := json.NewEncoder(w).Encode(voices); err != nil {
-		http.Error(w, "JSON编码失败", http.StatusInternalServerError)
-		return
-	}
+	// 返回JSON响应
+	c.JSON(http.StatusOK, voices)
 }

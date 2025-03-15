@@ -203,20 +203,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 复制HttpTTS链接按钮点击事件
         copyHttpTtsLinkButton.addEventListener('click', function () {
-            const text = textInput.value.trim();
-            if (!text) {
-                showCustomAlert('请输入要转换的文本', 'warning');
-                return;
-            }
-
+            const text = "{{java.encodeURI(speakText)}}";
             const voice = voiceSelect.value;
             const style = styleSelect.value;
-            const rate = rateInput.value;
+            const rate = "{{speakSpeed*4}}"
             const pitch = pitchInput.value;
             const apiKey = apiKeyInput.value.trim();
 
             // 构建HttpTTS链接
-            let httpTtsLink = `${window.location.origin}${config.basePath}/tts?t=${encodeURIComponent(text)}&v=${voice}&r=${rate}&p=${pitch}&s=${style}`;
+            let httpTtsLink = `${window.location.origin}${config.basePath}/tts?t=${text}&v=${voice}&r=${rate}&p=${pitch}&s=${style}`;
 
             // 添加API Key参数（如果有）
             if (apiKey) {

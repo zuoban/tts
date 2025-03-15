@@ -32,14 +32,14 @@ func NewApp(configPath string) (*App, error) {
 		return nil, fmt.Errorf("初始化服务失败: %w", err)
 	}
 
-	// 设置路由
-	handler, err := routes.SetupRoutes(cfg, ttsService)
+	// 设置Gin路由
+	router, err := routes.SetupRoutes(cfg, ttsService)
 	if err != nil {
 		return nil, fmt.Errorf("设置路由失败: %w", err)
 	}
 
 	// 创建HTTP服务器
-	server := New(cfg, handler)
+	server := New(cfg, router)
 
 	return &App{
 		server: server,
