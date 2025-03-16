@@ -124,7 +124,7 @@ async function handleRequest(request) {
 
     // 构建基本URL
     const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-    
+
     // 构建URL参数
     const urlParams = ["t={{java.encodeURI(speakText)}}", "r={{speakSpeed*4}}"];
 
@@ -557,6 +557,9 @@ curl ${baseUrl}/v1/audio/speech \\
         const pitch = document.getElementById('pitch').value;
         const style = document.getElementById('style').value; // 获取选择的风格
 
+        // 保存表单值到localStorage
+        saveFormValuesToLocalStorage(voice, rate, pitch, style, document.getElementById('text').value);
+
         if (!text) {
           showError('请输入要转换的文本', '文本内容不能为空');
           return;
@@ -604,6 +607,52 @@ curl ${baseUrl}/v1/audio/speech \\
         }
       });
 
+      // 保存表单值到localStorage的函数
+      function saveFormValuesToLocalStorage(voice, rate, pitch, style, text) {
+        localStorage.setItem('tts_voice', voice);
+        localStorage.setItem('tts_rate', rate);
+        localStorage.setItem('tts_pitch', pitch);
+        localStorage.setItem('tts_style', style);
+        localStorage.setItem('tts_text', text);
+      }
+
+      // 从localStorage加载表单值的函数
+      function loadFormValuesFromLocalStorage() {
+        const voice = localStorage.getItem('tts_voice');
+        const rate = localStorage.getItem('tts_rate');
+        const pitch = localStorage.getItem('tts_pitch');
+        const style = localStorage.getItem('tts_style');
+        const text = localStorage.getItem('tts_text');
+
+        // 设置语音选择（在语音列表加载完成后设置）
+        if (voice) {
+          const voiceSelect = document.getElementById('voice');
+          // 我们将在语音列表加载完成后设置这个值
+          voiceSelect.dataset.savedValue = voice;
+        }
+
+        // 设置语速
+        if (rate) {
+          const rateInput = document.getElementById('rate');
+          rateInput.value = rate;
+          document.getElementById('rateValue').textContent = rate;
+        }
+
+        // 设置音调
+        if (pitch) {
+          const pitchInput = document.getElementById('pitch');
+          pitchInput.value = pitch;
+          document.getElementById('pitchValue').textContent = pitch;
+        }
+
+        // 设置文本（如果有）
+        if (text) {
+          document.getElementById('text').value = text;
+        }
+
+        // 风格将在语音选择后设置
+      }
+
       // 显示错误信息的函数
       function showError(title, message) {
         const errorAlert = document.getElementById('apiErrorAlert');
@@ -621,10 +670,10 @@ curl ${baseUrl}/v1/audio/speech \\
         // 清空现有选项
         styleSelect.innerHTML = '';
 
-        // 默认无风格
+        // 默认添加标准风格
         const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.text = '无风格';
+        defaultOption.value = 'general';
+        defaultOption.text = '标准';
         styleSelect.appendChild(defaultOption);
 
         // 查找选定的语音对象
@@ -646,6 +695,11 @@ curl ${baseUrl}/v1/audio/speech \\
             styleSelect.appendChild(option);
           });
         }
+
+        // 添加风格选择变化事件监听器
+        styleSelect.addEventListener('change', function() {
+          localStorage.setItem('tts_style', this.value);
+        });
       }
 
       // 风格名称本地化显示
@@ -721,14 +775,53 @@ curl ${baseUrl}/v1/audio/speech \\
               addVoiceGroup(voiceSelect, '其他语言 (Other Languages)', otherVoices);
             }
 
-            // 默认选择晓晓多语言
-            const defaultVoice = 'zh-CN-XiaoxiaoMultilingualNeural';
-            if (voiceSelect.querySelector(\`option[value="\${defaultVoice}"]\`)) {
-              voiceSelect.value = defaultVoice;
+            // 尝试恢复保存的语音选择
+            const savedVoice = voiceSelect.dataset.savedValue;
+            if (savedVoice && voiceSelect.querySelector(\`option[value="\${savedVoice}"]\`)) {
+              voiceSelect.value = savedVoice;
+            } else {
+              // 默认选择晓晓多语言
+              const defaultVoice = 'zh-CN-XiaoxiaoMultilingualNeural';
+              if (voiceSelect.querySelector(\`option[value="\${defaultVoice}"]\`)) {
+                voiceSelect.value = defaultVoice;
+              }
             }
 
             // 加载初始选择语音的风格选项
             updateStyleOptions(voiceSelect.value);
+
+            // 尝试恢复保存的风格选择
+            const savedStyle = localStorage.getItem('tts_style');
+            if (savedStyle) {
+              setTimeout(() => {
+                const styleSelect = document.getElementById('style');
+                if (styleSelect.querySelector(\`option[value="\${savedStyle}"]\`)) {
+                  styleSelect.value = savedStyle;
+                }
+              }, 100); // 给updateStyleOptions一点时间来填充选项
+            }
+
+            // 添加语音选择变化事件监听器，保存选择到localStorage
+            voiceSelect.addEventListener('change', function() {
+              localStorage.setItem('tts_voice', this.value);
+              updateStyleOptions(this.value);
+            });
+
+            // 添加语速变化事件监听器
+            document.getElementById('rate').addEventListener('change', function() {
+              localStorage.setItem('tts_rate', this.value);
+            });
+
+            // 添加音调变化事件监听器
+            document.getElementById('pitch').addEventListener('change', function() {
+              localStorage.setItem('tts_pitch', this.value);
+            });
+
+            // 添加文本变化事件监听器
+            document.getElementById('text').addEventListener('input', function() {
+              localStorage.setItem('tts_text', this.value);
+            });
+
           } else {
             console.error('获取语音列表失败：', response.status);
             showDefaultVoices();
@@ -804,6 +897,10 @@ curl ${baseUrl}/v1/audio/speech \\
 
       // 页面加载完成后加载语音列表
       window.onload = function() {
+        // 先加载保存的表单值
+        loadFormValuesFromLocalStorage();
+
+        // 然后加载语音列表
         loadVoices();
 
         // API Key 相关功能
@@ -821,7 +918,10 @@ curl ${baseUrl}/v1/audio/speech \\
           const rate = document.getElementById('rate').value;
           const pitch = document.getElementById('pitch').value;
           const style = document.getElementById('style').value;
-          const displayName = document.getElementById('voice').options[document.getElementById('voice').selectedIndex].text || '微软TTS';
+          const displayName = '微软TTS'; // 可以根据需要修改默认名称
+
+          // 保存当前设置到localStorage
+          saveFormValuesToLocalStorage(voice, rate, pitch, style, document.getElementById('text').value);
 
           // 构建URL参数
           const params = new URLSearchParams();

@@ -26,6 +26,131 @@ function saveApiKey() {
     }
 }
 
+// 保存表单数据到localStorage
+function saveFormData() {
+    const textInput = document.getElementById('text');
+    const voiceSelect = document.getElementById('voice');
+    const styleSelect = document.getElementById('style');
+    const rateInput = document.getElementById('rate');
+    const pitchInput = document.getElementById('pitch');
+
+    // 保存文本内容
+    if (textInput && textInput.value) {
+        localStorage.setItem('ttsText', textInput.value);
+    }
+
+    // 保存语音选择
+    if (voiceSelect && voiceSelect.value) {
+        localStorage.setItem('ttsVoice', voiceSelect.value);
+    }
+
+    // 保存风格选择
+    if (styleSelect && styleSelect.value) {
+        localStorage.setItem('ttsStyle', styleSelect.value);
+    }
+
+    // 保存语速
+    if (rateInput && rateInput.value) {
+        localStorage.setItem('ttsRate', rateInput.value);
+    }
+
+    // 保存语调
+    if (pitchInput && pitchInput.value) {
+        localStorage.setItem('ttsPitch', pitchInput.value);
+    }
+}
+
+// 从localStorage加载表单数据
+function loadFormData() {
+    const textInput = document.getElementById('text');
+    const voiceSelect = document.getElementById('voice');
+    const styleSelect = document.getElementById('style');
+    const rateInput = document.getElementById('rate');
+    const rateValue = document.getElementById('rateValue');
+    const pitchInput = document.getElementById('pitch');
+    const pitchValue = document.getElementById('pitchValue');
+
+    // 加载文本内容
+    const savedText = localStorage.getItem('ttsText');
+    if (savedText && textInput) {
+        textInput.value = savedText;
+        // 更新字符计数
+        if (document.getElementById('charCount')) {
+            document.getElementById('charCount').textContent = savedText.length;
+        }
+    }
+
+    // 加载语速
+    const savedRate = localStorage.getItem('ttsRate');
+    if (savedRate && rateInput) {
+        rateInput.value = savedRate;
+        if (rateValue) {
+            rateValue.textContent = savedRate + '%';
+        }
+    }
+
+    // 加载语调
+    const savedPitch = localStorage.getItem('ttsPitch');
+    if (savedPitch && pitchInput) {
+        pitchInput.value = savedPitch;
+        if (pitchValue) {
+            pitchValue.textContent = savedPitch + '%';
+        }
+    }
+
+    // 保存风格选择的值，以便在语音加载后使用
+    const savedStyle = localStorage.getItem('ttsStyle');
+
+    // 加载语音选择（在语音列表加载完成后处理）
+    const savedVoice = localStorage.getItem('ttsVoice');
+    if (savedVoice && voiceSelect) {
+        // 在initVoicesList完成后设置
+        const voiceLoadInterval = setInterval(() => {
+            if (voiceSelect.options.length > 0 && voiceSelect.options[0].value !== "loading") {
+                for (let i = 0; i < voiceSelect.options.length; i++) {
+                    if (voiceSelect.options[i].value === savedVoice) {
+                        voiceSelect.selectedIndex = i;
+                        // 触发change事件以更新风格选项
+                        const event = new Event('change');
+                        voiceSelect.dispatchEvent(event);
+
+                        // 在语音选择更新后，设置保存的风格
+                        // 使用setTimeout确保风格选项已经更新
+                        setTimeout(() => {
+                            if (savedStyle && styleSelect && styleSelect.options.length > 0) {
+                                for (let j = 0; j < styleSelect.options.length; j++) {
+                                    if (styleSelect.options[j].value === savedStyle) {
+                                        styleSelect.selectedIndex = j;
+                                        break;
+                                    }
+                                }
+                            }
+                        }, 100);
+
+                        break;
+                    }
+                }
+                clearInterval(voiceLoadInterval);
+            }
+        }, 100);
+    } else {
+        // 如果没有保存的语音选择，但有保存的风格，直接尝试设置风格
+        if (savedStyle && styleSelect) {
+            const styleLoadInterval = setInterval(() => {
+                if (styleSelect.options.length > 0) {
+                    for (let i = 0; i < styleSelect.options.length; i++) {
+                        if (styleSelect.options[i].value === savedStyle) {
+                            styleSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    clearInterval(styleLoadInterval);
+                }
+            }, 100);
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // 获取DOM元素
     const textInput = document.getElementById('text');
@@ -58,27 +183,42 @@ document.addEventListener('DOMContentLoaded', function () {
     initVoicesList();
     initEventListeners();
     loadApiKeyFromLocalStorage(); // 加载API Key
+    loadFormData(); // 加载表单数据
 
     // 更新字符计数
     textInput.addEventListener('input', function () {
         charCount.textContent = this.value.length;
+        // 保存文本内容
+        localStorage.setItem('ttsText', this.value);
     });
 
     // 更新语速值显示
     rateInput.addEventListener('input', function () {
         const value = this.value;
         rateValue.textContent = value + '%';
+        // 保存语速
+        localStorage.setItem('ttsRate', value);
     });
 
     // 更新语调值显示
     pitchInput.addEventListener('input', function () {
         const value = this.value;
         pitchValue.textContent = value + '%';
+        // 保存语调
+        localStorage.setItem('ttsPitch', value);
     });
 
     // 语音选择变化时更新可用风格
     voiceSelect.addEventListener('change', function () {
         updateStyleOptions();
+        // 保存语音选择
+        localStorage.setItem('ttsVoice', this.value);
+    });
+
+    // 添加风格选择变化事件
+    styleSelect.addEventListener('change', function() {
+        // 保存风格选择
+        localStorage.setItem('ttsStyle', this.value);
     });
 
     // 获取可用语音列表
@@ -179,6 +319,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             styleSelect.appendChild(option);
         });
+
+        // 在风格选项更新后，尝试恢复保存的风格设置
+        const savedStyle = localStorage.getItem('ttsStyle');
+        if (savedStyle) {
+            for (let i = 0; i < styleSelect.options.length; i++) {
+                if (styleSelect.options[i].value === savedStyle) {
+                    styleSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
     }
 
     // 初始化事件监听器
@@ -294,6 +445,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const rate = rateInput.value;
         const pitch = pitchInput.value;
         const apiKey = apiKeyInput.value.trim();
+
+        // 保存表单数据
+        saveFormData();
 
         // 禁用按钮，显示加载状态
         speakButton.disabled = true;
