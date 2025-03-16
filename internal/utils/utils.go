@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
 	"strings"
@@ -156,4 +157,29 @@ func MergeStringsWithLimit(strs []string, minLen int, maxLen int) []string {
 	}
 
 	return result
+}
+
+// GetBaseURL 返回基础 URL，包括方案和主机，但不包括路径和查询参数
+func GetBaseURL(c *gin.Context) string {
+	scheme := "http"
+	if c.Request.TLS != nil || c.Request.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+
+	return fmt.Sprintf("%s://%s", scheme, c.Request.Host)
+}
+
+// JoinURL 安全地拼接基础 URL 和相对路径
+func JoinURL(baseURL, relativePath string) (string, error) {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	rel, err := url.Parse(relativePath)
+	if err != nil {
+		return "", err
+	}
+
+	return base.ResolveReference(rel).String(), nil
 }

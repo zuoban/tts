@@ -211,13 +211,14 @@ document.addEventListener('DOMContentLoaded', function () {
         copyHttpTtsLinkButton.addEventListener('click', function () {
             const text = "{{java.encodeURI(speakText)}}";
             const voice = voiceSelect.value;
+            const displayName = voiceSelect.options[voiceSelect.selectedIndex].text;
             const style = styleSelect.value;
             const rate = "{{speakSpeed*4}}"
             const pitch = pitchInput.value;
             const apiKey = apiKeyInput.value.trim();
 
             // 构建HttpTTS链接
-            let httpTtsLink = `${window.location.origin}${config.basePath}/tts?t=${text}&v=${voice}&r=${rate}&p=${pitch}`;
+            let httpTtsLink = `${window.location.origin}${config.basePath}/reader.json?&v=${voice}&r=${rate}&p=${pitch}&n=${displayName}`;
 
             // 只有当style不为空时才添加
             if (style) {
@@ -229,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 httpTtsLink += `&api_key=${apiKey}`;
             }
 
-            copyToClipboard(httpTtsLink);
+            window.open(httpTtsLink, '_blank')
         });
 
         // 显示/隐藏API Key区域的按钮事件
@@ -421,8 +422,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 复制内容到剪贴板的通用函数
     function copyToClipboard(text) {
+        let success = false;
         navigator.clipboard.writeText(text).then(() => {
             showCustomAlert('链接已复制到剪贴板', 'success');
+            success = true;
         }).catch(err => {
             console.error('复制失败:', err);
             // 兼容处理
@@ -435,12 +438,16 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 document.execCommand('copy');
                 showCustomAlert('链接已复制到剪贴板', 'success');
+                success = true;
             } catch (err) {
                 console.error('复制失败:', err);
+                shwoCustomAlert('复制失败', 'error');
+                success = false;
             }
 
             document.body.removeChild(textArea);
         });
+        return success;
     }
 
     // 添加通知函数

@@ -23,3 +23,10 @@ type OpenAIRequest struct {
 	Voice string  `json:"voice"`
 	Speed float64 `json:"speed"`
 }
+
+// ReaderResponse reader 响应结构体
+type ReaderResponse struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}

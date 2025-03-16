@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,6 +19,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+var cfg = config.Get()
 
 // truncateForLog 截断文本用于日志显示，同时显示开头和结尾
 func truncateForLog(text string, maxLength int) string {
@@ -450,6 +453,57 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 		totalTime, splitTime, synthesisTime, writeTime, formatFileSize(len(audioData)))
 }
 
+// HandleReader 返回 reader 可导入的格式
+func (h *TTSHandler) HandleReader(context *gin.Context) {
+	// 从URL参数获取
+	req := models.TTSRequest{
+		Text:  context.Query("t"),
+		Voice: context.Query("v"),
+		Rate:  context.Query("r"),
+		Pitch: context.Query("p"),
+		Style: context.Query("s"),
+	}
+	displayName := context.Query("n")
+
+	baseUrl := utils.GetBaseURL(context)
+	basePath, err := utils.JoinURL(baseUrl, cfg.Server.BasePath)
+	if err != nil {
+		context.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 构建基本URL
+	urlParams := []string{"t={{java.encodeURI(speakText)}}", "r={{speakSpeed*4}}"}
+
+	// 只有有值的参数才添加
+	if req.Voice != "" {
+		urlParams = append(urlParams, fmt.Sprintf("v=%s", req.Voice))
+	}
+
+	if req.Pitch != "" {
+		urlParams = append(urlParams, fmt.Sprintf("p=%s", req.Pitch))
+	}
+
+	if req.Style != "" {
+		urlParams = append(urlParams, fmt.Sprintf("s=%s", req.Style))
+	}
+
+	if cfg.TTS.ApiKey != "" {
+		urlParams = append(urlParams, fmt.Sprintf("api_key=%s", cfg.TTS.ApiKey))
+	}
+
+	url := fmt.Sprintf("%s/tts?%s", basePath, strings.Join(urlParams, "&"))
+
+	encoder := json.NewEncoder(context.Writer)
+	encoder.SetEscapeHTML(false)
+	context.Status(http.StatusOK)
+	encoder.Encode(models.ReaderResponse{
+		Id:   time.Now().Unix(),
+		Name: displayName,
+		Url:  url,
+	})
+}
+
 // splitTextBySentences 将文本按句子分割
 func splitTextBySentences(text string) []string {
 	// 如果文本过短，直接作为一个句子返回
@@ -457,9 +511,8 @@ func splitTextBySentences(text string) []string {
 		return []string{text}
 	}
 
-	cfg := config.Get().TTS
-	maxLen := cfg.MaxSentenceLength
-	minLen := cfg.MinSentenceLength
+	maxLen := cfg.TTS.MaxSentenceLength
+	minLen := cfg.TTS.MinSentenceLength
 
 	// 第一次分割：按标点和长度限制分割
 	sentences := utils.SplitAndFilterEmptyLines(text)
