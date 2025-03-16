@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -96,4 +97,63 @@ func Sign(urlStr string) string {
 	secretKey := hash.Sum(nil)
 	signBase64 := base64.StdEncoding.EncodeToString(secretKey)
 	return fmt.Sprintf("MSTranslatorAndroidApp::%s::%s::%s", signBase64, formattedDate, uuidStr)
+}
+
+// SplitAndFilterEmptyLines 拆分文本并过滤掉空行
+func SplitAndFilterEmptyLines(text string) []string {
+	// 按换行符拆分
+	lines := strings.Split(text, "\n")
+	var result []string
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
+
+// MergeStringsWithLimit 会将字符串切片依次累加，直到总长度 ≥ minLen。
+// 但如果再合并下一段后会超过 maxLen，则提前结束本段合并，放入结果。
+// 然后继续新的一段合并。
+func MergeStringsWithLimit(strs []string, minLen int, maxLen int) []string {
+	var result []string
+
+	for i := 0; i < len(strs); {
+		// 如果已经没有更多段落，直接退出
+		if i >= len(strs) {
+			break
+		}
+
+		// 从当前段开始合并
+		currentBuilder := strings.Builder{}
+		currentBuilder.WriteString(strs[i])
+		i++
+
+		for i < len(strs) {
+			currentLen := utf8.RuneCountInString(currentBuilder.String())
+			// 如果当前已达(或超过) minLen，先行结束本段合并
+			if currentLen >= minLen {
+				break
+			}
+
+			// 检查添加下一个段落后是否会超过 1.2 × minLen
+			nextLen := utf8.RuneCountInString(strs[i])
+			if currentLen+nextLen > int(float64(minLen)*1.2) {
+				// 加上下一个会超标，则结束合并
+				break
+			}
+
+			// 如果未超标，则继续合并这个段
+			currentBuilder.WriteString("\n")
+			currentBuilder.WriteString(strs[i])
+			i++
+		}
+
+		// 本段合并结束，加入结果
+		result = append(result, currentBuilder.String())
+	}
+
+	return result
 }

@@ -15,3 +15,11 @@ type TTSResponse struct {
 	ContentType  string `json:"content_type"`  // MIME类型
 	CacheHit     bool   `json:"cache_hit"`     // 是否命中缓存
 }
+
+// OpenAIRequest OpenAI TTS请求结构体
+type OpenAIRequest struct {
+	Model string  `json:"model"`
+	Input string  `json:"input"`
+	Voice string  `json:"voice"`
+	Speed float64 `json:"speed"`
+}
