@@ -98,6 +98,66 @@ async function handleRequest(request) {
     return response;
   }
 
+  // 添加 reader.json 路径处理
+  if (path === '/reader.json') {
+    // 从请求参数获取 API 密钥
+    const apiKey = requestUrl.searchParams.get('api_key');
+
+    // 验证 API 密钥
+    if (!validateApiKey(apiKey)) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized',
+        message: '无效的 API 密钥，请确保您提供了正确的密钥。',
+        status: 401
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
+    }
+
+    // 从URL参数获取
+    const voice = requestUrl.searchParams.get('v') || '';
+    const rate = requestUrl.searchParams.get('r') || '';
+    const pitch = requestUrl.searchParams.get('p') || '';
+    const style = requestUrl.searchParams.get('s') || '';
+    const displayName = requestUrl.searchParams.get('n') || 'Microsoft TTS';
+
+    // 构建基本URL
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    
+    // 构建URL参数
+    const urlParams = ["t={{java.encodeURI(speakText)}}", "r={{speakSpeed*4}}"];
+
+    // 只有有值的参数才添加
+    if (voice) {
+      urlParams.push(`v=${voice}`);
+    }
+
+    if (pitch) {
+      urlParams.push(`p=${pitch}`);
+    }
+
+    if (style) {
+      urlParams.push(`s=${style}`);
+    }
+
+    if (apiKey) {
+      urlParams.push(`api_key=${apiKey}`);
+    }
+
+    const url = `${baseUrl}/tts?${urlParams.join('&')}`;
+
+    // 返回 reader 响应
+    return new Response(JSON.stringify({
+      id: Date.now(),
+      name: displayName,
+      url: url
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
+  }
+
   // 添加 OpenAI 兼容接口路由
   if (path === '/v1/audio/speech' || path === '/audio/speech') {
     return await handleOpenAITTS(request);
@@ -304,6 +364,10 @@ async function handleRequest(request) {
                     <button type="button" id="downloadBtn" style="display:none;"
                       class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                       下载音频
+                    </button>
+                    <button type="button" id="getReaderLinkBtn"
+                      class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
+                      导入阅读
                     </button>
                   </div>
 
@@ -557,10 +621,10 @@ curl ${baseUrl}/v1/audio/speech \\
         // 清空现有选项
         styleSelect.innerHTML = '';
 
-        // 默认添加标准风格
+        // 默认无风格
         const defaultOption = document.createElement('option');
-        defaultOption.value = 'general';
-        defaultOption.text = '标准';
+        defaultOption.value = '';
+        defaultOption.text = '无风格';
         styleSelect.appendChild(defaultOption);
 
         // 查找选定的语音对象
@@ -749,6 +813,28 @@ curl ${baseUrl}/v1/audio/speech \\
         const savedApiKeyInfo = document.getElementById('savedApiKeyInfo');
         const apiKeyInputGroup = document.getElementById('apiKeyInputGroup');
         const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibility');
+
+        // 添加获取Reader链接按钮的事件监听
+        document.getElementById('getReaderLinkBtn').addEventListener('click', function() {
+          const apiKey = document.getElementById('apiKey').value || localStorage.getItem('tts_api_key') || '';
+          const voice = document.getElementById('voice').value;
+          const rate = document.getElementById('rate').value;
+          const pitch = document.getElementById('pitch').value;
+          const style = document.getElementById('style').value;
+          const displayName = document.getElementById('voice').options[document.getElementById('voice').selectedIndex].text || '微软TTS';
+
+          // 构建URL参数
+          const params = new URLSearchParams();
+          if (apiKey) params.append('api_key', apiKey);
+          if (voice) params.append('v', voice);
+          if (rate) params.append('r', rate);
+          if (pitch) params.append('p', pitch);
+          if (style) params.append('s', style);
+          params.append('n', displayName);
+
+          // 打开新标签页
+          window.open(\`\${window.location.origin}/reader.json?\${params.toString()}\`, '_blank');
+        });
 
         // 显示/隐藏API Key
         toggleApiKeyVisibilityBtn.addEventListener('click', function() {
