@@ -159,6 +159,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // 添加清空选项
+        const emptyOption = document.createElement('option');
+        emptyOption.value = "";
+        emptyOption.textContent = "-- 无风格 --";
+        styleSelect.appendChild(emptyOption);
+
         // 添加可用风格选项
         voiceData.style_list.forEach(style => {
             const option = document.createElement('option');
@@ -211,7 +217,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const apiKey = apiKeyInput.value.trim();
 
             // 构建HttpTTS链接
-            let httpTtsLink = `${window.location.origin}${config.basePath}/tts?t=${text}&v=${voice}&r=${rate}&p=${pitch}&s=${style}`;
+            let httpTtsLink = `${window.location.origin}${config.basePath}/tts?t=${text}&v=${voice}&r=${rate}&p=${pitch}`;
+
+            // 只有当style不为空时才添加
+            if (style) {
+                httpTtsLink += `&s=${style}`;
+            }
 
             // 添加API Key参数（如果有）
             if (apiKey) {
@@ -292,10 +303,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const params = new URLSearchParams({
                 t: text,
                 v: voice,
-                s: style,
                 r: rate,
                 p: pitch
             });
+
+            // 只有当style不为空时才添加
+            if (style) {
+                params.append('s', style);
+            }
 
             // 添加API Key参数（如果有）
             if (apiKey) {
