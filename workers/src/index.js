@@ -918,7 +918,7 @@ curl ${baseUrl}/v1/audio/speech \\
           const rate = document.getElementById('rate').value;
           const pitch = document.getElementById('pitch').value;
           const style = document.getElementById('style').value;
-          const displayName = '微软TTS'; // 可以根据需要修改默认名称
+          const displayName = document.getElementById('voice').options[document.getElementById('voice').selectedIndex].text || '微软TTS';
 
           // 保存当前设置到localStorage
           saveFormValuesToLocalStorage(voice, rate, pitch, style, document.getElementById('text').value);
