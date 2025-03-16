@@ -409,7 +409,7 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 	// 打印表格格式的合成结果
 	log.Println("句子合成结果表:")
 	log.Println("-------------------------------------------------------------")
-	log.Println("序号 | 长度  |     音频大小    |     耗时     | 内容")
+	log.Println("序号 | 长度  |    音频大小   |    耗时    | 内容")
 	log.Println("-------------------------------------------------------------")
 	for i := 0; i < segmentCount; i++ {
 		result := synthResults[i]
@@ -448,18 +448,6 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 	totalTime := time.Since(segmentStart)
 	log.Printf("分段TTS请求总耗时: %v (分割: %v, 合成: %v, 写入: %v), 总音频大小: %s",
 		totalTime, splitTime, synthesisTime, writeTime, formatFileSize(len(audioData)))
-}
-
-// sentenceEnders 定义句子结束的标点符号
-var sentenceEnders = map[rune]bool{
-	'。':  true,
-	'！':  true,
-	'？':  true,
-	'…':  true,
-	'.':  true,
-	'!':  true,
-	'?':  true,
-	'\n': true,
 }
 
 // splitTextBySentences 将文本按句子分割

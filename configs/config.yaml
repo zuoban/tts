@@ -1,7 +1,7 @@
 server:
   port: 8080
-  read_timeout: 30
-  write_timeout: 30
+  read_timeout: 60
+  write_timeout: 60
   base_path: ""
 
 tts:
@@ -12,7 +12,7 @@ tts:
   default_format: "audio-24khz-48kbitrate-mono-mp3"
   max_text_length: 65535
   request_timeout: 30
-  max_concurrent: 10
+  max_concurrent: 20
   segment_threshold: 300
   min_sentence_length: 200
   max_sentence_length: 300
