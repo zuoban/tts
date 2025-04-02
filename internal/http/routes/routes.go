@@ -51,6 +51,7 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error
 	baseRouter.POST("/tts", middleware.TTSAuth(cfg.TTS.ApiKey), ttsHandler.HandleTTS)
 	baseRouter.GET("/tts", middleware.TTSAuth(cfg.TTS.ApiKey), ttsHandler.HandleTTS)
 	baseRouter.GET("/reader.json", middleware.TTSAuth(cfg.TTS.ApiKey), ttsHandler.HandleReader)
+	baseRouter.GET("ifreetime.json", middleware.TTSAuth(cfg.TTS.ApiKey), ttsHandler.HandleIFreeTime)
 
 	// 设置语音列表API路由
 	baseRouter.GET("/voices", voicesHandler.HandleVoices)

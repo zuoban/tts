@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"os"
@@ -502,6 +503,88 @@ func (h *TTSHandler) HandleReader(context *gin.Context) {
 		Name: displayName,
 		Url:  url,
 	})
+}
+
+// HandleIFreeTime 处理IFreeTime应用请求
+func (h *TTSHandler) HandleIFreeTime(context *gin.Context) {
+	// 从URL参数获取
+	req := models.TTSRequest{
+		Text:  context.Query("t"),
+		Voice: context.Query("v"),
+		Rate:  context.Query("r"),
+		Pitch: context.Query("p"),
+		Style: context.Query("s"),
+	}
+	displayName := context.Query("n")
+
+	// 获取基础URL
+	baseUrl := utils.GetBaseURL(context)
+	basePath, err := utils.JoinURL(baseUrl, cfg.Server.BasePath)
+	if err != nil {
+		context.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 构建URL
+	url := fmt.Sprintf("%s/tts", basePath)
+
+	// 生成随机的唯一ID
+	ttsConfigID := uuid.New().String()
+
+	// 构建声音列表
+	var voiceList []models.IFreeTimeVoice
+
+	// 构建请求参数
+	params := map[string]string{
+		"t": "%@", // %@ 是 IFreeTime 中的文本占位符
+		"v": req.Voice,
+		"r": req.Rate,
+		"p": req.Pitch,
+		"s": req.Style,
+	}
+
+	// 如果需要API密钥认证，添加到请求参数
+	if h.config.TTS.ApiKey != "" {
+		params["api_key"] = h.config.TTS.ApiKey
+	}
+
+	// 构建响应
+	response := models.IFreeTimeResponse{
+		LoginUrl:       "",
+		MaxWordCount:   "",
+		CustomRules:    map[string]interface{}{},
+		TtsConfigGroup: "Azure",
+		TTSName:        displayName,
+		ClassName:      "JxdAdvCustomTTS",
+		TTSConfigID:    ttsConfigID,
+		HttpConfigs: models.IFreeTimeHttpConfig{
+			UseCookies: 1,
+			Headers:    map[string]interface{}{},
+		},
+		VoiceList: voiceList,
+		TtsHandles: []models.IFreeTimeTtsHandle{
+			{
+				ParamsEx:         "",
+				ProcessType:      1,
+				MaxPageCount:     1,
+				NextPageMethod:   1,
+				Method:           1,
+				RequestByWebView: 0,
+				Parser:           map[string]interface{}{},
+				NextPageParams:   map[string]interface{}{},
+				Url:              url,
+				Params:           params,
+				HttpConfigs: models.IFreeTimeHttpConfig{
+					UseCookies: 1,
+					Headers:    map[string]interface{}{},
+				},
+			},
+		},
+	}
+
+	// 设置响应类型
+	context.Header("Content-Type", "application/json")
+	context.JSON(http.StatusOK, response)
 }
 
 // splitTextBySentences 将文本按句子分割

@@ -30,3 +30,44 @@ type ReaderResponse struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
 }
+
+// IFreeTimeResponse IFreeTime应用配置响应
+type IFreeTimeResponse struct {
+	LoginUrl       string                 `json:"loginUrl"`
+	MaxWordCount   string                 `json:"maxWordCount"`
+	CustomRules    map[string]interface{} `json:"customRules"`
+	TtsConfigGroup string                 `json:"ttsConfigGroup"`
+	TTSName        string                 `json:"_TTSName"`
+	ClassName      string                 `json:"_ClassName"`
+	TTSConfigID    string                 `json:"_TTSConfigID"`
+	HttpConfigs    IFreeTimeHttpConfig    `json:"httpConfigs"`
+	VoiceList      []IFreeTimeVoice       `json:"voiceList"`
+	TtsHandles     []IFreeTimeTtsHandle   `json:"ttsHandles"`
+}
+
+// IFreeTimeHttpConfig HTTP配置
+type IFreeTimeHttpConfig struct {
+	UseCookies int                    `json:"useCookies"`
+	Headers    map[string]interface{} `json:"headers"`
+}
+
+// IFreeTimeVoice 语音配置
+type IFreeTimeVoice struct {
+	Name    string `json:"name"`
+	Display string `json:"display"`
+}
+
+// IFreeTimeTtsHandle TTS处理配置
+type IFreeTimeTtsHandle struct {
+	ParamsEx         string                 `json:"paramsEx"`
+	ProcessType      int                    `json:"processType"`
+	MaxPageCount     int                    `json:"maxPageCount"`
+	NextPageMethod   int                    `json:"nextPageMethod"`
+	Method           int                    `json:"method"`
+	RequestByWebView int                    `json:"requestByWebView"`
+	Parser           map[string]interface{} `json:"parser"`
+	NextPageParams   map[string]interface{} `json:"nextPageParams"`
+	Url              string                 `json:"url"`
+	Params           map[string]string      `json:"params"`
+	HttpConfigs      IFreeTimeHttpConfig    `json:"httpConfigs"`
+}
