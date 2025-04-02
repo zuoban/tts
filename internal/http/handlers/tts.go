@@ -509,7 +509,6 @@ func (h *TTSHandler) HandleReader(context *gin.Context) {
 func (h *TTSHandler) HandleIFreeTime(context *gin.Context) {
 	// 从URL参数获取
 	req := models.TTSRequest{
-		Text:  context.Query("t"),
 		Voice: context.Query("v"),
 		Rate:  context.Query("r"),
 		Pitch: context.Query("p"),

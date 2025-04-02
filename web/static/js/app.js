@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // 添加风格选择变化事件
-    styleSelect.addEventListener('change', function() {
+    styleSelect.addEventListener('change', function () {
         // 保存风格选择
         localStorage.setItem('ttsStyle', this.value);
     });
@@ -387,11 +387,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // 复制爱阅记链接按钮点击事件
         copyIfreetimeLinkButton.addEventListener('click', function () {
-            const text = "{{java.encodeURI(speakText)}}";
             const voice = voiceSelect.value;
             const displayName = voiceSelect.options[voiceSelect.selectedIndex].text;
             const style = styleSelect.value;
-            const rate = "{{speakSpeed*4}}"
+            const rate = rateInput.value
             const pitch = pitchInput.value;
             const apiKey = apiKeyInput.value.trim();
 
@@ -679,6 +678,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 300);
         }, duration);
     }
+
     // 添加自定义alert函数到全局范围
     window.showCustomAlert = showCustomAlert;
 });
