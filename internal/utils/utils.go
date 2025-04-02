@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -33,26 +32,29 @@ const (
 )
 
 func generateUserID() string {
-	// 创建一个字节切片来存储随机数据
-	bytes := make([]byte, 8) // 8 字节 = 64 位 = 16 位十六进制字符串
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return ""
+	chars := "abcdef0123456789"
+	result := make([]byte, 16)
+	for i := 0; i < 16; i++ {
+		randIndex := make([]byte, 1)
+		if _, err := rand.Read(randIndex); err != nil {
+			return ""
+		}
+		result[i] = chars[randIndex[0]%uint8(len(chars))]
 	}
-	// 将字节切片转换为十六进制字符串
-	userID := hex.EncodeToString(bytes)
-	return userID
+	return string(result)
 }
 
 // GetEndpoint 获取语音合成服务的端点信息
 func GetEndpoint() (map[string]interface{}, error) {
 	signature := Sign(endpointURL)
+	userId := generateUserID()
+	traceId := uuid.New().String()
 	headers := map[string]string{
 		"Accept-Language":        "zh-Hans",
 		"X-ClientVersion":        clientVersion,
-		"X-UserId":               generateUserID(),
+		"X-UserId":               userId,
 		"X-HomeGeographicRegion": homeGeographicRegion,
-		"X-ClientTraceId":        uuid.New().String(),
+		"X-ClientTraceId":        traceId,
 		"X-MT-Signature":         signature,
 		"User-Agent":             userAgent,
 		"Content-Type":           "application/json; charset=utf-8",
@@ -68,12 +70,21 @@ func GetEndpoint() (map[string]interface{}, error) {
 		req.Header.Set(k, v)
 	}
 
+	headerJson, err := json.Marshal(&headers)
+	fmt.Printf("GetEndpoint -> url: %s, headers: %v\n", endpointURL, string(headerJson))
+
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error("failed to do request: ", err)
 		return nil, err
 	}
+
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Error("failed to get endpoint, status code: ", resp.StatusCode)
+		return nil, fmt.Errorf("failed to get endpoint, status code: %d", resp.StatusCode)
+	}
 
 	var result map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
@@ -182,4 +193,31 @@ func JoinURL(baseURL, relativePath string) (string, error) {
 	}
 
 	return base.ResolveReference(rel).String(), nil
+}
+
+func GetExp(s string) int64 {
+	// 解析 JWT
+	parts := strings.Split(s, ".")
+	if len(parts) != 3 {
+		return 0
+	}
+
+	// 解码负载部分
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return 0
+	}
+
+	// 解析 JSON
+	var data map[string]interface{}
+	if err := json.Unmarshal(payload, &data); err != nil {
+		return 0
+	}
+
+	exp, ok := data["exp"].(float64)
+	if !ok {
+		return 0
+	}
+
+	return int64(exp)
 }

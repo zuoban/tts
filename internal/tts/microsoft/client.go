@@ -89,13 +89,24 @@ func (c *Client) getEndpoint(ctx context.Context) (map[string]interface{}, error
 	// 获取新的端点信息
 	endpoint, err := utils.GetEndpoint()
 	if err != nil {
+		log.Printf("获取认证信息失败: %v\n", err)
 		return nil, err
 	}
+	log.Printf("获取认证信息成功: %v\n", endpoint)
+
+	// 从 jwt 中解析出到期时间 exp
+	jwt := endpoint["t"].(string)
+	exp := utils.GetExp(jwt)
+	if exp == 0 {
+		return nil, errors.New("jwt 中缺少 exp 字段")
+	}
+	expTime := time.Unix(exp, 0)
+	log.Println("jwt  距到期时间:", expTime.Sub(time.Now()))
 
 	// 更新缓存
 	c.endpointMu.Lock()
 	c.endpoint = endpoint
-	c.endpointExpiry = time.Now().Add(5 * time.Minute)
+	c.endpointExpiry = expTime.Add(-1 * time.Minute) // 提前1分钟过期
 	c.endpointMu.Unlock()
 
 	return endpoint, nil
