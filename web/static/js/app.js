@@ -166,6 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const downloadButton = document.getElementById('download');
     const copyLinkButton = document.getElementById('copyLink');
     const copyHttpTtsLinkButton = document.getElementById('copyHttpTtsLink');
+    const copyIfreetimeLinkButton = document.getElementById('copyIfreetimeLink'); // 新增元素引用
     const audioPlayer = document.getElementById('audioPlayer');
     const resultSection = document.getElementById('resultSection');
     const charCount = document.getElementById('charCount');
@@ -382,6 +383,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             window.open(httpTtsLink, '_blank')
+        });
+
+        // 复制爱阅记链接按钮点击事件
+        copyIfreetimeLinkButton.addEventListener('click', function () {
+            const text = "{{java.encodeURI(speakText)}}";
+            const voice = voiceSelect.value;
+            const displayName = voiceSelect.options[voiceSelect.selectedIndex].text;
+            const style = styleSelect.value;
+            const rate = "{{speakSpeed*4}}"
+            const pitch = pitchInput.value;
+            const apiKey = apiKeyInput.value.trim();
+
+            // 构建爱阅记链接
+            let ifreetimeLink = `${window.location.origin}${config.basePath}/ifreetime.json?&v=${voice}&r=${rate}&p=${pitch}&n=${displayName}`;
+
+            // 只有当style不为空时才添加
+            if (style) {
+                ifreetimeLink += `&s=${style}`;
+            }
+
+            // 添加API Key参数（如果有）
+            if (apiKey) {
+                ifreetimeLink += `&api_key=${apiKey}`;
+            }
+
+            window.open(ifreetimeLink, '_blank')
         });
 
         // 显示/隐藏API Key区域的按钮事件
@@ -681,10 +708,10 @@ function showCustomAlert(message, type = 'info', title = '', duration = 3000) {
             iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-7v2h2v-2h-2zm0-8v6h2V7h-2z"/></svg>';
             break;
         case 'warning':
-            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-7v2h2v-2h-2zm0-8v6h2V7h-2z"/></svg>';
+            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10-10-4.477 10-10 10zm-1-7v2h2v-2h-2zm0-8v6h2V7h-2z"/></svg>';
             break;
         default: // info
-            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-11v6h2v-6h-2zm0-4v2h2V7h-2z"/></svg>';
+            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10-10-4.477 10-10 10zm-1-11v6h2v-6h-2zm0-4v2h2V7h-2z"/></svg>';
     }
 
     // 构建通知内容
