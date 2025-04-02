@@ -158,6 +158,92 @@ async function handleRequest(request) {
     });
   }
 
+  // 添加 ifreetime.json 路径处理
+  if (path === '/ifreetime.json') {
+    // 从请求参数获取 API 密钥
+    const apiKey = requestUrl.searchParams.get('api_key');
+
+    // 验证 API 密钥
+    if (!validateApiKey(apiKey)) {
+      return new Response(JSON.stringify({
+        error: 'Unauthorized',
+        message: '无效的 API 密钥，请确保您提供了正确的密钥。',
+        status: 401
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      });
+    }
+
+    // 从URL参数获取
+    const voice = requestUrl.searchParams.get('v') || '';
+    const rate = requestUrl.searchParams.get('r') || '';
+    const pitch = requestUrl.searchParams.get('p') || '';
+    const style = requestUrl.searchParams.get('s') || '';
+    const displayName = requestUrl.searchParams.get('n') || 'Microsoft TTS';
+
+    // 构建基本URL
+    const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+    const url = `${baseUrl}/tts`;
+
+    // 生成随机的唯一ID
+    const ttsConfigID = crypto.randomUUID();
+
+    // 构建请求参数
+    const params = {
+      "t": "%@", // %@ 是 IFreeTime 中的文本占位符
+      "v": voice,
+      "r": rate,
+      "p": pitch,
+      "s": style
+    };
+
+    // 如果需要API密钥认证，添加到请求参数
+    if (apiKey) {
+      params["api_key"] = apiKey;
+    }
+
+    // 构建响应
+    const response = {
+      loginUrl: "",
+      maxWordCount: "",
+      customRules: {},
+      ttsConfigGroup: "Azure",
+      _TTSName: displayName,
+      _ClassName: "JxdAdvCustomTTS",
+      _TTSConfigID: ttsConfigID,
+      httpConfigs: {
+        useCookies: 1,
+        headers: {}
+      },
+      voiceList: [],
+      ttsHandles: [
+        {
+          paramsEx: "",
+          processType: 1,
+          maxPageCount: 1,
+          nextPageMethod: 1,
+          method: 1,
+          requestByWebView: 0,
+          parser: {},
+          nextPageParams: {},
+          url: url,
+          params: params,
+          httpConfigs: {
+            useCookies: 1,
+            headers: {}
+          }
+        }
+      ]
+    };
+
+    // 返回 IFreeTime 响应
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
+  }
+
   // 添加 OpenAI 兼容接口路由
   if (path === '/v1/audio/speech' || path === '/audio/speech') {
     return await handleOpenAITTS(request);
@@ -259,7 +345,7 @@ async function handleRequest(request) {
                           placeholder="输入API Key" />
                         <button type="button" id="toggleApiKeyVisibility" class="absolute inset-y-0 right-0 px-3 flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 06 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </button>
@@ -368,6 +454,10 @@ async function handleRequest(request) {
                     <button type="button" id="getReaderLinkBtn"
                       class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
                       导入阅读
+                    </button>
+                    <button type="button" id="getIFreeTimeLinkBtn"
+                      class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
+                      导入爱阅记
                     </button>
                   </div>
 
@@ -540,6 +630,56 @@ curl ${baseUrl}/v1/audio/speech \\
               tc.style.display = (tc.id === targetId) ? '' : 'none';
             });
           });
+        });
+
+        // 添加获取Reader链接按钮的事件监听
+        document.getElementById('getReaderLinkBtn').addEventListener('click', function() {
+          const apiKey = document.getElementById('apiKey').value || localStorage.getItem('tts_api_key') || '';
+          const voice = document.getElementById('voice').value;
+          const rate = document.getElementById('rate').value;
+          const pitch = document.getElementById('pitch').value;
+          const style = document.getElementById('style').value;
+          const displayName = document.getElementById('voice').options[document.getElementById('voice').selectedIndex].text || '微软TTS';
+
+          // 保存当前设置到localStorage
+          saveFormValuesToLocalStorage(voice, rate, pitch, style, document.getElementById('text').value);
+
+          // 构建URL参数
+          const params = new URLSearchParams();
+          if (apiKey) params.append('api_key', apiKey);
+          if (voice) params.append('v', voice);
+          if (rate) params.append('r', rate);
+          if (pitch) params.append('p', pitch);
+          if (style) params.append('s', style);
+          params.append('n', displayName);
+
+          // 打开新标签页
+          window.open(\`\${window.location.origin}/reader.json?\${params.toString()}\`, '_blank');
+        });
+
+        // 添加获取IFreeTime链接按钮的事件监听
+        document.getElementById('getIFreeTimeLinkBtn').addEventListener('click', function() {
+          const apiKey = document.getElementById('apiKey').value || localStorage.getItem('tts_api_key') || '';
+          const voice = document.getElementById('voice').value;
+          const rate = document.getElementById('rate').value;
+          const pitch = document.getElementById('pitch').value;
+          const style = document.getElementById('style').value;
+          const displayName = document.getElementById('voice').options[document.getElementById('voice').selectedIndex].text || '微软TTS';
+
+          // 保存当前设置到localStorage
+          saveFormValuesToLocalStorage(voice, rate, pitch, style, document.getElementById('text').value);
+
+          // 构建URL参数
+          const params = new URLSearchParams();
+          if (apiKey) params.append('api_key', apiKey);
+          if (voice) params.append('v', voice);
+          if (rate) params.append('r', rate);
+          if (pitch) params.append('p', pitch);
+          if (style) params.append('s', style);
+          params.append('n', displayName);
+
+          // 打开新标签页
+          window.open(\`\${window.location.origin}/ifreetime.json?\${params.toString()}\`, '_blank');
         });
       });
 
@@ -911,31 +1051,6 @@ curl ${baseUrl}/v1/audio/speech \\
         const apiKeyInputGroup = document.getElementById('apiKeyInputGroup');
         const toggleApiKeyVisibilityBtn = document.getElementById('toggleApiKeyVisibility');
 
-        // 添加获取Reader链接按钮的事件监听
-        document.getElementById('getReaderLinkBtn').addEventListener('click', function() {
-          const apiKey = document.getElementById('apiKey').value || localStorage.getItem('tts_api_key') || '';
-          const voice = document.getElementById('voice').value;
-          const rate = document.getElementById('rate').value;
-          const pitch = document.getElementById('pitch').value;
-          const style = document.getElementById('style').value;
-          const displayName = document.getElementById('voice').options[document.getElementById('voice').selectedIndex].text || '微软TTS';
-
-          // 保存当前设置到localStorage
-          saveFormValuesToLocalStorage(voice, rate, pitch, style, document.getElementById('text').value);
-
-          // 构建URL参数
-          const params = new URLSearchParams();
-          if (apiKey) params.append('api_key', apiKey);
-          if (voice) params.append('v', voice);
-          if (rate) params.append('r', rate);
-          if (pitch) params.append('p', pitch);
-          if (style) params.append('s', style);
-          params.append('n', displayName);
-
-          // 打开新标签页
-          window.open(\`\${window.location.origin}/reader.json?\${params.toString()}\`, '_blank');
-        });
-
         // 显示/隐藏API Key
         toggleApiKeyVisibilityBtn.addEventListener('click', function() {
           const type = apiKeyInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -948,7 +1063,7 @@ curl ${baseUrl}/v1/audio/speech \\
             </svg>\`;
           } else {
             this.innerHTML = \`<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 06 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>\`;
           }
