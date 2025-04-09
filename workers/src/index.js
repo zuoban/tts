@@ -521,14 +521,14 @@ async function handleRequest(request) {
               <div class="mt-2 bg-gray-50 p-2 rounded">
                 <p class="text-xs text-gray-600 mb-1">示例请求:</p>
                 <code class="text-xs block overflow-auto whitespace-pre-wrap">
-curl ${baseUrl}/v1/audio/speech \\
+curl -X POST ${baseUrl}/v1/audio/speech \\
   -H "Authorization: Bearer your-secret-api-key" \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "tts-1",
     "input": "这是一个语音合成测试",
     "voice": "alloy"
-  }'
+  }' --output output.mp3
                 </code>
               </div>
 
@@ -1343,7 +1343,7 @@ async function handleOpenAITTS(request) {
       'audio-24khz-48kbitrate-mono-mp3';
 
     // 调用 TTS API
-    const ttsResponse = await getVoice(text, voiceName, rate, 0, outputFormat, false);
+    const ttsResponse = await getVoice(text, voiceName, rate, 0,requestData.model ,outputFormat, false);
 
     return ttsResponse;
   } catch (error) {
