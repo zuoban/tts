@@ -1,19 +1,18 @@
-## TTS 服务 TTS 服务
-
+## TTS 服务
 一个简单易用的文本转语音 (TTS) 服务，基于 Microsoft Azure 语音服务，提供高质量的语音合成能力。
 
-#### 功能特点 功能特点
+#### 功能特点
 
--- 支持多种语言和声音
--- 可调节语速和语调
--- 支持多种输出音频格式
--- 兼容 OpenAI TTS API
--- 支持长文本自动分割与合并
--- 提供 Web UI 和 RESTful API
+- 支持多种语言和声音
+- 可调节语速和语调
+- 支持多种输出音频格式
+- 兼容 OpenAI TTS API
+- 支持长文本自动分割与合并
+- 提供 Web UI 和 RESTful API
 
-#### 快速开始 快速开始
+#### 快速开始
 
-###### Docker 部署 Docker 部署
+###### Docker 部署
 
 ```shell
 docker run -d -p 8080:8080 --name=tts zuoban/zb-ttsdocker run -d -p 8080:8080 --name=tts zuoban/zb-tts
