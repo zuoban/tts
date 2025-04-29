@@ -15,7 +15,7 @@
 ###### Docker 部署
 
 ```shell
-docker run -d -p 8080:8080 --name=tts zuoban/zb-ttsdocker run -d -p 8080:8080 --name=tts zuoban/zb-tts
+docker run -d -p 8080:8080 --name=tts zuoban/zb-tts
 ```
 
 部署完成后，访问 `http://localhost:8080` 使用 Web 界面，或通过 `http://localhost:8080/api-doc` 查看 API 文档。部署完成后，访问 `http://localhost:8080` 使用 Web 界面，或通过 `http://localhost:8080/api-doc` 查看 API 文档。
@@ -35,7 +35,7 @@ docker run -d -p 8080:8080 --name=tts zuoban/zb-ttsdocker run -d -p 8080:8080 --
 
 ```shell
 # 基础文本转语音# 基础文本转语音
-curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural"curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural"
+curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural"
 
 # 调整语速和语调
 curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural&r=20&p=10"
