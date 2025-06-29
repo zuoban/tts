@@ -304,290 +304,171 @@ async function handleRequest(request) {
 
     <!-- 主内容 -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="border-b border-gray-200">
-        <nav class="-mb-px flex space-x-8 justify-center" aria-label="Tabs">
-          <button class="tab-link py-4 px-1 text-ms-blue border-b-2 border-ms-blue hover:text-ms-dark-blue" data-tab="tab1">在线文本转语音</button>
-          <button class="tab-link py-4 px-1 text-gray-500 hover:text-ms-dark-blue" data-tab="tab2">API文档</button>
-          <button class="tab-link py-4 px-1 text-gray-500 hover:text-ms-dark-blue" data-tab="tab3">关于服务</button>
-        </nav>
-      </div>
-
-      <div id="tab1" class="tab-content mt-6">
-        <!-- 在线文本转语音表单内容 -->
-        <div class="flex flex-col lg:flex-row gap-8">
-          <!-- 左边栏：语音转换 -->
-          <div class="lg:w-3/4 mx-auto">
-            <div class="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
-              <div class="px-4 py-5 sm:px-6">
-                <h2 class="text-lg font-medium text-gray-900">在线文本转语音</h2>
-                <p class="mt-1 text-sm text-gray-500">输入文本并选择语音进行转换</p>
-              </div>
-              <div class="px-4 py-5 sm:p-6">
-                <form id="ttsForm" class="space-y-6">
-                  <!-- 添加错误提示区域 -->
-                  <div id="apiErrorAlert" class="rounded-md bg-red-50 p-4" style="display: none;">
-                    <div class="flex">
-                      <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800" id="apiErrorTitle">错误</h3>
-                        <div class="mt-2 text-sm text-red-700">
-                          <p id="apiErrorMessage"></p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label for="apiKey" class="block text-sm font-medium text-gray-700">API Key</label>
-                    <div class="mt-1 flex rounded-md shadow-sm">
-                      <div id="apiKeyInputGroup" class="flex-grow flex relative">
-                        <input type="password" id="apiKey" name="apiKey" required
-                          class="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-ms-blue focus:border-ms-blue"
-                          placeholder="输入API Key" />
-                        <button type="button" id="toggleApiKeyVisibility" class="absolute inset-y-0 right-0 px-3 flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 06 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </button>
-                      </div>
-                      <button type="button" id="saveApiKey" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-ms-blue hover:bg-ms-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
-                        保存
-                      </button>
-                    </div>
-                    <div id="savedApiKeyInfo" style="display:none;" class="mt-2 flex items-center justify-between">
-                      <span class="text-sm text-green-600 flex items-center">
-                        API Key 已保存
-                      </span>
-                      <button type="button" id="editApiKey" class="text-sm text-ms-blue hover:text-ms-dark-blue">
-                        编辑
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label for="text" class="block text-sm font-medium text-gray-700">输入文本</label>
-                    <textarea id="text" name="text" rows="4" required
-                      class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-ms-blue focus:border-ms-blue"
-                      placeholder="请输入要转换的文本"></textarea>
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label for="voice" class="block text-sm font-medium text-gray-700">选择语音</label>
-                      <select id="voice" name="voice"
-                        class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
-                      </select>
-                    </div>
-
-                    <div>
-                      <label for="style" class="block text-sm font-medium text-gray-700">语音风格</label>
-                      <select id="style" name="style"
-                        class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
-                        <option value="general" selected>标准</option>
-                        <option value="advertisement_upbeat">广告热情</option>
-                        <option value="affectionate">亲切</option>
-                        <option value="angry">愤怒</option>
-                        <option value="assistant">助理</option>
-                        <option value="calm">平静</option>
-                        <option value="chat">随意</option>
-                        <option value="cheerful">愉快</option>
-                        <option value="customerservice">客服</option>
-                        <option value="depressed">沮丧</option>
-                        <option value="disgruntled">不满</option>
-                        <option value="documentary-narration">纪录片解说</option>
-                        <option value="embarrassed">尴尬</option>
-                        <option value="empathetic">共情</option>
-                        <option value="envious">羡慕</option>
-                        <option value="excited">兴奋</option>
-                        <option value="fearful">恐惧</option>
-                        <option value="friendly">友好</option>
-                        <option value="gentle">温柔</option>
-                        <option value="hopeful">希望</option>
-                        <option value="lyrical">抒情</option>
-                        <option value="narration-professional">专业叙述</option>
-                        <option value="narration-relaxed">轻松叙述</option>
-                        <option value="newscast">新闻播报</option>
-                        <option value="newscast-casual">随意新闻</option>
-                        <option value="newscast-formal">正式新闻</option>
-                        <option value="poetry-reading">诗朗诵</option>
-                        <option value="sad">悲伤</option>
-                        <option value="serious">严肃</option>
-                        <option value="shouting">大喊</option>
-                        <option value="sports_commentary">体育解说</option>
-                        <option value="sports_commentary_excited">激动体育解说</option>
-                        <option value="whispering">低语</option>
-                        <option value="terrified">恐慌</option>
-                        <option value="unfriendly">冷漠</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label for="rate" class="block text-sm font-medium text-gray-700">语速调整</label>
-                      <div class="flex items-center mt-2">
-                        <span id="rateValue" class="w-8 text-sm text-gray-500">0</span>
-                        <input type="range" id="rate" name="rate" min="-100" max="100" value="0"
-                          class="mt-1 block w-full" oninput="document.getElementById('rateValue').textContent=this.value" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label for="pitch" class="block text-sm font-medium text-gray-700">音调调整</label>
-                      <div class="flex items-center mt-2">
-                        <span id="pitchValue" class="w-8 text-sm text-gray-500">0</span>
-                        <input type="range" id="pitch" name="pitch" min="-100" max="100" value="0"
-                          class="mt-1 block w-full" oninput="document.getElementById('pitchValue').textContent=this.value" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex flex-col sm:flex-row gap-3">
-                    <button type="submit"
-                      class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-ms-blue hover:bg-ms-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
-                      生成语音
-                    </button>
-                    <button type="button" id="downloadBtn" style="display:none;"
-                      class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                      下载音频
-                    </button>
-                    <button type="button" id="getReaderLinkBtn"
-                      class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
-                      导入阅读
-                    </button>
-                    <button type="button" id="getIFreeTimeLinkBtn"
-                      class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
-                      导入爱阅记
-                    </button>
-                  </div>
-
-                  <div id="voiceLoadError" role="alert" class="mt-4 rounded-md bg-red-50 p-4" style="display: none;">
-                    <div class="flex">
-                      <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fill-rule="evenodd" d="M10 18a8 8 100-16 8 8 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293-1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                      </div>
-                      <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800">无法加载语音列表</h3>
-                        <div class="mt-2 text-sm text-red-700">
-                          <p>显示默认语音列表。请检查网络连接或稍后再试。</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </form>
-
-                <div id="audioContainer" class="mt-6 rounded-md bg-gray-50 p-4 border border-gray-200" style="display: none;">
-                  <audio id="audioPlayer" controls class="w-full"></audio>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="tab2" class="tab-content mt-6" style="display: none;">
-        <!-- API文档部分 -->
-        <div class="w-full lg:w-2/3 mx-auto space-y-6">
-          <!-- API 文档链接 -->
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- 语音转换 -->
+        <div class="lg:w-3/4 mx-auto">
           <div class="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
             <div class="px-4 py-5 sm:px-6">
-              <h3 class="text-lg font-medium text-gray-900">API 文档</h3>
+              <h2 class="text-lg font-medium text-gray-900">在线文本转语音</h2>
+              <p class="mt-1 text-sm text-gray-500">输入文本并选择语音进行转换</p>
             </div>
             <div class="px-4 py-5 sm:p-6">
-              <h4 class="text-base font-medium text-gray-900 mb-2">文本转语音 API</h4>
-              <code class="text-sm block bg-gray-50 p-2 rounded mb-2 overflow-auto">/tts?api_key={key}&t={text}&v={voice}&r={rate}&p={pitch}&s={style}</code>
-              <ul class="list-disc pl-5 text-sm space-y-1">
-                <li><span class="text-red-600">api_key</span>: API密钥 [必填]</li>
-                <li><span class="text-red-600">t</span>: 文本内容 [必填]</li>
-                <li>v: 语音名称 [可选]</li>
-                <li>r: 语速调整 (-100~100) [可选]</li>
-                <li>p: 音调调整 (-100~100) [可选]</li>
-                <li>s: 语音风格 (general, cheerful, sad等) [可选]</li>
-              </ul>
-
-              <h4 class="text-base font-medium text-gray-900 mt-6 mb-2">OpenAI 兼容接口</h4>
-              <code class="text-sm block bg-gray-50 p-2 rounded mb-2 overflow-auto">/v1/audio/speech 或 /audio/speech</code>
-              <p class="text-sm mb-2">使用方式与 OpenAI TTS API 相同，支持以下参数：</p>
-              <ul class="list-disc pl-5 text-sm space-y-1">
-                <li><span class="text-red-600">model</span>: 模型名称 [必填]</li>
-                <li><span class="text-red-600">input</span>: 文本内容 [必填]</li>
-                <li>voice: 声音类型 (alloy, echo, fable, onyx, nova, shimmer)</li>
-                <li>speed: 语速 (0.25~4.0)</li>
-                <li>response_format: 输出格式 (mp3, opus)</li>
-              </ul>
-
-              <div class="mt-2 bg-gray-50 p-2 rounded">
-                <p class="text-xs text-gray-600 mb-1">示例请求:</p>
-                <code class="text-xs block overflow-auto whitespace-pre-wrap">
-curl -X POST ${baseUrl}/v1/audio/speech \\
-  -H "Authorization: Bearer your-secret-api-key" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "tts-1",
-    "input": "这是一个语音合成测试",
-    "voice": "alloy"
-  }' --output output.mp3
-                </code>
-              </div>
-
-              <h4 class="text-base font-medium text-gray-900 mt-6 mb-2">获取语音列表 API</h4>
-              <code class="text-sm block bg-gray-50 p-2 rounded mb-2 overflow-auto">/voices?l={locale}&f={format}</code>
-              <ul class="list-disc pl-5 text-sm space-y-1">
-                <li>l: 语言筛选 (如 'zh', 'en')</li>
-                <li>f: 返回格式 (0=TTS格式, 1=JSON格式)</li>
-              </ul>
-
-              <div class="mt-6 bg-amber-50 p-3 rounded-md">
-                <div class="flex">
-                  <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 11-2 0 1 1 12 0zm-1-8a1 1 00-1 1v3a1 1 001 1h1a1 1 100-2v-3a1 1 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <div class="ml-3">
-                    <h3 class="text-sm font-medium text-amber-800">重要提示</h3>
-                    <div class="mt-2 text-sm text-amber-700">
-                      <ul class="list-disc pl-5 space-y-1">
-                        <li>所有请求必须提供有效的 API 密钥</li>
-                        <li>请确保中文文本进行 URL 编码</li>
-                      </ul>
+              <form id="ttsForm" class="space-y-6">
+                <!-- 添加错误提示区域 -->
+                <div id="apiErrorAlert" class="rounded-md bg-red-50 p-4" style="display: none;">
+                  <div class="flex">
+                    <div class="ml-3">
+                      <h3 class="text-sm font-medium text-red-800" id="apiErrorTitle">错误</h3>
+                      <div class="mt-2 text-sm text-red-700">
+                        <p id="apiErrorMessage"></p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div id="tab3" class="tab-content mt-6" style="display: none;">
-        <!-- 关于服务部分 -->
-        <div class="w-full lg:w-2/3 mx-auto space-y-6">
-          <!-- 关于卡片 -->
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="px-4 py-5 sm:p-6">
-              <h3 class="text-lg leading-6 font-medium text-gray-900">关于服务</h3>
-              <div class="mt-2 max-w-xl text-sm text-gray-500">
-                <p>
-                  Microsoft TTS API 是一个高质量的文本转语音服务，支持多种语言和声音。
-                  通过简单的 API 调用，可以将文本转换为自然流畅的语音。
-                </p>
-              </div>
-              <div class="mt-3 bg-blue-50 p-3 rounded-md">
-                <div class="flex">
-                  <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0116 0zm-7-4a1 1 11-2 0 1 1 12 0zm-1-8a1 1 00-1 1v3a1 1 001 1h1a1 1 100-2v-3a1 1 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
+                <div>
+                  <label for="apiKey" class="block text-sm font-medium text-gray-700">API Key</label>
+                  <div class="mt-1 flex rounded-md shadow-sm">
+                    <div id="apiKeyInputGroup" class="flex-grow flex relative">
+                      <input type="password" id="apiKey" name="apiKey" required
+                        class="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-ms-blue focus:border-ms-blue"
+                        placeholder="输入API Key" />
+                      <button type="button" id="toggleApiKeyVisibility" class="absolute inset-y-0 right-0 px-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 06 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button type="button" id="saveApiKey" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-ms-blue hover:bg-ms-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
+                      保存
+                    </button>
                   </div>
-                  <div class="ml-3 flex-1 md:flex md:justify-between">
-                    <p class="text-sm text-blue-700">
-                      支持 SSML 标签和 OpenAI 兼容接口
-                    </p>
+                  <div id="savedApiKeyInfo" style="display:none;" class="mt-2 flex items-center justify-between">
+                    <span class="text-sm text-green-600 flex items-center">
+                      API Key 已保存
+                    </span>
+                    <button type="button" id="editApiKey" class="text-sm text-ms-blue hover:text-ms-dark-blue">
+                      编辑
+                    </button>
                   </div>
                 </div>
+
+                <div>
+                  <label for="text" class="block text-sm font-medium text-gray-700">输入文本</label>
+                  <textarea id="text" name="text" rows="4" required
+                    class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-ms-blue focus:border-ms-blue"
+                    placeholder="请输入要转换的文本"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label for="voice" class="block text-sm font-medium text-gray-700">选择语音</label>
+                    <select id="voice" name="voice"
+                      class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="style" class="block text-sm font-medium text-gray-700">语音风格</label>
+                    <select id="style" name="style"
+                      class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-ms-blue focus:border-ms-blue sm:text-sm">
+                      <option value="general" selected>标准</option>
+                      <option value="advertisement_upbeat">广告热情</option>
+                      <option value="affectionate">亲切</option>
+                      <option value="angry">愤怒</option>
+                      <option value="assistant">助理</option>
+                      <option value="calm">平静</option>
+                      <option value="chat">随意</option>
+                      <option value="cheerful">愉快</option>
+                      <option value="customerservice">客服</option>
+                      <option value="depressed">沮丧</option>
+                      <option value="disgruntled">不满</option>
+                      <option value="documentary-narration">纪录片解说</option>
+                      <option value="embarrassed">尴尬</option>
+                      <option value="empathetic">共情</option>
+                      <option value="envious">羡慕</option>
+                      <option value="excited">兴奋</option>
+                      <option value="fearful">恐惧</option>
+                      <option value="friendly">友好</option>
+                      <option value="gentle">温柔</option>
+                      <option value="hopeful">希望</option>
+                      <option value="lyrical">抒情</option>
+                      <option value="narration-professional">专业叙述</option>
+                      <option value="narration-relaxed">轻松叙述</option>
+                      <option value="newscast">新闻播报</option>
+                      <option value="newscast-casual">随意新闻</option>
+                      <option value="newscast-formal">正式新闻</option>
+                      <option value="poetry-reading">诗朗诵</option>
+                      <option value="sad">悲伤</option>
+                      <option value="serious">严肃</option>
+                      <option value="shouting">大喊</option>
+                      <option value="sports_commentary">体育解说</option>
+                      <option value="sports_commentary_excited">激动体育解说</option>
+                      <option value="whispering">低语</option>
+                      <option value="terrified">恐慌</option>
+                      <option value="unfriendly">冷漠</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label for="rate" class="block text-sm font-medium text-gray-700">语速调整</label>
+                    <div class="flex items-center mt-2">
+                      <span id="rateValue" class="w-8 text-sm text-gray-500">0</span>
+                      <input type="range" id="rate" name="rate" min="-100" max="100" value="0"
+                        class="mt-1 block w-full" oninput="document.getElementById('rateValue').textContent=this.value" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label for="pitch" class="block text-sm font-medium text-gray-700">音调调整</label>
+                    <div class="flex items-center mt-2">
+                      <span id="pitchValue" class="w-8 text-sm text-gray-500">0</span>
+                      <input type="range" id="pitch" name="pitch" min="-100" max="100" value="0"
+                        class="mt-1 block w-full" oninput="document.getElementById('pitchValue').textContent=this.value" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                  <button type="submit"
+                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-ms-blue hover:bg-ms-dark-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
+                    生成语音
+                  </button>
+                  <button type="button" id="downloadBtn" style="display:none;"
+                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    下载音频
+                  </button>
+                  <button type="button" id="getReaderLinkBtn"
+                    class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
+                    导入阅读
+                  </button>
+                  <button type="button" id="getIFreeTimeLinkBtn"
+                    class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ms-blue">
+                    导入爱阅记
+                  </button>
+                </div>
+
+                <div id="voiceLoadError" role="alert" class="mt-4 rounded-md bg-red-50 p-4" style="display: none;">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 18a8 8 100-16 8 8 000 16zM8.707 7.293a1 1 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 101.414 1.414L10 11.414l1.293-1.293a1 1 001.414-1.414L11.414 10l1.293-1.293a1 1 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </div>
+                    <div class="ml-3">
+                      <h3 class="text-sm font-medium text-red-800">无法加载语音列表</h3>
+                      <div class="mt-2 text-sm text-red-700">
+                        <p>显示默认语音列表。请检查网络连接或稍后再试。</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+              <div id="audioContainer" class="mt-6 rounded-md bg-gray-50 p-4 border border-gray-200" style="display: none;">
+                <audio id="audioPlayer" controls class="w-full"></audio>
               </div>
             </div>
           </div>
@@ -611,25 +492,6 @@ curl -X POST ${baseUrl}/v1/audio/speech \\
         // 添加对语音选择变化的监听
         document.getElementById('voice').addEventListener('change', function() {
           updateStyleOptions(this.value);
-        });
-
-        const tabLinks = document.querySelectorAll('.tab-link');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabLinks.forEach(link => {
-          link.addEventListener('click', () => {
-            tabLinks.forEach(l => {
-              l.classList.remove('text-ms-blue', 'border-ms-blue');
-              l.classList.add('text-gray-500');
-            });
-            link.classList.add('text-ms-blue', 'border-ms-blue');
-            link.classList.remove('text-gray-500');
-
-            const targetId = link.getAttribute('data-tab');
-            tabContents.forEach(tc => {
-              tc.style.display = (tc.id === targetId) ? '' : 'none';
-            });
-          });
         });
 
         // 添加获取Reader链接按钮的事件监听
@@ -1110,7 +972,6 @@ addEventListener('fetch', event => {
 });
 
 
-
 async function getEndpoint() {
   const endpointUrl = 'https://dev.microsofttranslator.com/apps/endpoint?api-version=1.0';
   const headers = {
@@ -1168,7 +1029,7 @@ function getSsml(text, voiceName, rate, pitch, style = 'general') {
 function voiceList() {
   // 检查缓存是否有效
   if (voiceListCache && voiceListCacheTime && (Date.now() - voiceListCacheTime) < VOICE_CACHE_DURATION) {
-    console.log('使用缓存的语音列表数据，剩余有效期：',
+    console.log('使用缓存的语音列表数据，剩余有效���：',
       Math.round((VOICE_CACHE_DURATION - (Date.now() - voiceListCacheTime)) / 60000), '分钟');
     return Promise.resolve(voiceListCache);
   }
