@@ -18,7 +18,7 @@
 docker run -d -p 8080:8080 --name=tts zuoban/zb-tts
 ```
 
-部署完成后，访问 `http://localhost:8080` 使用 Web 界面，或通过 `http://localhost:8080/api-doc` 查看 API 文档。部署完成后，访问 `http://localhost:8080` 使用 Web 界面，或通过 `http://localhost:8080/api-doc` 查看 API 文档。
+部署完成后，访问 `http://localhost:8080` 使用 Web 界面。
 
 ### Cloudflare Worker 部署
 

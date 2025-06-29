@@ -116,7 +116,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
-        /* 为滑块输入元素添加毛玻璃效果 - 更新样式 */
+        /* 为滑块输入元素添加毛玻璃效�� - 更新样式 */
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -980,30 +980,7 @@
             <h1 class="text-4xl font-bold mb-2 text-slate-800">文本转语音 (TTS)</h1>
             <p class="text-xl text-slate-600 mb-4">将文本转换为自然流畅的语音</p>
 
-            <!-- 新Tab栏设计 -->
-            <div class="tab-bar mt-6">
-                <span class="tab-indicator" style="width: 50%;"></span>
-                <a href="{{.BasePath}}/" class="tab-item active">
-                        <span class="tab-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                            </svg>
-                        </span>
-                    主页
-                </a>
-                <a href="{{.BasePath}}/api-doc" class="tab-item">
-                        <span class="tab-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                            </svg>
-                        </span>
-                    API文档
-                </a>
-            </div>
+            <!-- Tab bar removed as requested -->
         </header>
 
         <main>
@@ -1075,7 +1052,7 @@
                         <label for="style" class="mb-1 font-semibold text-slate-700">风格:</label>
                         <select id="style"
                                 class="p-2 border border-slate-300 rounded-md bg-white/90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            <option value="loading">加载中...</option>
+                            <option value="loading">加载���...</option>
                         </select>
                     </div>
                 </div>
@@ -1170,7 +1147,7 @@
         </main>
 
         <footer class="text-center mt-10 py-4 text-slate-600 text-sm">
-            <p>© 2025 TTS服务 | <a href="{{.BasePath}}/api-doc" class="text-blue-500 hover:underline">API文档</a></p>
+            <p>© 2025 TTS服务</p>
         </footer>
     </div>
 </div>
@@ -1259,7 +1236,7 @@
             // 创建渐变背景，从中间的0点向两边扩散
             let gradient;
             if (val < 0) {
-                // 负值 - 从中点到左侧
+                // 负值 - 从中��到左侧
                 const middlePos = 50; // 0值在滑块中间
                 const fillPos = middlePos + (percentage / 2); // 填充位置
                 gradient = `linear-gradient(to right, rgba(59, 130, 246, 0.1) ${fillPos}%, rgba(13, 47, 98, 0.2) ${fillPos}%)`;
@@ -1311,3 +1288,4 @@
 </script>
 </body>
 </html>
+
