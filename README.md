@@ -35,14 +35,28 @@ docker run -d -p 8080:8080 --name=tts zuoban/zb-tts
 
 ```shell
 # 基础文本转语音# 基础文本转语音
-curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural"
+curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural" -o output.mp3
 
 # 调整语速和语调
-curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural&r=20&p=10"
+curl "http://localhost:8080/tts?t=你好，世界&v=zh-CN-XiaoxiaoNeural&r=20&p=10" -o output.mp3
 
 # 使用情感风格
-curl "http://localhost:8080/tts?t=今天天气真好&v=zh-CN-XiaoxiaoNeural&s=cheerful"
+curl "http://localhost:8080/tts?t=今天天气真好&v=zh-CN-XiaoxiaoNeural&s=cheerful" -o output.mp3
 ```
+GET 参数列表：
+- `t`: 文本内容
+- `v`: 语音风格
+- `r`: 语速，范围 -100 到 100
+- `p`: 语调，范围 -100 到 100
+- `s`: 情感风格，可选值为 `sad`, `angry`, `cheerful`, `neutral`
+
+POST 参数列表, 使用 `application/json`：
+- `text`: 文本内容
+- `voice`: 语音风格
+- `rate`: 语速，范围 -100 到 100
+- `pitch`: 语调，范围 -100 到 100
+- `style`: 情感风格，可选值为 `sad`, `angry`, `cheerful`, `neutral`
+
 
 ### OpenAI 兼容 API
 
@@ -52,11 +66,16 @@ curl -X POST "http://localhost:8080/v1/audio/speech" \
   -d '{
     "model": "tts-1",
     "input": "你好，世界！",
-    "voice": "zh-CN-XiaoxiaoNeural"
-  }'
+    "voice": "zh-CN-XiaoxiaoNeural",
+    "speed": 0.5
+  }' -o output.mp3
 ```
-- model 对应 TTS 服务的 `style` 参数
-- voice 对应 TTS 服务的 `voice` 参数
+
+参数列表：
+- `model`: 模型名称, 对应上面的 `style`
+- `input`: 文本内容, 对应上面的 `text`
+- `voice`: 语音风格, 对应上面的 `voice`
+- `speed`: 语速，0.0 到 2.0，对应上面的 `rate`
 
 ## 配置选项
 
@@ -130,17 +149,5 @@ go build -o tts ./cmd/api
 # 运行
 ./tts
 ```
-
-## 支持的音频格式
-
-- MP3: `audio-24khz-48kbitrate-mono-mp3`（默认）
-- MP3: `audio-24khz-96kbitrate-mono-mp3`
-- MP3: `audio-24khz-160kbitrate-mono-mp3`
-- WAV: `riff-24khz-16bit-mono-pcm`
-- OGG: `ogg-24khz-16bit-mono-opus`
-
-更多格式请参考 API 文档。
-
 ## 许可证
-
 MIT
