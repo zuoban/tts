@@ -497,111 +497,6 @@
             transform: scale(1.1);
         }
 
-        /* 重新设计的Tab栏样式 - 更加和谐 */
-        .tab-bar {
-            display: flex;
-            justify-content: center;
-            background: rgba(13, 47, 98, 0.15); /* 更轻微的背景色 */
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 10px;
-            padding: 4px;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15),
-            0 4px 10px rgba(0, 0, 0, 0.1);
-            position: relative;
-            max-width: 380px;
-            margin: 0 auto;
-            z-index: 1;
-        }
-
-        .tab-bar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border-radius: 10px;
-            padding: 1px;
-            background: rgba(255, 255, 255, 0.2); /* 更微妙的边框 */
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            z-index: -1;
-        }
-
-        .tab-item {
-            position: relative;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 500;
-            padding: 8px 18px;
-            flex-grow: 1;
-            text-align: center;
-            transition: all 0.25s ease;
-            border-radius: 6px;
-            z-index: 2;
-            letter-spacing: 0.01em;
-        }
-
-        .tab-item:hover {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .tab-item.active {
-            color: #1a365d; /* 更深的文字颜色，与主题对比 */
-            font-weight: 600;
-        }
-
-        .tab-indicator {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.9); /* 纯白色指示器 */
-            border-radius: 6px;
-            height: calc(100% - 8px);
-            z-index: 1;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            top: 4px;
-            left: 4px;
-            bottom: 4px;
-        }
-
-        /* Tab中的图标样式 - 简化 */
-        .tab-icon {
-            display: inline-flex;
-            vertical-align: middle;
-            margin-right: 6px;
-            height: 18px;
-            width: 18px;
-            transition: transform 0.2s ease;
-            opacity: 0.9;
-        }
-
-        .tab-item:hover .tab-icon {
-            transform: scale(1.1);
-        }
-
-        .tab-item.active .tab-icon {
-            color: #1a365d; /* 图标颜色与文本匹配 */
-        }
-
-        /* 简化下方线条效果 */
-        .tab-item::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.5);
-            bottom: -2px;
-            left: 50%;
-            transform: translateX(-50%) scaleX(0);
-            transition: transform 0.2s ease;
-            opacity: 0;
-        }
-
-        .tab-item.active::after {
-            opacity: 0; /* 移除活动状态下的额外线条，保持简洁 */
-        }
-
         /* 重新设计的API Key输入组件 */
         .api-key-container {
             position: relative;
@@ -1032,10 +927,10 @@
 
                 <h2 class="text-xl font-bold mb-4 pb-2 border-b border-slate-200 text-slate-800">输入文本</h2>
                 <div class="relative mb-4">
-                        <textarea id="text" placeholder="输入要转换的文本..." rows="6" maxlength="5000"
+                        <textarea id="text" placeholder="输入要转换的文本..." rows="6"
                                   class="w-full p-3 border border-slate-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 backdrop-blur-sm"></textarea>
                     <div class="absolute bottom-2 right-2 text-sm text-slate-500">
-                        <span id="charCount" class="char-counter">0</span><span class="text-slate-500">/5000</span>
+                        <span id="charCount" class="char-counter">0</span>
                     </div>
                 </div>
 
