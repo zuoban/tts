@@ -86,12 +86,12 @@ curl -X POST "http://localhost:8080/v1/audio/speech" \
 docker run -d -p 9000:9000 -e PORT=9000 --name=tts zuoban/zb-tts
 
 # 使用配置文件
-docker run -d -p 8080:8080 -v /path/to/config.yaml:/app/configs/config.yaml --name=tts zuoban/zb-tts
+docker run -d -p 8080:8080 -v /path/to/config.yaml:/configs/config.yaml --name=tts zuoban/zb-tts
 ```
 
 ### 配置文件详解
 
-TTS 服务使用 YAML 格式的配置文件，默认位置为 `/app/configs/config.yaml`。以下是配置文件的主要选项：
+TTS 服务使用 YAML 格式的配置文件，默认位置为 `/configs/config.yaml`。以下是配置文件的主要选项：
 
 ```yaml
 server:

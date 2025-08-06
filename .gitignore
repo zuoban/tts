@@ -25,4 +25,5 @@ go.work.sum
 # env file
 .env
 
-.idea/
+.DS_Store
+.idea
