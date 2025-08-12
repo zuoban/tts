@@ -187,7 +187,7 @@ func (c *Client) ListVoices(ctx context.Context, locale string) ([]models.Voice,
 	// 更新缓存
 	c.voicesCacheMu.Lock()
 	c.voicesCache = voices
-	c.voicesCacheExpiry = time.Now().Add(24 * time.Hour) // 缓存24小时
+	c.voicesCacheExpiry = time.Now().Add(2 * time.Hour) // 缓存 2 小时
 	c.voicesCacheMu.Unlock()
 
 	// 如果指定了locale，则过滤结果
