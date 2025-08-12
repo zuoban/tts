@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,11 +16,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 var (
-	log    = logrus.New()
 	client = &http.Client{}
 )
 
@@ -71,18 +70,18 @@ func GetEndpoint() (map[string]interface{}, error) {
 	}
 
 	headerJson, err := json.Marshal(&headers)
-	fmt.Printf("GetEndpoint -> url: %s, headers: %v\n", endpointURL, string(headerJson))
+	log.Printf("GetEndpoint -> url: %s, headers: %v\n", endpointURL, string(headerJson))
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error("failed to do request: ", err)
+		log.Println("failed to do request: ", err)
 		return nil, err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Error("failed to get endpoint, status code: ", resp.StatusCode)
+		log.Println("failed to get endpoint, status code: ", resp.StatusCode)
 		return nil, fmt.Errorf("failed to get endpoint, status code: %d", resp.StatusCode)
 	}
 
@@ -92,6 +91,7 @@ func GetEndpoint() (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	log.Println("GetEndpoint <- success get endpoint result: ", result)
 	return result, nil
 }
 

@@ -144,6 +144,7 @@ func (c *Client) ListVoices(ctx context.Context, locale string) ([]models.Voice,
 	}
 
 	url := fmt.Sprintf(voicesEndpoint, endpoint["r"])
+	log.Println("ListVoices, endpoint:", endpoint)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
