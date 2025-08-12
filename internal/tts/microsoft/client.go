@@ -117,6 +117,8 @@ func (c *Client) ListVoices(ctx context.Context, locale string) ([]models.Voice,
 	// 检查缓存是否有效
 	c.voicesCacheMu.RLock()
 	if !c.voicesCacheExpiry.IsZero() && time.Now().Before(c.voicesCacheExpiry) && len(c.voicesCache) > 0 {
+		// 从缓存中获取
+		log.Println("从缓存中获取语音列表: ", len(c.voicesCache), "个", "剩余时间:", c.voicesCacheExpiry.Sub(time.Now()))
 		voices := c.voicesCache
 		c.voicesCacheMu.RUnlock()
 
