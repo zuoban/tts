@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="bg-[#0f1a2f]">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +8,18 @@
     <link rel="icon" type="image/svg+xml" href="{{.BasePath}}/static/icons/favicon.svg">
     <meta name="description" content="浏览所有可用的TTS声音，试听并选择最适合的声音">
     <script src="{{.BasePath}}/static/js/app.js"></script>
+    <link rel="stylesheet" href="{{.BasePath}}/static/css/theme.css">
+    <link rel="stylesheet" href="{{.BasePath}}/static/css/theme-overrides.css">
+    <script src="{{.BasePath}}/static/js/theme-toggle.js"></script>
     <style>
         html, body {
-            background-color: #0f1a2f;
+            background-color: var(--bg-primary);
+            min-height: 100vh;
         }
 
         /* 固定渐变背景 */
         .bg-gradient-animated {
-            background: linear-gradient(-45deg, #0f1a2f, #2d3748, #1a365d, #0d2f62);
+            background: var(--gradient-bg);
             background-size: 400% 400%;
             position: relative;
         }

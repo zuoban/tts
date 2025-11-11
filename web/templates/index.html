@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="bg-[#0f1a2f]">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +8,18 @@
     <link rel="icon" type="image/svg+xml" href="{{.BasePath}}/static/icons/favicon.svg">
     <meta name="description" content="基于Microsoft Azure语音服务的在线文本转语音工具">
     <script src="{{.BasePath}}/static/js/app.js"></script>
+    <link rel="stylesheet" href="{{.BasePath}}/static/css/theme.css">
+    <link rel="stylesheet" href="{{.BasePath}}/static/css/theme-overrides.css">
+    <script src="{{.BasePath}}/static/js/theme-toggle.js"></script>
     <style>
         html, body {
-            background-color: #0f1a2f; /* 确保即使在滚动时也有深色背景 */
+            background-color: var(--bg-primary);
+            min-height: 100vh;
         }
 
         /* 固定渐变背景，移除动画效果 */
         .bg-gradient-animated {
-            background: linear-gradient(-45deg, #0f1a2f, #2d3748, #1a365d, #0d2f62);
+            background: var(--gradient-bg);
             background-size: 400% 400%;
             position: relative;
         }
@@ -81,14 +85,15 @@
         .content-area {
             position: relative;
             z-index: 10;
-            background: rgba(255, 255, 255, 0.7);
+            background: var(--glass-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 1rem;
-            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            box-shadow: var(--shadow-xl);
             width: 100%;
-            max-width: 100%; /* 确保不超出父容器 */
-            overflow: hidden; /* 防止子元素溢出 */
+            max-width: 100%;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
         }
 
         /* 毛玻璃按钮效果 */
