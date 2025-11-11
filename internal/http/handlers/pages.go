@@ -47,3 +47,23 @@ func (h *PagesHandler) HandleIndex(c *gin.Context) {
 		return
 	}
 }
+
+// HandleVoiceLibrary 处理声音库页面请求
+func (h *PagesHandler) HandleVoiceLibrary(c *gin.Context) {
+	// 准备模板数据
+	data := map[string]interface{}{
+		"BasePath":     h.config.Server.BasePath,
+		"DefaultVoice": h.config.TTS.DefaultVoice,
+		"DefaultRate":  h.config.TTS.DefaultRate,
+		"DefaultPitch": h.config.TTS.DefaultPitch,
+	}
+
+	// 设置内容类型
+	c.Header("Content-Type", "text/html; charset=utf-8")
+
+	// 渲染模板
+	if err := h.templates.ExecuteTemplate(c.Writer, "voice-library.html", data); err != nil {
+		c.AbortWithStatusJSON(500, gin.H{"error": "模板渲染失败: " + err.Error()})
+		return
+	}
+}

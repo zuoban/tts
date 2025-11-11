@@ -27,3 +27,8 @@ go.work.sum
 
 .DS_Store
 .idea
+
+*/node_modules/
+tmp
+CLAUDE.md
+*/package-lock.json

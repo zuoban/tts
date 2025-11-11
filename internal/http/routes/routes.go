@@ -43,6 +43,9 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error
 	// 设置主页路由
 	baseRouter.GET("/", pagesHandler.HandleIndex)
 
+	// 设置声音库页面路由
+	baseRouter.GET("/voice-library", pagesHandler.HandleVoiceLibrary)
+
 	// 设置TTS API路由 - 添加认证中间件
 
 	baseRouter.POST("/tts", middleware.TTSAuth(cfg.TTS.ApiKey), ttsHandler.HandleTTS)

@@ -875,7 +875,17 @@
             <h1 class="text-4xl font-bold mb-2 text-slate-800">文本转语音 (TTS)</h1>
             <p class="text-xl text-slate-600 mb-4">将文本转换为自然流畅的语音</p>
 
-            <!-- Tab bar removed as requested -->
+            <!-- 声音库入口 -->
+            <div class="flex justify-center mb-6">
+                <a href="{{.BasePath}}/voice-library"
+                   class="btn-frosted px-6 py-3 rounded-lg inline-flex items-center gap-2 text-slate-700 hover:text-blue-600 transition-all duration-300 hover:-translate-y-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                    浏览声音库
+                </a>
+            </div>
         </header>
 
         <main>
