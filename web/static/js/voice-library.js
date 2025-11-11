@@ -160,6 +160,79 @@ class VoiceLibrary {
         });
     }
 
+    generatePreviewText(voice) {
+        // 根据语言生成不同的试听文本
+        const locale = voice.locale.toLowerCase();
+
+        // 中文语言
+        if (locale.startsWith('zh-') || locale.startsWith('wuu-') || locale.startsWith('yue-')) {
+            return `你好，我是${voice.local_name}，这是我的声音。`;
+        }
+
+        // 英语
+        if (locale.startsWith('en-')) {
+            return `Hello, I'm ${voice.local_name}. This is how my voice sounds.`;
+        }
+
+        // 阿拉伯语
+        if (locale.startsWith('ar-')) {
+            return `مرحباً، أنا ${voice.local_name}. هذا هو صوتي.`;
+        }
+
+        // 西班牙语
+        if (locale.startsWith('es-')) {
+            return `Hola, soy ${voice.local_name}. Así suena mi voz.`;
+        }
+
+        // 法语
+        if (locale.startsWith('fr-')) {
+            return `Bonjour, je suis ${voice.local_name}. Voici le son de ma voix.`;
+        }
+
+        // 德语
+        if (locale.startsWith('de-')) {
+            return `Hallo, ich bin ${voice.local_name}. So klingt meine Stimme.`;
+        }
+
+        // 日语
+        if (locale.startsWith('ja-')) {
+            return `こんにちは、${voice.local_name}です。私の声はこのように聞こえます。`;
+        }
+
+        // 韩语
+        if (locale.startsWith('ko-')) {
+            return `안녕하세요, ${voice.local_name}입니다. 제 목소리는 이렇게 들립니다.`;
+        }
+
+        // 俄语
+        if (locale.startsWith('ru-')) {
+            return `Здравствуйте, я ${voice.local_name}. Вот как звучит мой голос.`;
+        }
+
+        // 葡萄牙语
+        if (locale.startsWith('pt-')) {
+            return `Olá, sou ${voice.local_name}. Assim soa a minha voz.`;
+        }
+
+        // 意大利语
+        if (locale.startsWith('it-')) {
+            return `Ciao, sono ${voice.local_name}. Così suona la mia voce.`;
+        }
+
+        // 荷兰语
+        if (locale.startsWith('nl-')) {
+            return `Hallo, ik ben ${voice.local_name}. Zo klinkt mijn stem.`;
+        }
+
+        // 印地语
+        if (locale.startsWith('hi-')) {
+            return `नमस्ते, मैं ${voice.local_name} हूँ। यह मेरी आवाज़ कैसी सुनाई देती है।`;
+        }
+
+        // 默认使用中文
+        return `你好，我是${voice.local_name}，这是我的声音。`;
+    }
+
     onLanguageChange() {
         const languageFilter = document.getElementById('language-filter');
         const localeFilter = document.getElementById('locale-filter');
@@ -314,7 +387,7 @@ class VoiceLibrary {
 
                 <div class="flex gap-2">
                     <button class="btn-preview" data-voice="${voice.short_name}"
-                            data-text="你好，这是${voice.local_name}的声音试听。">
+                            data-text="${this.generatePreviewText(voice)}">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
