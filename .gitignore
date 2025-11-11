@@ -32,3 +32,4 @@ go.work.sum
 tmp
 CLAUDE.md
 */package-lock.json
+.serena/

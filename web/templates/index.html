@@ -1169,28 +1169,7 @@
         });
     });
 
-    // Tab栏交互效果
-    document.addEventListener('DOMContentLoaded', function () {
-        // 初始化Tab指示器的位置
-        const tabBar = document.querySelector('.tab-bar');
-        const activeTab = tabBar.querySelector('.active');
-        const indicator = tabBar.querySelector('.tab-indicator');
-
-        // 设置指示器初始位置和宽度来匹配活动tab
-        if (indicator && activeTab) {
-            indicator.style.width = `${activeTab.offsetWidth}px`;
-            indicator.style.transform = `translateX(${activeTab.offsetLeft}px)`;
-        }
-
-        // 当窗口大小改变时调整指示器
-        window.addEventListener('resize', function () {
-            if (indicator && activeTab) {
-                indicator.style.width = `${activeTab.offsetWidth}px`;
-                indicator.style.transform = `translateX(${activeTab.offsetLeft}px)`;
-            }
-        });
-    });
-</script>
+  </script>
 </body>
 </html>
 
