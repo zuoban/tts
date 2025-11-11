@@ -1,0 +1,443 @@
+/* 主题覆盖样式 - 覆盖内联样式中的硬编码颜色 */
+
+/* 基础元素样式覆盖 */
+body {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* 文本颜色覆盖 */
+.text-slate-800 {
+    color: var(--text-primary) !important;
+}
+
+.text-slate-600 {
+    color: var(--text-secondary) !important;
+}
+
+.text-slate-500 {
+    color: var(--text-tertiary) !important;
+}
+
+.text-blue-600 {
+    color: var(--primary-600) !important;
+}
+
+.text-blue-500 {
+    color: var(--primary-500) !important;
+}
+
+/* 背景颜色覆盖 */
+.bg-white\/70 {
+    background: var(--glass-bg) !important;
+}
+
+.bg-white\/90 {
+    background: var(--glass-bg) !important;
+}
+
+.bg-white\/80 {
+    background: var(--glass-bg) !important;
+}
+
+.bg-slate-100 {
+    background: var(--bg-tertiary) !important;
+}
+
+.bg-slate-50 {
+    background: var(--bg-secondary) !important;
+}
+
+.bg-blue-50\/80 {
+    background: var(--primary-100) !important;
+}
+
+/* 边框颜色覆盖 */
+.border-slate-300 {
+    border-color: var(--border-medium) !important;
+}
+
+.border-slate-200 {
+    border-color: var(--border-light) !important;
+}
+
+/* 按钮样式覆盖 */
+.btn-frosted {
+    background: var(--glass-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* 涟漪和渐变按钮 */
+.bg-gradient-to-b {
+    background: var(--btn-primary-bg) !important;
+}
+
+.bg-gradient-to-b.from-blue-500 {
+    background: var(--btn-primary-bg) !important;
+}
+
+/* 输入框样式覆盖 */
+input, textarea, select {
+    background: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--input-border) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--input-focus) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 面板样式覆盖 */
+.panel-frosted {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+/* 滑块样式覆盖 */
+input[type="range"] {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-medium) !important;
+}
+
+/* 字数计数器 */
+.char-counter {
+    background: var(--primary-100) !important;
+    color: var(--primary-800) !important;
+    border: 1px solid var(--primary-300) !important;
+}
+
+[data-theme="dark"] .char-counter {
+    background: var(--primary-900) !important;
+    color: var(--primary-200) !important;
+    border: 1px solid var(--primary-700) !important;
+}
+
+/* API Key相关样式 */
+.api-key-container {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.api-key-input {
+    background: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--input-border) !important;
+}
+
+.api-key-input:focus {
+    border-color: var(--input-focus) !important;
+    background: var(--input-bg) !important;
+}
+
+/* 音频播放器 */
+audio {
+    background: var(--bg-tertiary) !important;
+}
+
+/* 通知系统 */
+.custom-alert {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+/* 链接颜色 */
+.text-blue-500 {
+    color: var(--primary-500) !important;
+}
+
+.text-blue-500:hover {
+    color: var(--primary-600) !important;
+}
+
+/* 状态指示器 */
+.loading-text {
+    color: var(--primary-600) !important;
+}
+
+/* 阴影覆盖 */
+.shadow-lg {
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.shadow-xl {
+    box-shadow: var(--shadow-xl) !important;
+}
+
+/* 过渡效果 */
+* {
+    transition: background-color var(--theme-transition),
+                color var(--theme-transition),
+                border-color var(--theme-transition),
+                box-shadow var(--theme-transition);
+}
+
+/* 确保主题切换按钮不受影响 */
+.theme-toggle {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text-primary) !important;
+}
+
+/* 声音卡片样式 */
+.voice-card {
+    background: var(--glass-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.voice-card:hover {
+    box-shadow: var(--shadow-lg) !important;
+    transform: translateY(-4px);
+}
+
+/* 性别标签 */
+.gender-male {
+    background: var(--primary-600) !important;
+    color: white !important;
+}
+
+.gender-female {
+    background: var(--accent-pink) !important;
+    color: white !important;
+}
+
+/* 语言标签 */
+.locale-tag {
+    background: var(--primary-100) !important;
+    color: var(--primary-800) !important;
+    border: 1px solid var(--primary-300) !important;
+}
+
+[data-theme="dark"] .locale-tag {
+    background: var(--primary-900) !important;
+    color: var(--primary-200) !important;
+    border: 1px solid var(--primary-700) !important;
+}
+
+/* 风格标签 */
+.style-tag {
+    background: var(--primary-100) !important;
+    color: var(--primary-800) !important;
+    border: 1px solid var(--primary-300) !important;
+}
+
+[data-theme="dark"] .style-tag {
+    background: var(--primary-900) !important;
+    color: var(--primary-200) !important;
+    border: 1px solid var(--primary-700) !important;
+}
+
+/* 加载动画 */
+.loading-spinner {
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-top: 2px solid var(--primary-600);
+}
+
+/* 空状态样式 */
+.empty-state {
+    color: var(--text-secondary);
+}
+
+/* 返回按钮 */
+.btn-back {
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-back:hover {
+    background: var(--glass-bg);
+    box-shadow: var(--shadow-md);
+}
+
+/* 试听按钮 */
+.btn-preview {
+    background: var(--accent-green);
+    color: white;
+    border: none;
+}
+
+.btn-preview:hover {
+    background: var(--accent-green);
+    filter: brightness(0.9);
+}
+
+/* 选择按钮 */
+.btn-select {
+    background: var(--primary-600);
+    color: white;
+    border: none;
+}
+
+.btn-select:hover {
+    background: var(--primary-700);
+}
+
+/* 收藏按钮 */
+.btn-favorite {
+    background: transparent;
+    color: var(--accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-favorite:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* 搜索框样式 */
+.search-box input {
+    background: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--input-border) !important;
+}
+
+.search-box svg {
+    color: var(--text-tertiary);
+}
+
+/* 标签页指示器 */
+.tab-indicator {
+    background: linear-gradient(90deg, var(--primary-600), var(--accent-purple));
+}
+
+/* 确保主题切换动画平滑 */
+html {
+    transition: background-color var(--theme-transition);
+}
+
+body {
+    transition: color var(--theme-transition);
+}
+
+/* ========== 暗色模式特定优化 ========== */
+
+/* 暗色模式面板和内容区域增强 - Raycast 风格 */
+[data-theme="dark"] .content-area {
+    background: rgba(26, 31, 46, 0.85) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.8) !important;
+}
+
+[data-theme="dark"] .panel-frosted {
+    background: rgba(26, 31, 46, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 15px 20px -3px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 暗色模式按钮增强 - Raycast 风格 */
+[data-theme="dark"] .btn-frosted {
+    background: rgba(31, 41, 55, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .btn-frosted:hover {
+    background: rgba(55, 65, 81, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(-1px);
+}
+
+/* 暗色模式输入框增强 - Raycast 风格 */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background: rgba(17, 24, 39, 0.95) !important;
+    border: 1px solid rgba(55, 65, 81, 0.8) !important;
+    color: #f3f4f6 !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+    background: rgba(31, 41, 55, 0.98) !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 暗色模式语音卡片增强 - Raycast 风格 */
+[data-theme="dark"] .voice-card {
+    background: rgba(26, 31, 46, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] .voice-card:hover {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(-2px);
+}
+
+/* 暗色模式特殊按钮增强 */
+[data-theme="dark"] .btn-preview {
+    background: linear-gradient(135deg, #4ade80, #22c55e) !important;
+    box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-select {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-favorite {
+    color: #f87171 !important;
+    border: 1px solid rgba(248, 113, 113, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-favorite:hover {
+    background: rgba(248, 113, 113, 0.15) !important;
+    border-color: rgba(248, 113, 113, 0.5) !important;
+}
+
+/* 暗色模式字数计数器 */
+[data-theme="dark"] .char-counter {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(96, 165, 250, 0.4) !important;
+}
+
+/* 暗色模式API Key容器 */
+[data-theme="dark"] .api-key-container {
+    background: rgba(37, 43, 66, 0.8) !important;
+    border: 1px solid rgba(100, 116, 139, 0.4) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .api-key-input {
+    background: rgba(52, 58, 79, 0.8) !important;
+    border: 1px solid rgba(100, 116, 139, 0.5) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .api-key-input:focus {
+    background: rgba(71, 77, 97, 0.9) !important;
+    border: 1px solid rgba(96, 165, 250, 0.6) !important;
+}
+
+/* 暗色模式搜索框图标 */
+[data-theme="dark"] .search-box svg {
+    color: #94a3b8 !important;
+}
+
+/* 暗色模式滑块值显示 */
+[data-theme="dark"] .range-value {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(96, 165, 250, 0.4) !important;
+}
+
+/* 暗色模式音频播放器 */
+[data-theme="dark"] audio {
+    filter: hue-rotate(200deg) saturate(110%) brightness(80%) !important;
+    background: rgba(37, 43, 66, 0.5) !important;
+}
