@@ -155,6 +155,15 @@ function loadFormData() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  // 检查是否为主页面（通过检查是否存在关键的TTS表单元素）
+  const isMainPage = document.getElementById("text") && document.getElementById("voice") && document.getElementById("speak");
+
+  // 如果不是主页面，则不执行主页面相关的初始化代码
+  if (!isMainPage) {
+    console.log("非主页面，跳过主页面初始化");
+    return;
+  }
+
   // 获取DOM元素
   const textInput = document.getElementById("text");
   const voiceSelect = document.getElementById("voice");
