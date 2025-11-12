@@ -740,7 +740,12 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                             {favoriteVoices.length > 0 && (
                                 <div>
                                     <div className="flex items-center justify-between mb-3">
-                                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">收藏声音</h3>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">收藏声音</h3>
+                                            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-500 rounded-full">
+                                                {favoriteVoices.length}
+                                            </span>
+                                        </div>
                                         <button
                                             onClick={handleClearAllFavorites}
                                             className="text-xs text-gray-500 hover:text-red-500 transition-colors"
@@ -795,25 +800,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 </div>
                             )}
 
-                            {/* 统计信息 */}
-                            <div>
-                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">统计信息</h3>
-                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">历史记录</span>
-                                        <span className="text-lg font-semibold text-gray-800">{history.length}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">收藏声音</span>
-                                        <span className="text-lg font-semibold text-gray-800">{favoriteVoices.length}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">可用声音</span>
-                                        <span className="text-lg font-semibold text-gray-800">{voices.length}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                          </div>
 
                       </div>
                 </aside>
