@@ -14,13 +14,7 @@ import (
 type Config struct {
 	Server ServerConfig `mapstructure:"server"`
 	TTS    TTSConfig    `mapstructure:"tts"`
-	OpenAI OpenAIConfig `mapstructure:"openai"`
 	SSML   SSMLConfig   `mapstructure:"ssml"`
-}
-
-// OpenAIConfig 包含OpenAI API配置
-type OpenAIConfig struct {
-	ApiKey string `mapstructure:"api_key"`
 }
 
 // ServerConfig 包含HTTP服务器配置

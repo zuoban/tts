@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +16,8 @@ import (
 	"tts/internal/tts"
 	"tts/internal/utils"
 	"unicode/utf8"
+
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )
@@ -193,13 +194,27 @@ func (h *TTSHandler) HandleTTS(c *gin.Context) {
 func (h *TTSHandler) HandleTTSGet(c *gin.Context) {
 	startTime := time.Now()
 
-	// 从URL参数获取
-	req := models.TTSRequest{
-		Text:  c.Query("t"),
-		Voice: c.Query("v"),
-		Rate:  c.Query("r"),
-		Pitch: c.Query("p"),
-		Style: c.Query("s"),
+	var req models.TTSRequest
+
+	if c.Query("t") != "" {
+		req = models.TTSRequest{
+			Text:  c.Query("t"),
+			Voice: c.Query("v"),
+			Rate:  c.Query("r"),
+			Pitch: c.Query("p"),
+			Style: c.Query("s"),
+		}
+	} else if c.Query("text") != "" {
+		req = models.TTSRequest{
+			Text:  c.Query("text"),
+			Voice: c.Query("voice"),
+			Rate:  c.Query("rate"),
+			Pitch: c.Query("pitch"),
+			Style: c.Query("style"),
+		}
+	} else {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "必须提供文本参数"})
+		return
 	}
 
 	parseTime := time.Since(startTime)
