@@ -241,6 +241,98 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         await generateSpeech();
     };
 
+    const handleImportReader = async () => {
+        if (!voice) {
+            setError('请先选择声音');
+            return;
+        }
+
+        try {
+            setError(null);
+
+            // 构造请求参数，与TTS参数相同但不包含api_key
+            const params = new URLSearchParams();
+            params.append('text', text.trim());
+            params.append('voice', voice);
+            if (style) params.append('style', style);
+            params.append('rate', rate);
+            params.append('pitch', pitch);
+
+            // 构造完整的请求URL
+            const baseUrl = window.location.origin;
+            const url = `${baseUrl}/api/v1/reader.json?${params.toString()}`;
+
+            // 复制到剪贴板
+            await navigator.clipboard.writeText(url);
+
+            // 显示成功提示
+            const message = document.createElement('div');
+            message.className = 'fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
+            message.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>导入阅读链接已复制到剪贴板</span>
+                </div>
+            `;
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.remove();
+            }, 3000);
+
+        } catch (error) {
+            setError('复制到剪贴板失败');
+        }
+    };
+
+    const handleImportIfreetime = async () => {
+        if (!voice || !text.trim()) {
+            setError('请先选择声音并输入文本');
+            return;
+        }
+
+        try {
+            setError(null);
+
+            // 构造请求参数，与TTS参数相同但不包含api_key
+            const params = new URLSearchParams();
+            params.append('text', text.trim());
+            params.append('voice', voice);
+            if (style) params.append('style', style);
+            params.append('rate', rate);
+            params.append('pitch', pitch);
+
+            // 构造完整的请求URL
+            const baseUrl = window.location.origin;
+            const url = `${baseUrl}/api/v1/ifreetime.json?${params.toString()}`;
+
+            // 复制到剪贴板
+            await navigator.clipboard.writeText(url);
+
+            // 显示成功提示
+            const message = document.createElement('div');
+            message.className = 'fixed top-4 right-4 bg-purple-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
+            message.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>导入爱阅记链接已复制到剪贴板</span>
+                </div>
+            `;
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.remove();
+            }, 3000);
+
+        } catch (error) {
+            setError('复制到剪贴板失败');
+        }
+    };
+
     const handleRegenerateHistoryItem = async (item: HistoryItem) => {
 
         try {
@@ -1075,6 +1167,36 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                             </svg>
                                                             清空
+                                                        </Button>
+
+                                                        {/* 导入阅读按钮 */}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-gray-600 hover:text-green-600 hover:bg-green-50 border border-gray-200 hover:border-green-200"
+                                                            onClick={handleImportReader}
+                                                            disabled={!text.trim() || !voice}
+                                                            title="导入阅读"
+                                                        >
+                                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                            </svg>
+                                                            导入阅读
+                                                        </Button>
+
+                                                        {/* 导入爱阅记按钮 */}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 border border-gray-200 hover:border-purple-200"
+                                                            onClick={handleImportIfreetime}
+                                                            disabled={!text.trim() || !voice}
+                                                            title="导入爱阅记"
+                                                        >
+                                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                            </svg>
+                                                            导入爱阅记
                                                         </Button>
 
                                                         {/* 生成语音按钮 */}
