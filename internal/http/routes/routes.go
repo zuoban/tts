@@ -55,8 +55,8 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error
 	// 兼容性路由 - 保持现有第三方集成接口不变
 	baseRouter.POST("/tts", authHandler, ttsHandler.HandleTTS)
 	baseRouter.GET("/tts", authHandler, ttsHandler.HandleTTS)
-	baseRouter.GET("/reader.json", authHandler, ttsHandler.HandleReader)
-	baseRouter.GET("/ifreetime.json", authHandler, ttsHandler.HandleIFreeTime)
+	apiV1.GET("/reader.json", authHandler, ttsHandler.HandleReader)
+	apiV1.GET("/ifreetime.json", authHandler, ttsHandler.HandleIFreeTime)
 	baseRouter.GET("/voices", voicesHandler.HandleVoices)
 
 	// 设置OpenAI兼容接口的处理器，添加验证中间件
