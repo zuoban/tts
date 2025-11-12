@@ -188,7 +188,7 @@ func (c *Client) ListVoices(ctx context.Context, locale string) ([]models.Voice,
 	// 更新缓存
 	c.voicesCacheMu.Lock()
 	c.voicesCache = voices
-	c.voicesCacheExpiry = time.Now().Add(2 * time.Hour) // 缓存 2 小时
+	c.voicesCacheExpiry = time.Now().Add(8 * time.Hour) // 缓存 8 小时
 	c.voicesCacheMu.Unlock()
 
 	// 如果指定了locale，则过滤结果
@@ -203,6 +203,31 @@ func (c *Client) ListVoices(ctx context.Context, locale string) ([]models.Voice,
 	}
 
 	return voices, nil
+}
+
+// WarmupVoicesCache 预热声音列表缓存
+func (c *Client) WarmupVoicesCache(ctx context.Context) error {
+	// 检查缓存是否已经有效
+	c.voicesCacheMu.RLock()
+	if !c.voicesCacheExpiry.IsZero() && time.Now().Before(c.voicesCacheExpiry) && len(c.voicesCache) > 0 {
+		c.voicesCacheMu.RUnlock()
+		log.Printf("声音列表缓存已有效，跳过预热，当前缓存 %d 个语音，剩余时间: %v",
+			len(c.voicesCache), c.voicesCacheExpiry.Sub(time.Now()))
+		return nil
+	}
+	c.voicesCacheMu.RUnlock()
+
+	log.Println("开始预热声音列表缓存...")
+
+	// 调用 ListVoices 来填充缓存
+	voices, err := c.ListVoices(ctx, "")
+	if err != nil {
+		log.Printf("预热声音列表缓存失败: %v", err)
+		return err
+	}
+
+	log.Printf("声音列表缓存预热成功，缓存了 %d 个语音", len(voices))
+	return nil
 }
 
 // SynthesizeSpeech 将文本转换为语音

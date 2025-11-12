@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"context"
+	"log"
 	"net/http"
+	"time"
 
 	"tts/internal/config"
 	"tts/internal/http/handlers"
@@ -80,7 +83,7 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error
 	router.NoRoute(func(c *gin.Context) {
 		// 如果是API路径，返回404
 		path := c.Request.URL.Path
-		if len(path) >= 4 && (path[:4] == "/api" || path[:4] == "/tts" || (len(path) >= 2 && path[:2] == "/v")) {
+		if len(path) >= 4 && (path[:4] == "/api" || path[:4] == "/tts" || path[:4] == "/v1/" || path == "/v1") {
 			c.JSON(http.StatusNotFound, gin.H{"error": "API endpoint not found"})
 			return
 		}
@@ -96,6 +99,18 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error
 func InitializeServices(cfg *config.Config) (tts.Service, error) {
 	// 创建Microsoft TTS客户端
 	ttsClient := microsoft.NewClient(cfg)
+
+	// 预热声音列表缓存
+	log.Println("正在初始化声音列表缓存...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := ttsClient.WarmupVoicesCache(ctx); err != nil {
+		log.Printf("预热声音列表缓存失败，但不影响服务启动: %v", err)
+		// 注意：预热失败不应该阻止服务启动，因为用户请求时还可以重新尝试
+	} else {
+		log.Println("声音列表缓存预热完成")
+	}
 
 	return ttsClient, nil
 }

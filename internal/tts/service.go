@@ -12,4 +12,7 @@ type Service interface {
 
 	// SynthesizeSpeech 将文本转换为语音
 	SynthesizeSpeech(ctx context.Context, req models.TTSRequest) (*models.TTSResponse, error)
+
+	// WarmupVoicesCache 预热声音列表缓存
+	WarmupVoicesCache(ctx context.Context) error
 }
