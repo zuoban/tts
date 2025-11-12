@@ -6,7 +6,7 @@ const pendingRequests = new Map<string, Promise<unknown>>();
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/', // 使用相对路径，在生产环境中直接使用根路径
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

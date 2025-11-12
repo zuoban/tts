@@ -14,7 +14,8 @@ RUN npm ci
 # 复制前端源代码
 COPY frontend/ ./
 
-# 构建前端应用
+# 构建前端应用（设置为生产环境，使用相对路径）
+ENV VITE_API_BASE_URL=/
 RUN npm run build
 
 # ======================
