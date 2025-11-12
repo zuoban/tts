@@ -26,9 +26,6 @@ tts:
     onyx: "zh-CN-YunjianNeural"       # 成熟男声
     nova: "zh-CN-XiaohanNeural"       # 活力女声
     shimmer: "zh-CN-XiaomoNeural"     # 温柔女声
-openai:
-  api_key: ''
-
 ssml:
   preserve_tags:
     - name: break

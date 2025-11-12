@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+README-SEPARATION.md
+CLAUDE.md
+Dockerfile*
+
+# Docker 相关
+docker-compose*.yml
+nginx*.conf
+
+# 脚本文件
+script/
+
+# 临时文件
+*.tmp
+*.log
+
+# IDE 文件
+.idea/
+.vscode/
+
+# OS 文件
+.DS_Store
+Thumbs.db
+
+# 构建产物
+web/dist/
+node_modules/
+tmp/
+
+# 环境变量文件
+.env*
+!.env.example
+
+# SSL 证书
+ssl/
+
+# 日志文件
+*.log
+
+# 测试文件
+*_test.go
+test/
