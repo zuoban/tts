@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useTTSStore } from './hooks/useTTSStore';
-import { Navbar } from './components/layout/Navbar';
 import { SettingsModal } from './components/layout/SettingsModal';
 import Home from './pages/Home';
-import VoiceLibrary from './pages/VoiceLibrary';
 import './styles/globals.css';
 
 function App() {
@@ -30,13 +28,9 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {/* 导航栏 */}
-        <Navbar onOpenSettings={handleOpenSettings} />
-
         {/* 路由内容 */}
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/voice-library" element={<VoiceLibrary />} />
+          <Route path="/" element={<Home onOpenSettings={handleOpenSettings} />} />
         </Routes>
 
         {/* 设置弹窗 - 全局级别 */}

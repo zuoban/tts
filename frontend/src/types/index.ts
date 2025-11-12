@@ -109,6 +109,24 @@ export interface TTSState {
   currentPlayingId: string | null;
 }
 
+// 收藏声音项
+export interface FavoriteVoiceItem {
+  id: string; // 声音ID或short_name
+  name: string; // 声音名称
+  localName?: string; // 本地化名称
+  locale: string; // 语言区域
+  localeName?: string; // 语言区域显示名称
+  gender: 'Male' | 'Female';
+  styles?: string[]; // 支持的风格
+  addedAt: Date; // 收藏时间
+}
+
+// 收藏夹状态
+export interface FavoritesState {
+  items: FavoriteVoiceItem[];
+  lastUpdated: Date | null;
+}
+
 // 本地存储键
 export const STORAGE_KEYS = {
   API_KEY: 'tts_api_key',
@@ -119,4 +137,5 @@ export const STORAGE_KEYS = {
   PITCH: 'tts_pitch',
   LOCALE: 'tts_locale',
   HISTORY: 'tts_history',
+  FAVORITES: 'tts_favorites',
 } as const;

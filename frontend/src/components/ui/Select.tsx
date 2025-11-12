@@ -26,22 +26,23 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     children,
     ...props
   }, ref) => {
-    const baseClasses = 'flex h-10 w-full rounded-md border border-gray-300 bg-white/90 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 backdrop-blur-sm transition-colors appearance-none pr-10';
+    const baseClasses = 'h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors appearance-none pr-10';
     const errorClasses = error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : '';
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-1 isolate">
         {label && (
           <label className="text-sm font-medium text-gray-700">
             {label}
           </label>
         )}
-        <select
-          className={`${baseClasses} ${errorClasses} ${className}`}
-          ref={ref}
-          disabled={loading}
-          {...props}
-        >
+        <div className="relative">
+          <select
+            className={`${baseClasses} ${errorClasses} ${className}`}
+            ref={ref}
+            disabled={loading}
+            {...props}
+          >
           {placeholder && (
             <option value="" disabled key="placeholder">
               {loading ? '加载中...' : placeholder}
@@ -57,7 +58,14 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
           {children}
-        </select>
+          </select>
+          {/* 下拉箭头 */}
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-20">
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
         {error && (
           <p className="text-sm text-red-600">{error}</p>
         )}

@@ -126,7 +126,8 @@ func (c *Client) ListVoices(ctx context.Context, locale string) ([]models.Voice,
 		if locale != "" {
 			var filtered []models.Voice
 			for _, voice := range voices {
-				if strings.HasPrefix(voice.Locale, locale) {
+				// 精确匹配或前缀匹配
+				if voice.Locale == locale || strings.HasPrefix(voice.Locale, locale+"-") {
 					filtered = append(filtered, voice)
 				}
 			}
@@ -195,7 +196,8 @@ func (c *Client) ListVoices(ctx context.Context, locale string) ([]models.Voice,
 	if locale != "" {
 		var filtered []models.Voice
 		for _, voice := range voices {
-			if strings.HasPrefix(voice.Locale, locale) {
+			// 精确匹配或前缀匹配
+			if voice.Locale == locale || strings.HasPrefix(voice.Locale, locale+"-") {
 				filtered = append(filtered, voice)
 			}
 		}

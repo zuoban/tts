@@ -13,6 +13,8 @@
 - 🖥️ **现代界面** - 基于 React 的现代化 Web UI
 - 🔧 **RESTful API** - 提供完整的 REST API 接口
 - 📦 **多部署方式** - 支持 Docker、Cloudflare Worker 等多种部署方式
+- ⭐ **收藏功能** - 支持收藏喜欢的声音，快速选择和管理
+- 🎯 **声音库** - 完整的声音浏览和试听功能
 
 ## 🏗️ 架构概览
 
@@ -423,10 +425,21 @@ tts/
 ├── frontend/               # React 前端应用
 │   ├── src/
 │   │   ├── components/     # React 组件
+│   │   │   ├── ui/         # 通用 UI 组件
+│   │   │   ├── audio/      # 音频相关组件
+│   │   │   │   ├── FavoriteVoices.tsx    # 收藏声音组件
+│   │   │   │   ├── HistoryList.tsx      # 历史记录组件
+│   │   │   │   └── AudioPlayer.tsx      # 音频播放器组件
+│   │   │   └── layout/     # 布局组件
 │   │   ├── pages/          # 页面组件
+│   │   │   ├── Home.tsx    # 首页（包含收藏功能）
+│   │   │   └── VoiceLibrary.tsx   # 声音库页面
 │   │   ├── hooks/          # 自定义 Hooks
 │   │   ├── services/       # API 服务层
+│   │   │   ├── api.ts      # TTS API 服务
+│   │   │   └── favorites.ts # 收藏功能服务
 │   │   ├── types/          # TypeScript 类型定义
+│   │   │   ├── index.ts    # 核心类型（包含收藏相关类型）
 │   │   └── utils/          # 工具函数
 │   └── dist/               # 构建输出目录
 ├── configs/                # 配置文件

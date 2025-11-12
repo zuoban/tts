@@ -21,11 +21,8 @@ func NewVoicesHandler(service tts.Service) *VoicesHandler {
 
 // HandleVoices 处理语音列表请求
 func (h *VoicesHandler) HandleVoices(c *gin.Context) {
-	// 从查询参数中获取语言筛选
-	locale := c.Query("locale")
-
-	// 获取语音列表
-	voices, err := h.ttsService.ListVoices(c.Request.Context(), locale)
+	// 获取所有语音列表
+	voices, err := h.ttsService.ListVoices(c.Request.Context(), "")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "获取语音列表失败: " + err.Error()})
 		return

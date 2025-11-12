@@ -79,15 +79,15 @@ export class TTSApiService {
   }
 
   // 获取声音列表
-  static async getVoices(locale?: string): Promise<Voice[]> {
-    const cacheKey = `voices-${locale || 'all'}`;
+  static async getVoices(): Promise<Voice[]> {
+    const cacheKey = 'voices-all';
 
     // 如果已有请求在进行中，返回相同的 Promise
     if (pendingRequests.has(cacheKey)) {
       return pendingRequests.get(cacheKey) as Promise<Voice[]>;
     }
 
-    const requestPromise = this.makeVoicesRequest(locale);
+    const requestPromise = this.makeVoicesRequest();
     pendingRequests.set(cacheKey, requestPromise);
 
     try {
@@ -99,10 +99,9 @@ export class TTSApiService {
   }
 
   // 实际的声音列表请求方法
-  private static async makeVoicesRequest(locale?: string): Promise<Voice[]> {
+  private static async makeVoicesRequest(): Promise<Voice[]> {
     try {
-      const params = locale ? { locale } : {};
-      const response = await api.get('/api/v1/voices', { params });
+      const response = await api.get('/api/v1/voices');
 
       // 映射后端数据到前端类型
       return response.data.map((voice: Record<string, unknown>) => ({
