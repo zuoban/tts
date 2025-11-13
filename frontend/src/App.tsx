@@ -17,6 +17,21 @@ function App() {
     }
   }, [apiKey]);
 
+  // 全局键盘事件处理
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // ESC 键关闭设置弹窗
+      if (event.key === 'Escape' && showSettings) {
+        setShowSettings(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showSettings]);
+
   const handleOpenSettings = () => {
     setShowSettings(true);
   };

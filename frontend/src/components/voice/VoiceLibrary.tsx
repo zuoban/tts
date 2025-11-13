@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useTTSStore } from "../../hooks/useTTSStore";
 import { TTSApiService } from "../../services/api";
 import { Button } from "../ui/Button";
@@ -36,6 +36,9 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
     new Set(),
   );
 
+  // 搜索框引用
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (voices.length === 0 && isOpen) {
       loadVoices();
@@ -52,6 +55,13 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
         // 如果没有任何 locale 设置，清空搜索框
         setSearchTerm("");
       }
+
+      // 聚焦搜索框
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, 100);
     }
   }, [isOpen, currentLocale]);
 
@@ -413,11 +423,26 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
           {/* 筛选控件 */}
           <div className="mb-6 p-4 border border-gray-200 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                placeholder="搜索声音名称、区域..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  ref={searchInputRef}
+                  placeholder="搜索声音名称、区域..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="清除搜索"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <Select
                 value={selectedGender}
                 onChange={(e) => setSelectedGender(e.target.value)}

@@ -60,10 +60,61 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     // 声音库模态框状态
     const [voiceLibraryOpen, setVoiceLibraryOpen] = useState(false);
 
+    // 快捷键帮助弹窗状态
+    const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
+
     // 使用 useCallback 稳定化函数引用，防止重复初始化
     const initializeAppCallback = useCallback(() => {
         initializeApp();
     }, [initializeApp]); // 包含 initializeApp 依赖
+
+    // 快捷键处理
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Ctrl+K 或 Cmd+K 打开声音库
+            if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+                event.preventDefault();
+                setVoiceLibraryOpen(true);
+            }
+
+            // Ctrl+/ 或 Cmd+/ 显示快捷键帮助
+            if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+                event.preventDefault();
+                setShortcutsHelpOpen(true);
+            }
+
+            // Ctrl+E 或 Cmd+E 聚焦文本输入框
+            if ((event.ctrlKey || event.metaKey) && event.key === 'e') {
+                event.preventDefault();
+                document.getElementById('text-input')?.focus();
+            }
+
+            // Ctrl+Enter 或 Cmd+Enter 生成语音
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                // 检查是否在文本输入框内
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.id === 'text-input' || activeElement.tagName === 'TEXTAREA')) {
+                    event.preventDefault();
+                    handleGenerateSpeech();
+                }
+            }
+
+            // ESC 键关闭弹窗
+            if (event.key === 'Escape') {
+                if (voiceLibraryOpen) {
+                    setVoiceLibraryOpen(false);
+                }
+                if (shortcutsHelpOpen) {
+                    setShortcutsHelpOpen(false);
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [voiceLibraryOpen, shortcutsHelpOpen]);
 
     useEffect(() => {
         initializeAppCallback();
@@ -876,27 +927,23 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 <div className="space-y-2">
                                     <Button
                                         variant="ghost"
-                                        className="w-full justify-start"
+                                        className="w-full justify-start group"
                                         onClick={() => setVoiceLibraryOpen(true)}
                                     >
                                         <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                         </svg>
                                         声音库
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full justify-start"
-                                        onClick={() => document.getElementById('text-input')?.focus()}
-                                    >
-                                        <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        新建文本
+                                        <span className="ml-auto text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
+                                            <kbd className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 border border-gray-200 rounded">
+                                                {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+                                            </kbd>
+                                        </span>
                                     </Button>
                                 </div>
                             </div>
 
+      
                             {/* 收藏声音 */}
                             {favoriteVoices.length > 0 && (
                                 <div>
@@ -1321,7 +1368,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
 
                     {/* 底部信息栏 */}
                     <footer className="bg-white/80 backdrop-blur-xl border-t border-gray-200/50 px-6 py-3">
-                        <div className="flex items-center justify-between text-sm text-gray-600">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-600">
                             <div className="flex items-center space-x-4">
                                 <span>© 2025 TTS Studio</span>
                                 <a href="https://github.com/zuoban/tts" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 transition-colors">
@@ -1332,6 +1379,16 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 <span>已生成 {history.length} 个语音</span>
                                 <span>•</span>
                                 <span>{voices.length} 个可用声音</span>
+                                <span>•</span>
+                                <button
+                                    onClick={() => setShortcutsHelpOpen(true)}
+                                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100/60 rounded-lg transition-all duration-200"
+                                    title="查看快捷键 (Ctrl+/)"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </footer>
@@ -1352,6 +1409,120 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 onClose={() => setVoiceLibraryOpen(false)}
                 onFavoritesChange={handleFavoritesChange}
             />
+
+            {/* 快捷键帮助弹窗 */}
+            {shortcutsHelpOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
+                        {/* 头部 */}
+                        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 text-white">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-bold flex items-center">
+                                        <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        快捷键
+                                    </h2>
+                                    <p className="text-indigo-100 text-sm mt-1">
+                                        提高您的工作效率
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setShortcutsHelpOpen(false)}
+                                    className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 内容 */}
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-medium text-gray-900">打开声音库</span>
+                                    </div>
+                                    <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
+                                        {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+                                    </kbd>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-medium text-gray-900">生成语音</span>
+                                    </div>
+                                    <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
+                                        {navigator.platform.includes('Mac') ? '⌘⏎' : 'Ctrl+⏎'}
+                                    </kbd>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-yellow-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-medium text-gray-900">聚焦文本内容</span>
+                                    </div>
+                                    <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
+                                        {navigator.platform.includes('Mac') ? '⌘E' : 'Ctrl+E'}
+                                    </kbd>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-medium text-gray-900">快捷键帮助</span>
+                                    </div>
+                                    <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
+                                        {navigator.platform.includes('Mac') ? '⌘/' : 'Ctrl+/'}
+                                    </kbd>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-medium text-gray-900">关闭弹窗</span>
+                                    </div>
+                                    <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
+                                        ESC
+                                    </kbd>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-200">
+                                <div className="text-sm text-gray-600 text-center">
+                                    💡 提示：生成语音快捷键仅在文本输入框内有效
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
