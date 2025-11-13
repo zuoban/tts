@@ -9,7 +9,7 @@ WORKDIR /frontend
 COPY frontend/package*.json ./
 
 # 安装前端依赖
-RUN npm ci
+RUN npm i
 
 # 复制前端源代码
 COPY frontend/ ./
