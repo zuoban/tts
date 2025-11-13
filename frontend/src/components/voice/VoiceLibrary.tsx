@@ -190,25 +190,109 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
     }
   };
 
-  const copyVoiceId = (voiceId: string, voiceName: string) => {
-    navigator.clipboard.writeText(voiceId);
+  // 通用的安全复制函数
+  const safeCopyToClipboard = async (text: string, successMessage: string) => {
+    try {
+      // 首先尝试使用现代的 Clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        showSuccessMessage(successMessage);
+      } else {
+        // 降级到传统的复制方法
+        fallbackCopyTextToClipboard(text, successMessage);
+      }
+    } catch (error) {
+      console.warn('Clipboard API failed, using fallback:', error);
+      // 如果现代API失败，使用降级方案
+      fallbackCopyTextToClipboard(text, successMessage);
+    }
+  };
 
-    const copyMessage = document.createElement("div");
-    copyMessage.className =
-      "fixed top-4 right-4 bg-gray-700 text-white px-3 py-1.5 rounded-lg shadow-lg z-50 text-sm";
-    copyMessage.innerHTML = `
+  // 传统的复制方法降级方案
+  const fallbackCopyTextToClipboard = (text: string, successMessage: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+
+      // 避免滚动到底部
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+
+      if (successful) {
+        showSuccessMessage(successMessage);
+      } else {
+        showCopyFailedMessage(text);
+      }
+    } catch (error) {
+      console.error('Fallback copy failed:', error);
+      showCopyFailedMessage(text);
+    }
+  };
+
+  // 显示成功消息
+  const showSuccessMessage = (message: string) => {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
+    successDiv.innerHTML = `
       <div class="flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
-        <span>已复制 ${voiceName} 的 ID</span>
+        <span>${message}</span>
       </div>
     `;
-    document.body.appendChild(copyMessage);
-
+    document.body.appendChild(successDiv);
     setTimeout(() => {
-      copyMessage.remove();
-    }, 2000);
+      if (document.body.contains(successDiv)) {
+        document.body.removeChild(successDiv);
+      }
+    }, 3000);
+  };
+
+  // 显示复制失败消息并提供手动复制选项
+  const showCopyFailedMessage = (text: string) => {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 text-sm max-w-md';
+    errorDiv.innerHTML = `
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-semibold">自动复制失败</span>
+        </div>
+        <div class="text-xs opacity-90">
+          请手动复制以下内容：
+        </div>
+        <div class="bg-white bg-opacity-20 rounded p-2 text-xs font-mono break-all">
+          ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}
+        </div>
+        <button class="bg-white text-red-500 px-2 py-1 rounded text-xs font-semibold hover:bg-opacity-90 transition-colors" onclick="this.parentElement.remove()">
+          关闭
+        </button>
+      </div>
+    `;
+    document.body.appendChild(errorDiv);
+
+    // 10秒后自动移除
+    setTimeout(() => {
+      if (document.body.contains(errorDiv)) {
+        document.body.removeChild(errorDiv);
+      }
+    }, 10000);
+  };
+
+  const copyVoiceId = (voiceId: string, voiceName: string) => {
+    safeCopyToClipboard(voiceId, `已复制 ${voiceName} 的 ID`);
   };
 
   const selectVoiceForForm = (voice: Voice) => {
