@@ -30,7 +30,8 @@ go.work.sum
 
 */node_modules/
 tmp
-CLAUDE.md
 */package-lock.json
 .serena/
 tts
+.conductor
+.claude
