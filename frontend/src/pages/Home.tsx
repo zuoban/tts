@@ -923,22 +923,20 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             {/* 快速访问 */}
                             <div>
-                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">快速访问</h3>
-                                <div className="space-y-2">
+                                  <div className="space-y-2">
                                     <Button
                                         variant="ghost"
-                                        className="w-full justify-start group"
-                                        onClick={() => setVoiceLibraryOpen(true)}
+                                        className="w-full justify-center group"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSidebarOpen(false); // 移动端点击时关闭侧边栏
+                                            setVoiceLibraryOpen(true);
+                                        }}
+                                        title="声音库"
                                     >
-                                        <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                         </svg>
-                                        声音库
-                                        <span className="ml-auto text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
-                                            <kbd className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 border border-gray-200 rounded">
-                                                {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
-                                            </kbd>
-                                        </span>
                                     </Button>
                                 </div>
                             </div>
@@ -971,7 +969,11 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                 className="group relative"
                                             >
                                                 <button
-                                                    onClick={() => handleFavoriteSelect(fav)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSidebarOpen(false); // 移动端点击时关闭侧边栏
+                                                        handleFavoriteSelect(fav);
+                                                    }}
                                                     className={`w-full text-left px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
                                                         voice === fav.id
                                                             ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium'
@@ -1014,7 +1016,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 </aside>
 
                 {/* 主内容区域 */}
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden relative z-10">
                     {/* 顶部导航栏 */}
                     <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4">
                         <div className="flex items-center justify-between">
@@ -1379,16 +1381,6 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 <span>已生成 {history.length} 个语音</span>
                                 <span>•</span>
                                 <span>{voices.length} 个可用声音</span>
-                                <span>•</span>
-                                <button
-                                    onClick={() => setShortcutsHelpOpen(true)}
-                                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100/60 rounded-lg transition-all duration-200"
-                                    title="查看快捷键 (Ctrl+/)"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </footer>
@@ -1398,8 +1390,14 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
             {/* 移动端侧边栏遮罩 */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
+                    className="fixed inset-y-0 left-72 right-0 bg-black/50 z-20 lg:hidden"
+                    style={{left: '288px'}} /* w-72 = 18rem = 288px */
+                    onClick={(e) => {
+                        // 确保点击的是遮罩层本身，而不是其子元素
+                        if (e.target === e.currentTarget) {
+                            setSidebarOpen(false);
+                        }
+                    }}
                 />
             )}
 
