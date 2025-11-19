@@ -928,7 +928,11 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                     <Button
                                         variant="ghost"
                                         className="w-full justify-start group"
-                                        onClick={() => setVoiceLibraryOpen(true)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSidebarOpen(false); // 移动端点击时关闭侧边栏
+                                            setVoiceLibraryOpen(true);
+                                        }}
                                     >
                                         <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -971,7 +975,11 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                 className="group relative"
                                             >
                                                 <button
-                                                    onClick={() => handleFavoriteSelect(fav)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSidebarOpen(false); // 移动端点击时关闭侧边栏
+                                                        handleFavoriteSelect(fav);
+                                                    }}
                                                     className={`w-full text-left px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
                                                         voice === fav.id
                                                             ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium'
@@ -1014,7 +1022,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 </aside>
 
                 {/* 主内容区域 */}
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden relative z-10">
                     {/* 顶部导航栏 */}
                     <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4">
                         <div className="flex items-center justify-between">
@@ -1275,59 +1283,57 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-gray-600 hover:text-red-600 hover:bg-red-50 border border-gray-200 hover:border-red-200"
+                                                            className="text-gray-600 hover:text-red-600 hover:bg-red-50 border border-gray-200 hover:border-red-200 p-3"
                                                             onClick={() => setText('')}
                                                             disabled={!text.trim()}
+                                                            title="清空"
                                                         >
-                                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                             </svg>
-                                                            清空
                                                         </Button>
 
                                                         {/* 导入阅读按钮 */}
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-gray-600 hover:text-green-600 hover:bg-green-50 border border-gray-200 hover:border-green-200"
+                                                            className="text-gray-600 hover:text-green-600 hover:bg-green-50 border border-gray-200 hover:border-green-200 p-3"
                                                             onClick={handleImportReader}
                                                             disabled={!text.trim() || !voice}
                                                             title="导入阅读"
                                                         >
-                                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                                             </svg>
-                                                            导入阅读
                                                         </Button>
 
                                                         {/* 导入爱阅记按钮 */}
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 border border-gray-200 hover:border-purple-200"
+                                                            className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 border border-gray-200 hover:border-purple-200 p-3"
                                                             onClick={handleImportIfreetime}
                                                             disabled={!text.trim() || !voice}
                                                             title="导入爱阅记"
                                                         >
-                                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                             </svg>
-                                                            导入爱阅记
                                                         </Button>
 
                                                         {/* 生成语音按钮 */}
                                                         <Button
                                                             size="sm"
-                                                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                                                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 p-3 shadow-lg hover:shadow-xl transition-all duration-200"
                                                             onClick={handleGenerateSpeech}
                                                             loading={isLoading}
                                                             disabled={!text.trim() || !voice}
+                                                            title={isLoading ? '生成中...' : '生成语音'}
                                                         >
-                                                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                             </svg>
-                                                            {isLoading ? '生成中...' : '生成语音'}
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -1398,8 +1404,14 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
             {/* 移动端侧边栏遮罩 */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
+                    className="fixed inset-y-0 left-72 right-0 bg-black/50 z-20 lg:hidden"
+                    style={{left: '288px'}} /* w-72 = 18rem = 288px */
+                    onClick={(e) => {
+                        // 确保点击的是遮罩层本身，而不是其子元素
+                        if (e.target === e.currentTarget) {
+                            setSidebarOpen(false);
+                        }
+                    }}
                 />
             )}
 
