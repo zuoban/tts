@@ -141,7 +141,8 @@ async function handleRequest(request) {
       urlParams.push(`s=${style}`);
     }
 
-    if (apiKey) {
+    // 只有配置了API密钥且请求提供了api_key参数时才添加
+    if (API_KEY && apiKey) {
       urlParams.push(`api_key=${apiKey}`);
     }
 
@@ -198,8 +199,8 @@ async function handleRequest(request) {
       "s": style
     };
 
-    // 如果需要API密钥认证，添加到请求参数
-    if (apiKey) {
+    // 只有配置了API密钥且请求提供了api_key参数时才添加
+    if (API_KEY && apiKey) {
       params["api_key"] = apiKey;
     }
 
