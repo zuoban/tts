@@ -223,29 +223,6 @@ export const useTTSStore = create<TTSStore>()(
           get().addToHistory(historyItem);
 
           set({ audioUrl, currentPlayingId: historyItem.id });
-
-          // 自动播放新生成的音频
-          setTimeout(() => {
-            const audio = new Audio();
-            audio.src = audioUrl;
-            audio.volume = 1.0;
-            audio.muted = false;
-
-            audio.addEventListener('ended', () => {
-              set({ currentPlayingId: null });
-              URL.revokeObjectURL(audioUrl);
-            });
-
-            audio.addEventListener('error', () => {
-              set({ currentPlayingId: null });
-              URL.revokeObjectURL(audioUrl);
-            });
-
-            audio.play().catch(error => {
-              console.error('自动播放失败:', error);
-              set({ currentPlayingId: null });
-            });
-          }, 100);
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to generate speech' });
         } finally {

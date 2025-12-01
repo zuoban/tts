@@ -2,31 +2,50 @@ import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import type { HistoryItem } from '../../types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faTrash, faClock, faVolumeUp, faPlay, faPause, faRedo, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faTrash, faClock, faVolumeUp, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 interface HistoryListProps {
   items: HistoryItem[];
   currentPlayingId: string | null;
-  onPlayItem: (item: HistoryItem) => void;
   onDownloadItem: (item: HistoryItem) => void;
   onRemoveItem: (id: string) => void;
   onClearAll: () => void;
   onRegenerateItem: (item: HistoryItem) => void;
-  onPlayHistoryItemDirectly: (item: HistoryItem) => void;
   onLoadToForm: (item: HistoryItem) => void;
+  onPlayItem?: (item: HistoryItem) => void;
 }
 
 export const HistoryList: React.FC<HistoryListProps> = ({
   items,
   currentPlayingId,
-  onPlayItem,
   onDownloadItem,
   onRemoveItem,
   onClearAll,
   onRegenerateItem,
-  onPlayHistoryItemDirectly,
   onLoadToForm,
+  onPlayItem,
 }) => {
+  const [playError, setPlayError] = useState<string | null>(null);
+
+  // 自动清除错误信息
+  React.useEffect(() => {
+    if (playError) {
+      const timer = setTimeout(() => {
+        setPlayError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [playError]);
+
+  const handlePlayItem = (item: HistoryItem) => {
+    try {
+      setPlayError(null);
+      onPlayItem?.(item);
+    } catch (error) {
+      console.error('播放历史记录失败:', error);
+      setPlayError('播放失败，请重试');
+    }
+  };
   
     const formatDate = (date: Date | string) => {
     const now = new Date();
@@ -56,11 +75,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleTogglePlayback = (item: HistoryItem) => {
-    // 调用父组件的播放/暂停切换方法
-    onPlayHistoryItemDirectly(item);
-  };
-
+  
   if (items.length === 0) {
     return (
       <div className="bg-gray-50/50 backdrop-blur-sm border border-gray-200/50 rounded-lg p-8 text-center">
@@ -73,6 +88,12 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 
   return (
     <div className="space-y-3">
+      {playError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+          {playError}
+        </div>
+      )}
+
       <div className="flex items-center justify-between py-1">
         <h3 className="text-base font-semibold text-gray-800">
           历史记录 ({items.length})
@@ -90,16 +111,18 @@ export const HistoryList: React.FC<HistoryListProps> = ({
         )}
       </div>
 
-      
+
       <div className="space-y-2 max-h-80 overflow-y-auto">
         {items.map((item) => (
           <div
             key={item.id}
-            className={`bg-white/80 backdrop-blur-sm border rounded-md p-3 transition-all duration-200 ${
+            className={`bg-white/80 backdrop-blur-sm border rounded-md p-3 transition-all duration-200 cursor-pointer ${
               currentPlayingId === item.id
                 ? 'border-green-300 shadow-sm'
-                : 'border-gray-200/50 hover:shadow-sm'
+                : 'border-gray-200/50 hover:shadow-sm hover:bg-gray-50'
             }`}
+            onClick={() => handlePlayItem(item)}
+            title="点击播放音频"
           >
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
@@ -136,23 +159,6 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 
               {/* 右侧操作按钮 */}
               <div className="flex gap-1 flex-shrink-0">
-                {/* 播放/暂停按钮 - 支持播放和暂停功能 */}
-                <Button
-                  onClick={() => handleTogglePlayback(item)}
-                  variant={currentPlayingId === item.id ? "default" : "ghost"}
-                  size="sm"
-                  className={`p-1.5 ${
-                    currentPlayingId === item.id
-                      ? 'text-white bg-green-500 hover:bg-green-600'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  title={currentPlayingId === item.id ? "暂停" : "播放"}
-                >
-                  <FontAwesomeIcon
-                    icon={currentPlayingId === item.id ? faPause : faPlay}
-                    className="text-xs"
-                  />
-                </Button>
                 {/* 加载到表单按钮 */}
                 <Button
                   onClick={() => onLoadToForm(item)}
@@ -163,6 +169,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                 >
                   <FontAwesomeIcon icon={faUpload} className="text-xs" />
                 </Button>
+                {/* 下载按钮 */}
                 <Button
                   onClick={() => onDownloadItem(item)}
                   variant="ghost"
@@ -172,6 +179,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                 >
                   <FontAwesomeIcon icon={faDownload} className="text-xs" />
                 </Button>
+                {/* 删除按钮 */}
                 <Button
                   onClick={() => onRemoveItem(item.id)}
                   variant="ghost"

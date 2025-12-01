@@ -9,6 +9,7 @@ import {Textarea} from '../components/ui/Textarea';
 import {Select} from '../components/ui/Select';
 import {Slider} from '../components/ui/Slider';
 import {HistoryList} from '../components/audio/HistoryList';
+import {UnifiedAudioPlayer} from '../components/audio/UnifiedAudioPlayer';
 import VoiceLibrary from '../components/voice/VoiceLibrary';
 
 interface HomeProps {
@@ -29,6 +30,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         config,
         history,
         currentPlayingId,
+        audioUrl,
         initializeApp,
         setText,
         setVoice,
@@ -40,15 +42,13 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         clearError,
         setLoading,
         generateSpeech,
-        playHistoryItem,
         downloadHistoryAudio,
         removeFromHistory,
         clearHistory,
         addToHistory,
         setCurrentPlayingId,
+        setAudioUrl,
     } = useTTSStore();
-
-    const [audioErrors, setAudioErrors] = useState<Record<string, boolean>>({});
 
     // 二级联动状态
     const [selectedLanguage, setSelectedLanguage] = useState('');
@@ -490,12 +490,6 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
             removeFromHistory(item.id);
             addToHistory(updatedItem);
 
-            // 重置错误状态
-            setAudioErrors(prev => ({
-                ...prev,
-                [item.id]: false
-            }));
-
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Failed to regenerate speech');
         } finally {
@@ -503,134 +497,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         }
     };
 
-    const handlePlayHistoryItemDirectly = async (item: HistoryItem) => {
-
-        try {
-            setLoading(true);
-            setError(null);
-
-            // 清理之前的音频控制器
-            if ((window as any).tempAudioControls) {
-                const oldControls = (window as any).tempAudioControls;
-                if (oldControls.getAudio()) {
-                    const oldAudio = oldControls.getAudio();
-                    oldAudio.pause();
-                    if (oldAudio.src && oldAudio.src.startsWith('blob:')) {
-                        URL.revokeObjectURL(oldAudio.src);
-                    }
-                }
-                delete (window as any).tempAudioControls;
-            }
-
-            // 直接使用历史记录的参数重新生成音频并播放
-            const audioBlob = await TTSApiService.regenerateSpeech(item);
-            const audioUrl = URL.createObjectURL(audioBlob);
-
-            // 创建临时音频元素
-            const audio = new Audio();
-            audio.src = audioUrl;
-            audio.preload = 'auto';
-
-            // 设置音频属性以提高播放成功率
-            audio.volume = 1.0;
-            audio.muted = false;
-
-            // 添加暂停功能管理
-            const playPauseAudio = async () => {
-                try {
-                    if (audio.paused) {
-                        // 确保音频已加载
-                        if (audio.readyState < 2) {
-                            await new Promise((resolve) => {
-                                audio.addEventListener('canplay', resolve, {once: true});
-                            });
-                        }
-                        await audio.play();
-                    } else {
-                        audio.pause();
-                    }
-                } catch (error) {
-                    console.error('音频播放控制失败:', error);
-                    setError('音频播放失败');
-                }
-            };
-
-            // 暴露播放/暂停方法到全局作用域，以便按钮控制
-            (window as any).tempAudioControls = {
-                playPause: playPauseAudio,
-                isPlaying: () => !audio.paused,
-                getAudio: () => audio
-            };
-
-            // 设置当前播放ID
-            setCurrentPlayingId(item.id);
-
-            // 音频播放完成后清理
-            audio.addEventListener('ended', () => {
-                setCurrentPlayingId(null);
-                URL.revokeObjectURL(audioUrl);
-                delete (window as any).tempAudioControls;
-            });
-
-            // 音频加载失败处理
-            audio.addEventListener('error', (e) => {
-                console.error('音频加载失败:', e);
-                setError('音频加载失败');
-                setCurrentPlayingId(null);
-                URL.revokeObjectURL(audioUrl);
-                delete (window as any).tempAudioControls;
-            });
-
-            // 等待音频加载完成后播放
-            audio.addEventListener('canplay', async () => {
-                try {
-                    await audio.play();
-                } catch (error) {
-                    console.error('音频播放失败:', error);
-                    setError('音频播放失败，请重试');
-                    setCurrentPlayingId(null);
-                    URL.revokeObjectURL(audioUrl);
-                    delete (window as any).tempAudioControls;
-                }
-            }, {once: true});
-
-            // 开始加载音频
-            audio.load();
-
-        } catch (error) {
-            setError(error instanceof Error ? error.message : 'Failed to generate speech');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleToggleHistoryPlayback = async (item: HistoryItem) => {
-        // 如果当前点击的项目正在播放，则暂停
-        if (currentPlayingId === item.id && (window as any).tempAudioControls) {
-            const controls = (window as any).tempAudioControls;
-            if (controls.getAudio() && !controls.getAudio().ended) {
-                controls.playPause(); // 暂停播放
-                setCurrentPlayingId(null);
-                return;
-            }
-        }
-
-        // 否则开始新的播放（停止当前其他播放）
-        if ((window as any).tempAudioControls) {
-            const controls = (window as any).tempAudioControls;
-            const audio = controls.getAudio();
-            if (audio && !audio.ended) {
-                audio.pause();
-                if (audio.src && audio.src.startsWith('blob:')) {
-                    URL.revokeObjectURL(audio.src);
-                }
-            }
-            delete (window as any).tempAudioControls;
-        }
-
-        await handlePlayHistoryItemDirectly(item);
-    };
-
+  
     const handleLoadToForm = (item: HistoryItem) => {
         // 将历史记录的数据填充到表单中
         setText(item.text);
@@ -687,6 +554,21 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         setVoice(''); // 清空声音选择，让用户重新选择
         setStyle(''); // 清空风格选择
         localStorage.setItem('tts_current_locale', regionLocale);
+    };
+
+    // 点击历史记录项播放音频
+    const handlePlayHistoryItem = (item: HistoryItem) => {
+        if (item.audioUrl) {
+            // 检查是否是同一个项目，如果是同一个则切换播放状态
+            if (currentPlayingId === item.id && audioUrl === item.audioUrl) {
+                // 如果是同一个项目且正在播放，则停止播放
+                setCurrentPlayingId(null);
+            } else {
+                // 否则切换到新的项目
+                setAudioUrl(item.audioUrl);
+                setCurrentPlayingId(item.id);
+            }
+        }
     };
 
     // 处理外部locale变化（如从声音库返回）
@@ -903,531 +785,543 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
             {/* 现代化背景装饰 */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-indigo-400/10 to-pink-400/10 rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-cyan-300/5 to-blue-300/5 rounded-full blur-3xl"></div>
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-500/20 to-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/3 left-1/2 w-60 h-60 bg-gradient-to-r from-cyan-400/10 to-teal-400/10 rounded-full blur-2xl animate-pulse delay-500"></div>
             </div>
 
-            <div className="relative z-10 flex h-screen">
-                {/* 侧边栏 */}
-                <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white/90 backdrop-blur-xl border-r border-gray-200/50 transition-transform duration-300 ease-in-out`}>
-                    <div className="flex h-full flex-col">
-                        {/* 侧边栏头部 */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                    </svg>
-                                </div>
-                                <h2 className="text-lg font-semibold text-gray-800">TTS Studio</h2>
-                            </div>
-                            <button
-                                onClick={() => setSidebarOpen(false)}
-                                className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        {/* 快速操作 */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {/* 快速访问 */}
-                            <div>
-                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">快速访问</h3>
-                                <div className="space-y-2">
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full justify-start group"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSidebarOpen(false); // 移动端点击时关闭侧边栏
-                                            setVoiceLibraryOpen(true);
-                                        }}
-                                    >
-                                        <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                        </svg>
-                                        声音库
-                                        <span className="ml-auto text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
-                                            <kbd className="px-1.5 py-0.5 text-xs font-mono bg-gray-100 border border-gray-200 rounded">
-                                                {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
-                                            </kbd>
-                                        </span>
-                                    </Button>
-                                </div>
-                            </div>
-
-      
-                            {/* 收藏声音 */}
-                            {favoriteVoices.length > 0 && (
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">收藏声音</h3>
-                                            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-blue-500 rounded-full">
-                                                {favoriteVoices.length}
-                                            </span>
-                                        </div>
-                                        <button
-                                            onClick={handleClearAllFavorites}
-                                            className="text-xs text-gray-500 hover:text-red-500 transition-colors"
-                                            title="清空所有收藏"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                                        {favoriteVoices.map(fav => (
-                                            <div
-                                                key={fav.id}
-                                                className="group relative"
-                                            >
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSidebarOpen(false); // 移动端点击时关闭侧边栏
-                                                        handleFavoriteSelect(fav);
-                                                    }}
-                                                    className={`w-full text-left px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
-                                                        voice === fav.id
-                                                            ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium'
-                                                            : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                                            <svg className="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                                            </svg>
-                                                            <span className="truncate">
-                                                                {fav.localName || fav.name}
-                                                            </span>
-                                                        </div>
-                                                        {voice === fav.id && (
-                                                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                                        )}
-                                                    </div>
-                                                </button>
-                                                {/* 删除按钮 */}
-                                                <button
-                                                    onClick={(e) => handleRemoveFavorite(e, fav)}
-                                                    className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center hover:bg-red-600"
-                                                    title="移除收藏"
-                                                >
-                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                          </div>
-
-                      </div>
-                </aside>
-
-                {/* 主内容区域 */}
-                <div className="flex-1 flex flex-col overflow-hidden relative z-10">
-                    {/* 顶部导航栏 */}
-                    <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
+            <div className="relative z-10">
+                {/* 顶部导航栏 */}
+                <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100/50 sticky top-0 z-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between h-16">
+                            <div className="flex items-center">
+                                {/* 移动端菜单按钮 */}
                                 <button
                                     onClick={() => setSidebarOpen(true)}
-                                    className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+                                    className="md:hidden p-2 text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                                     </svg>
                                 </button>
-                                <div>
-                                    <h1 className="text-2xl font-bold text-gray-800">文本转语音</h1>
-                                    <p className="text-sm text-gray-500">将文字转换为自然流畅的语音</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onOpenSettings}
-                                    title="设置"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                </Button>
-                            </div>
-                        </div>
-                    </header>
 
-                    {/* 主要内容 */}
-                    <main className="flex-1 overflow-y-auto p-4 isolate">
-                        <div className="max-w-6xl mx-auto space-y-4">
-                            {/* 错误提示 */}
-                            {error && (
-                                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
-                                    <div className="flex items-center">
-                                        <svg className="w-5 h-5 text-red-400 mr-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                {/* Logo和标题 */}
+                                <div className="flex items-center space-x-3 ml-2 md:ml-0">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                                        <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                                         </svg>
-                                        <p className="text-red-700">{error}</p>
                                     </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                                {/* 左侧主要控制面板 */}
-                                <div className="xl:col-span-2 space-y-4">
-                                    {/* 声音选择卡片 */}
-                                    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden relative isolate">
-                                        <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
-                                            <h3 className="text-white font-semibold flex items-center">
-                                                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                                                </svg>
-                                                语音配置
-                                            </h3>
-                                        </div>
-                                        <div className="p-5 space-y-4">
-                                            {/* 声音选择 */}
-                                            <div className="space-y-3">
-                                                <h4 className="text-sm font-semibold text-gray-700 mb-2">声音选择</h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-start isolate">
-                                                    <div className="space-y-2 min-h-20">
-                                                        <label className="block text-sm font-medium text-gray-700">语言</label>
-                                                        <Select
-                                                            value={selectedLanguage}
-                                                            onChange={(e) => handleLanguageChange(e.target.value)}
-                                                            options={[
-                                                                { value: '', label: '选择语言' },
-                                                                ...languageOptions
-                                                            ]}
-                                                            loading={voices.length === 0}
-                                                            placeholder="选择语言"
-                                                        />
-                                                    </div>
-
-                                                    {selectedLanguage && (languageMap.get(selectedLanguage)?.length ?? 0) > 1 && (
-                                                        <div className="space-y-2 min-h-20">
-                                                            <label className="block text-sm font-medium text-gray-700">区域</label>
-                                                            <Select
-                                                                value={locale}
-                                                                onChange={(e) => handleRegionChange(e.target.value)}
-                                                                options={[
-                                                                    { value: '', label: '选择区域' },
-                                                                    ...regionOptions
-                                                                ]}
-                                                                loading={false}
-                                                                placeholder="选择区域"
-                                                            />
-                                                        </div>
-                                                    )}
-
-                                                    <div className="space-y-2 min-h-20">
-                                                        <label className="block text-sm font-medium text-gray-700">声音</label>
-                                                        <Select
-                                                            value={voice}
-                                                            onChange={(e) => handleVoiceChange(e.target.value)}
-                                                            options={[
-                                                                { value: '', label: locale ? "选择声音" : "请先选择语言" },
-                                                                ...voiceOptions
-                                                            ]}
-                                                            loading={voices.length === 0}
-                                                            placeholder={locale ? "选择声音" : "请先选择语言"}
-                                                            disabled={!locale}
-                                                        />
-                                                    </div>
-
-                                                    <div className="space-y-2 min-h-20">
-                                                        <label className="block text-sm font-medium text-gray-700">风格</label>
-                                                        <Select
-                                                            value={style}
-                                                            onChange={(e) => setStyle(e.target.value)}
-                                                            options={[
-                                                                { value: '', label: voice ? (selectedVoiceStyles.length > 0 ? "选择风格" : "该声音无特定风格") : "请先选择声音" },
-                                                                ...styleOptions
-                                                            ]}
-                                                            loading={false}
-                                                            placeholder={voice ? (selectedVoiceStyles.length > 0 ? "选择风格" : "该声音无特定风格") : "请先选择声音"}
-                                                            disabled={!voice || selectedVoiceStyles.length === 0}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* 常用语言快捷选择 */}
-                                                <div className="pt-2">
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {commonLanguagesAvailable.length > 0 ? (
-                                                            commonLanguagesAvailable.slice(0, 8).map(lang => (
-                                                                <button
-                                                                    key={lang}
-                                                                    onClick={() => handleLanguageChange(lang)}
-                                                                    className={`px-2 py-1 text-xs font-medium rounded-md border transition-all duration-200 ${
-                                                                        selectedLanguage === lang
-                                                                            ? 'bg-blue-500 text-white border-blue-500'
-                                                                            : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600'
-                                                                    }`}
-                                                                >
-                                                                    {lang}
-                                                                </button>
-                                                            ))
-                                                        ) : (
-                                                            <span className="text-xs text-gray-400">加载中...</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* 语音参数调节 */}
-                                            <div className="space-y-3">
-                                                <h4 className="text-sm font-semibold text-gray-700 mb-2">语音参数</h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <label className="text-sm font-medium text-gray-700 flex items-center">
-                                                                <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                                </svg>
-                                                                语速
-                                                            </label>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{rate}%</span>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => setRate(config?.defaultRate || '0')}
-                                                                    disabled={rate === (config?.defaultRate || '0')}
-                                                                    title="重置为默认值"
-                                                                    className="p-1.5"
-                                                                >
-                                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                                    </svg>
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                        <Slider
-                                                            value={Number(rate)}
-                                                            onChange={(e) => setRate(e.target.value)}
-                                                            min={-100}
-                                                            max={100}
-                                                            className="slider-no-label"
-                                                        />
-                                                    </div>
-
-                                                    <div className="space-y-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <label className="text-sm font-medium text-gray-700 flex items-center">
-                                                                <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                                                </svg>
-                                                                语调
-                                                            </label>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{pitch}%</span>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => setPitch(config?.defaultPitch || '0')}
-                                                                    disabled={pitch === (config?.defaultPitch || '0')}
-                                                                    title="重置为默认值"
-                                                                    className="p-1.5"
-                                                                >
-                                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                                    </svg>
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                        <Slider
-                                                            value={Number(pitch)}
-                                                            onChange={(e) => setPitch(e.target.value)}
-                                                            min={-100}
-                                                            max={100}
-                                                            className="slider-no-label"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 文本输入卡片 */}
-                                    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden">
-                                        <div className="bg-gradient-to-r from-green-500 to-teal-600 px-6 py-4">
-                                            <h3 className="text-white font-semibold flex items-center">
-                                                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                                文本内容
-                                            </h3>
-                                        </div>
-                                        <div className="p-5">
-                                            <Textarea
-                                                id="text-input"
-                                                value={text}
-                                                onChange={(e) => setText(e.target.value)}
-                                                placeholder="在此输入要转换为语音的文本内容..."
-                                                rows={6}
-                                                className="resize-none text-base leading-relaxed"
-                                            />
-                                            <div className="mt-4 space-y-3">
-                                                {/* 提示信息 */}
-                                                <div className="flex items-center text-sm text-gray-500">
-                                                    <svg className="w-4 h-4 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                    支持 SSML 标记语言
-                                                </div>
-
-                                                {/* 按钮组 */}
-                                                <div className="flex justify-end">
-                                                    <div className="flex items-center space-x-3">
-                                                        {/* 清空按钮 */}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-gray-600 hover:text-red-600 hover:bg-red-50 border border-gray-200 hover:border-red-200 p-3"
-                                                            onClick={() => setText('')}
-                                                            disabled={!text.trim()}
-                                                            title="清空"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                        </Button>
-
-                                                        {/* 导入阅读按钮 */}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-gray-600 hover:text-green-600 hover:bg-green-50 border border-gray-200 hover:border-green-200 p-3"
-                                                            onClick={handleImportReader}
-                                                            disabled={!text.trim() || !voice}
-                                                            title="导入阅读"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                                            </svg>
-                                                        </Button>
-
-                                                        {/* 导入爱阅记按钮 */}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 border border-gray-200 hover:border-purple-200 p-3"
-                                                            onClick={handleImportIfreetime}
-                                                            disabled={!text.trim() || !voice}
-                                                            title="导入爱阅记"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                            </svg>
-                                                        </Button>
-
-                                                        {/* 生成语音按钮 */}
-                                                        <Button
-                                                            size="sm"
-                                                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 p-3 shadow-lg hover:shadow-xl transition-all duration-200"
-                                                            onClick={handleGenerateSpeech}
-                                                            loading={isLoading}
-                                                            disabled={!text.trim() || !voice}
-                                                            title={isLoading ? '生成中...' : '生成语音'}
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* 右侧历史记录面板 */}
-                                <div className="xl:col-span-1">
-                                    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden sticky top-6">
-                                        <div className="bg-gradient-to-r from-orange-500 to-red-600 px-6 py-4">
-                                            <h3 className="text-white font-semibold flex items-center">
-                                                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                历史记录
-                                            </h3>
-                                        </div>
-                                        <div className="p-4 max-h-[450px] overflow-y-auto">
-                                            <HistoryList
-                                                items={history}
-                                                currentPlayingId={currentPlayingId}
-                                                onPlayItem={playHistoryItem}
-                                                onDownloadItem={downloadHistoryAudio}
-                                                onRemoveItem={removeFromHistory}
-                                                onClearAll={clearHistory}
-                                                onRegenerateItem={handleRegenerateHistoryItem}
-                                                onPlayHistoryItemDirectly={handleToggleHistoryPlayback}
-                                                onLoadToForm={handleLoadToForm}
-                                            />
-                                        </div>
+                                    <div>
+                                        <h1 className="text-xl font-bold text-gray-900">TTS Studio</h1>
+                                        <p className="text-xs text-gray-500 hidden sm:block">AI 文本转语音</p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </main>
 
-                    {/* 底部信息栏 */}
-                    <footer className="bg-white/80 backdrop-blur-xl border-t border-gray-200/50 px-6 py-3">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-600">
-                            <div className="flex items-center space-x-4">
-                                <span>© 2025 TTS Studio</span>
-                                <a href="https://github.com/zuoban/tts" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 transition-colors">
-                                    GitHub
-                                </a>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                                <span>已生成 {history.length} 个语音</span>
-                                <span>•</span>
-                                <span>{voices.length} 个可用声音</span>
-                                <span>•</span>
+                            <div className="flex items-center space-x-2">
+                                {/* 快速统计 */}
+                                <div className="hidden sm:flex items-center space-x-4 text-xs text-gray-500 mr-4">
+                                    <span>{voices.length} 声音</span>
+                                    <span>{history.length} 历史</span>
+                                </div>
+
+                                {/* 快速操作按钮 */}
+                                <button
+                                    onClick={() => setVoiceLibraryOpen(true)}
+                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="声音库 (Ctrl+K)"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg>
+                                </button>
+
                                 <button
                                     onClick={() => setShortcutsHelpOpen(true)}
-                                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100/60 rounded-lg transition-all duration-200"
-                                    title="查看快捷键 (Ctrl+/)"
+                                    className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    title="快捷键帮助 (Ctrl+/)"
                                 >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+
+                                <button
+                                    onClick={onOpenSettings}
+                                    className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    title="设置"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                 </button>
                             </div>
                         </div>
-                    </footer>
+                    </div>
+                </header>
+
+                {/* 主要内容区域 */}
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    {/* 错误提示 */}
+                    {error && (
+                        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg shadow-sm">
+                            <div className="flex items-center">
+                                <svg className="w-5 h-5 text-red-400 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p className="text-red-700">{error}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* 左侧主要控制面板 */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* 快速选择 */}
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-lg font-semibold text-gray-800">快速选择</h3>
+                                    <span className="text-xs text-gray-500">
+                                        {selectedLanguage || '选择语言'}
+                                    </span>
+                                </div>
+
+                                {/* 收藏声音下拉框 */}
+                                {favoriteVoices.length > 0 && (
+                                    <div className="mb-4">
+                                        <Select
+                                            value={voice}
+                                            onChange={(e) => {
+                                                const selectedFavorite = favoriteVoices.find(fav => fav.id === e.target.value);
+                                                if (selectedFavorite) {
+                                                    handleFavoriteSelect(selectedFavorite);
+                                                }
+                                            }}
+                                            options={[
+                                                { value: '', label: '🌟 选择收藏声音' },
+                                                ...favoriteVoices.map(fav => ({
+                                                    value: fav.id,
+                                                    label: `${fav.localName || fav.name} (${fav.locale})`,
+                                                }))
+                                            ]}
+                                            placeholder="收藏声音"
+                                            size="sm"
+                                            className="mb-3"
+                                        />
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-500">
+                                                已收藏 {favoriteVoices.length} 个声音
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setVoiceLibraryOpen(true)}
+                                                    className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                                                    title="管理收藏"
+                                                >
+                                                    管理收藏
+                                                </button>
+                                                <button
+                                                    onClick={handleClearAllFavorites}
+                                                    className="text-xs text-red-600 hover:text-red-700 transition-colors"
+                                                    title="清空所有收藏"
+                                                >
+                                                    清空
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 常用语言快捷选择 */}
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {commonLanguagesAvailable.slice(0, 12).map(lang => (
+                                        <button
+                                            key={lang}
+                                            onClick={() => handleLanguageChange(lang)}
+                                            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
+                                                selectedLanguage === lang
+                                                    ? 'bg-blue-500 text-white shadow-lg'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700 border border-gray-200'
+                                                }`}
+                                        >
+                                            {lang}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* 高级选择 */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <Select
+                                        value={selectedLanguage}
+                                        onChange={(e) => handleLanguageChange(e.target.value)}
+                                        options={[
+                                            { value: '', label: '选择语言' },
+                                            ...languageOptions
+                                        ]}
+                                        placeholder="所有语言"
+                                        size="sm"
+                                    />
+                                    {selectedLanguage && (languageMap.get(selectedLanguage)?.length ?? 0) > 1 && (
+                                        <Select
+                                            value={locale}
+                                            onChange={(e) => handleRegionChange(e.target.value)}
+                                            options={[
+                                                { value: '', label: '区域' },
+                                                ...regionOptions
+                                            ]}
+                                            placeholder="选择区域"
+                                            size="sm"
+                                        />
+                                    )}
+                                    <Select
+                                        value={voice}
+                                        onChange={(e) => handleVoiceChange(e.target.value)}
+                                        options={[
+                                            { value: '', label: locale ? "声音" : "先选语言" },
+                                            ...voiceOptions
+                                        ]}
+                                        loading={voices.length === 0}
+                                        placeholder={locale ? "选择声音" : "请先选择语言"}
+                                        disabled={!locale}
+                                        size="sm"
+                                    />
+                                </div>
+
+                                {/* 风格选择 */}
+                                {voice && selectedVoiceStyles.length > 0 && (
+                                    <div className="mt-3">
+                                        <Select
+                                            value={style}
+                                            onChange={(e) => setStyle(e.target.value)}
+                                            options={[
+                                                { value: '', label: "选择风格" },
+                                                ...styleOptions
+                                            ]}
+                                            placeholder="选择风格"
+                                            size="sm"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 语音参数调节 */}
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">语音参数</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center">
+                                                <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                                语速
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-mono bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium border border-blue-200">{rate}%</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setRate(config?.defaultRate || '0')}
+                                                    disabled={rate === (config?.defaultRate || '0')}
+                                                    title="重置为默认值"
+                                                    className="w-10 h-8 flex items-center justify-center text-sm font-mono bg-blue-50 text-blue-700 rounded-md font-medium border border-blue-200 hover:bg-blue-100 hover:border-blue-300 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors duration-200"
+                                                >
+                                                    ↺
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <Slider
+                                            value={Number(rate)}
+                                            onChange={(e) => setRate(e.target.value)}
+                                            min={-100}
+                                            max={100}
+                                            className="slider-no-label"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-gray-700 flex items-center">
+                                                <svg className="w-4 h-4 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                </svg>
+                                                语调
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-mono bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium border border-purple-200">{pitch}%</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPitch(config?.defaultPitch || '0')}
+                                                    disabled={pitch === (config?.defaultPitch || '0')}
+                                                    title="重置为默认值"
+                                                    className="w-10 h-8 flex items-center justify-center text-sm font-mono bg-purple-50 text-purple-700 rounded-md font-medium border border-purple-200 hover:bg-purple-100 hover:border-purple-300 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors duration-200"
+                                                >
+                                                    ↺
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <Slider
+                                            value={Number(pitch)}
+                                            onChange={(e) => setPitch(e.target.value)}
+                                            min={-100}
+                                            max={100}
+                                            className="slider-no-label"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 文本输入和生成区域 */}
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+                                <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
+                                    <h3 className="text-white font-semibold flex items-center">
+                                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        文本内容
+                                    </h3>
+                                </div>
+                                <div className="p-6">
+                                    <div className="space-y-4">
+                                        <Textarea
+                                            id="text-input"
+                                            value={text}
+                                            onChange={(e) => setText(e.target.value)}
+                                            placeholder="在此输入要转换为语音的文本内容，支持 SSML 标记语言..."
+                                            rows={8}
+                                            className="resize-none text-base leading-relaxed border-0 focus:ring-2 focus:ring-blue-500/20"
+                                        />
+
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center text-sm text-gray-500">
+                                                <svg className="w-4 h-4 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                支持 SSML，字符数: {text.length}
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                {/* 清空按钮 */}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                                    onClick={() => setText('')}
+                                                    disabled={!text.trim()}
+                                                    title="清空"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </Button>
+
+                                                {/* 快速导入按钮组 */}
+                                                <div className="flex items-center gap-1 border-l border-gray-200 pl-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-gray-600 hover:text-green-600 hover:bg-green-50"
+                                                        onClick={handleImportReader}
+                                                        disabled={!text.trim() || !voice}
+                                                        title="导入阅读"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                        </svg>
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-gray-600 hover:text-purple-600 hover:bg-purple-50"
+                                                        onClick={handleImportIfreetime}
+                                                        disabled={!text.trim() || !voice}
+                                                        title="导入爱阅记"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </Button>
+                                                </div>
+
+                                                {/* 生成语音按钮 */}
+                                                <Button
+                                                    size="lg"
+                                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+                                                    onClick={handleGenerateSpeech}
+                                                    disabled={isLoading || !text.trim() || !voice}
+                                                    title={isLoading ? '生成中...' : '生成语音 (Ctrl+Enter)'}
+                                                >
+                                                    {isLoading ? (
+                                                        <><svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        生成中...</>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            生成语音
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 右侧面板 */}
+                        <div className="space-y-6">
+                            {/* 历史记录 */}
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+                                <div className="bg-gradient-to-r from-orange-500 to-red-600 px-6 py-4">
+                                    <h3 className="text-white font-semibold flex items-center justify-between">
+                                        <span className="flex items-center">
+                                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            历史记录
+                                        </span>
+                                        <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                                            {history.length}
+                                        </span>
+                                    </h3>
+                                </div>
+                                <div className="p-4 max-h-[400px] overflow-y-auto">
+                                    <HistoryList
+                                        items={history}
+                                        currentPlayingId={currentPlayingId}
+                                        onDownloadItem={downloadHistoryAudio}
+                                        onRemoveItem={removeFromHistory}
+                                        onClearAll={clearHistory}
+                                        onRegenerateItem={handleRegenerateHistoryItem}
+                                        onLoadToForm={handleLoadToForm}
+                                        onPlayItem={handlePlayHistoryItem}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 音频播放器 */}
+                            {audioUrl && (
+                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+                                    <div className="bg-gradient-to-r from-green-500 to-teal-600 px-6 py-4">
+                                        <h3 className="text-white font-semibold flex items-center">
+                                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            播放器
+                                        </h3>
+                                    </div>
+                                    <div className="p-4">
+                                        <UnifiedAudioPlayer
+                                            audioUrl={audioUrl}
+                                            autoPlay={true}
+                                            itemId={currentPlayingId || undefined}
+                                            variant="full"
+                                            showProgress={true}
+                                            showVolume={true}
+                                            showDownload={true}
+                                            onDownload={(audioUrl, text) => {
+                                                const a = document.createElement('a');
+                                                a.href = audioUrl;
+                                                const cleanText = text
+                                                    .substring(0, 20)
+                                                    .replace(/[<>:"/\\|?*]/g, '')
+                                                    .replace(/\s+/g, '_')
+                                                    .trim();
+                                                const filename = cleanText ? `tts_${cleanText}_${Date.now()}.mp3` : `tts_audio_${Date.now()}.mp3`;
+                                                a.download = filename;
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                document.body.removeChild(a);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            {/* 移动端侧边栏（抽屉式） */}
+            <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}>
+                <div className="flex flex-col h-full">
+                    {/* 抽屉头部 */}
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                </svg>
+                            </div>
+                            <h2 className="text-lg font-semibold text-gray-800">TTS Studio</h2>
+                        </div>
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="p-2 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* 抽屉内容 */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+
+                        {/* 统计信息 */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">使用统计</h3>
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">可用声音</span>
+                                    <span className="font-medium">{voices.length}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">历史记录</span>
+                                    <span className="font-medium">{history.length}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">收藏声音</span>
+                                    <span className="font-medium">{favoriteVoices.length}</span>
+                                </div>
+                            </div>
+                            {favoriteVoices.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                    <button
+                                        onClick={() => {
+                                            setVoiceLibraryOpen(true);
+                                            setSidebarOpen(false);
+                                        }}
+                                        className="w-full text-center px-3 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                                    >
+                                        管理收藏 ({favoriteVoices.length})
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* 移动端侧边栏遮罩 */}
+            {/* 遮罩层 */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-y-0 left-72 right-0 bg-black/50 z-20 lg:hidden"
-                    style={{left: '288px'}} /* w-72 = 18rem = 288px */
-                    onClick={(e) => {
-                        // 确保点击的是遮罩层本身，而不是其子元素
-                        if (e.target === e.currentTarget) {
-                            setSidebarOpen(false);
-                        }
-                    }}
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
                 />
             )}
 
