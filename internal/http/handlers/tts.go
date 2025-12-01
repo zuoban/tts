@@ -471,15 +471,37 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 
 // HandleReader 返回 reader 可导入的格式
 func (h *TTSHandler) HandleReader(context *gin.Context) {
-	// 从URL参数获取
+	// 从URL参数获取 - 支持完整参数名和简短参数名
+	text := context.Query("text")
+	if text == "" {
+		text = context.Query("t")
+	}
+	voice := context.Query("voice")
+	if voice == "" {
+		voice = context.Query("v")
+	}
+	rate := context.Query("rate")
+	if rate == "" {
+		rate = context.Query("r")
+	}
+	pitch := context.Query("pitch")
+	if pitch == "" {
+		pitch = context.Query("p")
+	}
+	style := context.Query("style")
+	if style == "" {
+		style = context.Query("s")
+	}
+
 	req := models.TTSRequest{
-		Text:  context.Query("t"),
-		Voice: context.Query("v"),
-		Rate:  context.Query("r"),
-		Pitch: context.Query("p"),
-		Style: context.Query("s"),
+		Text:  text,
+		Voice: voice,
+		Rate:  rate,
+		Pitch: pitch,
+		Style: style,
 	}
 	displayName := context.Query("n")
+	api_key := context.Query("api_key")
 
 	baseUrl := utils.GetBaseURL(context)
 	basePath, err := utils.JoinURL(baseUrl, cfg.Server.BasePath)
@@ -504,8 +526,9 @@ func (h *TTSHandler) HandleReader(context *gin.Context) {
 		urlParams = append(urlParams, fmt.Sprintf("s=%s", req.Style))
 	}
 
-	if cfg.TTS.ApiKey != "" {
-		urlParams = append(urlParams, fmt.Sprintf("api_key=%s", cfg.TTS.ApiKey))
+	// 只有配置了API密钥且请求提供了api_key参数时才添加
+	if cfg.TTS.ApiKey != "" && api_key != "" {
+		urlParams = append(urlParams, fmt.Sprintf("api_key=%s", api_key))
 	}
 
 	url := fmt.Sprintf("%s/tts?%s", basePath, strings.Join(urlParams, "&"))
@@ -522,14 +545,32 @@ func (h *TTSHandler) HandleReader(context *gin.Context) {
 
 // HandleIFreeTime 处理IFreeTime应用请求
 func (h *TTSHandler) HandleIFreeTime(context *gin.Context) {
-	// 从URL参数获取
+	// 从URL参数获取 - 支持完整参数名和简短参数名
+	voice := context.Query("voice")
+	if voice == "" {
+		voice = context.Query("v")
+	}
+	rate := context.Query("rate")
+	if rate == "" {
+		rate = context.Query("r")
+	}
+	pitch := context.Query("pitch")
+	if pitch == "" {
+		pitch = context.Query("p")
+	}
+	style := context.Query("style")
+	if style == "" {
+		style = context.Query("s")
+	}
+
 	req := models.TTSRequest{
-		Voice: context.Query("v"),
-		Rate:  context.Query("r"),
-		Pitch: context.Query("p"),
-		Style: context.Query("s"),
+		Voice: voice,
+		Rate:  rate,
+		Pitch: pitch,
+		Style: style,
 	}
 	displayName := context.Query("n")
+	api_key := context.Query("api_key")
 
 	// 获取基础URL
 	baseUrl := utils.GetBaseURL(context)
@@ -557,9 +598,9 @@ func (h *TTSHandler) HandleIFreeTime(context *gin.Context) {
 		"s": req.Style,
 	}
 
-	// 如果需要API密钥认证，添加到请求参数
-	if h.config.TTS.ApiKey != "" {
-		params["api_key"] = h.config.TTS.ApiKey
+	// 只有配置了API密钥且请求提供了api_key参数时才添加
+	if h.config.TTS.ApiKey != "" && api_key != "" {
+		params["api_key"] = api_key
 	}
 
 	// 构建响应

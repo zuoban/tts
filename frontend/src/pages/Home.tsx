@@ -402,14 +402,22 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         try {
             setError(null);
 
+            // 获取当前声音的显示名称
+            const currentVoice = voices.find(v => v.id === voice);
+            const displayName = currentVoice ? (currentVoice.local_name || currentVoice.display_name || currentVoice.name) : 'TTS语音';
+
             // 构造请求参数，与TTS参数相同
             const params = new URLSearchParams();
-            params.append('text', text.trim());
+            params.append('n', displayName);
             params.append('voice', voice);
             if (style) params.append('style', style);
             params.append('rate', rate);
             params.append('pitch', pitch);
-            params.append('api_key', localStorage.getItem('tts_api_key'));
+
+            const apiKey = localStorage.getItem('tts_api_key');
+            if (apiKey) {
+                params.append('api_key', apiKey);
+            }
 
             // 构造完整的请求URL
             const baseUrl = window.location.origin;
@@ -432,14 +440,22 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         try {
             setError(null);
 
+            // 获取当前声音的显示名称
+            const currentVoice = voices.find(v => v.id === voice);
+            const displayName = currentVoice ? (currentVoice.local_name || currentVoice.display_name || currentVoice.name) : 'TTS语音';
+
             // 构造请求参数，与TTS参数相同
             const params = new URLSearchParams();
-            params.append('text', text.trim());
+            params.append('n', displayName);
             params.append('voice', voice);
             if (style) params.append('style', style);
             params.append('rate', rate);
             params.append('pitch', pitch);
-            params.append('api_key', localStorage.getItem('tts_api_key'));
+
+            const apiKey = localStorage.getItem('tts_api_key');
+            if (apiKey) {
+                params.append('api_key', apiKey);
+            }
 
             // 构造完整的请求URL
             const baseUrl = window.location.origin;
