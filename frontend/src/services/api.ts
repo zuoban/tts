@@ -19,6 +19,14 @@ api.interceptors.request.use(
     const apiKey = localStorage.getItem('tts_api_key');
     if (apiKey) {
       config.headers.Authorization = `Bearer ${apiKey}`;
+      console.log('API 请求认证:', {
+        url: config.url,
+        method: config.method,
+        hasApiKey: !!apiKey,
+        authHeader: config.headers.Authorization ? '已设置' : '未设置'
+      });
+    } else {
+      console.warn('API 请求缺少认证密钥:', config.url);
     }
     return config;
   },
@@ -30,7 +38,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-        error.message = 'API Key 无效';
+        console.error('API 认证失败:', {
+            url: error.config?.url,
+            status: error.response.status,
+            statusText: error.response.statusText,
+            hasApiKey: !!localStorage.getItem('tts_api_key')
+        });
+        error.message = 'API Key 无效或已过期，请检查认证设置';
+    } else if (error.response?.status === 403) {
+        console.error('API 访问被拒绝:', error.config?.url);
+        error.message = '访问被拒绝，权限不足';
     }
     return Promise.reject(error);
   }
@@ -127,8 +144,10 @@ export class TTSApiService {
   // 文本转语音
   static async synthesizeSpeech(params: TTSParams): Promise<Blob> {
     try {
-        params['api_key'] = localStorage.getItem('tts_api_key') || '';
-      const response = await api.post('/api/v1/tts', params, {
+      // 移除 api_key 参数，使用 Authorization 头认证
+      const { api_key, ...cleanParams } = params as any;
+
+      const response = await api.post('/api/v1/tts', cleanParams, {
         responseType: 'blob',
       });
 
@@ -193,10 +212,8 @@ export class TTSApiService {
         style: (historyItem.style as string) || undefined,
         rate: historyItem.rate as string,
         pitch: historyItem.pitch as string,
-        api_key: localStorage.getItem('tts_api_key') || '',
       };
-      const response = await api.get('/api/v1/tts', {
-        params,
+      const response = await api.post('/api/v1/tts', params, {
         responseType: 'blob',
       });
       return response.data;

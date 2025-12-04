@@ -10,7 +10,6 @@ import (
 func TTSAuth(apiKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 从查询参数中获取 api_key
-		queryKey := c.Query("api_key")
 
 		if apiKey == "" {
 			// 如果没有配置 API 密钥，跳过验证
@@ -18,13 +17,13 @@ func TTSAuth(apiKey string) gin.HandlerFunc {
 			return
 		}
 
-		apiKey, _ := ExtractAPIKey(c)
-		if apiKey == "" {
+		extractApiKey, _ := ExtractAPIKey(c)
+		if extractApiKey == "" {
 			c.AbortWithStatusJSON(401, gin.H{"error": "未提供授权令牌"})
 			return
 		}
 
-		if queryKey != apiKey {
+		if extractApiKey != apiKey {
 			c.AbortWithStatusJSON(401, gin.H{"error": "未授权访问: 无效的 API 密钥"})
 			return
 		}
