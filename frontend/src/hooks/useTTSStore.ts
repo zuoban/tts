@@ -108,6 +108,16 @@ export const useTTSStore = create<TTSStore>()(
         }
       },
 
+      // 清理历史记录中的无效blob URL
+      cleanupInvalidUrls: () => {
+        const state = get();
+        const cleanedHistory = state.history.map(item => ({
+          ...item,
+          audioUrl: item.audioUrl?.startsWith('blob:') ? null : item.audioUrl
+        }));
+        set({ history: cleanedHistory });
+      },
+
       // Actions
       setText: (text: string) => set({ text }),
       setVoice: (voice: string) => set({ voice }),
@@ -136,6 +146,9 @@ export const useTTSStore = create<TTSStore>()(
 
         try {
           set({ isLoading: true, error: null, isInitializing: true });
+
+          // 清理历史记录中的无效blob URL
+          get().cleanupInvalidUrls();
 
           // 加载配置
           const config = await TTSApiService.getConfig();
@@ -199,15 +212,55 @@ export const useTTSStore = create<TTSStore>()(
             pitch: pitch || '0',
           });
 
-          const audioUrl = URL.createObjectURL(audioBlob);
+          // 调试音频数据
+          console.log('音频数据详情:', {
+            size: audioBlob.size,
+            type: audioBlob.type,
+            isAudio: audioBlob.type.startsWith('audio/'),
+          });
+
+          // 验证音频数据是否有效
+          if (audioBlob.size === 0) {
+            throw new Error('音频数据为空');
+          }
+
+          // 确保 MIME 类型正确
+          let finalBlob = audioBlob;
+          if (!audioBlob.type || !audioBlob.type.startsWith('audio/')) {
+            console.warn('音频类型不正确，尝试修复 MIME 类型');
+            // 尝试创建具有正确 MIME 类型的 Blob
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            finalBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+            console.log('修复后的音频类型:', finalBlob.type);
+          }
+
+          const audioUrl = URL.createObjectURL(finalBlob);
+          console.log('创建的音频URL:', audioUrl);
+
+          // 立即验证 Blob URL 是否有效
+          try {
+            const testUrl = audioUrl;
+            console.log('验证 Blob URL:', testUrl);
+
+            // 将 blob 对象存储在临时映射中，防止被垃圾回收
+            (window as any).__activeBlobs = (window as any).__activeBlobs || new Map();
+            (window as any).__activeBlobs.set(audioUrl, finalBlob);
+            console.log('Blob 对象已保存，防止垃圾回收，大小:', finalBlob.size);
+          } catch (error) {
+            console.error('Blob URL 验证失败:', error);
+            throw new Error('音频 URL 创建失败');
+          }
 
           // 获取声音名称
           const selectedVoice = voices.find(v => v.short_name === voice || v.id === voice);
           const voiceName = selectedVoice?.local_name || selectedVoice?.name || voice;
 
-          // 创建历史记录项
+          // 创建历史记录项ID
+          const historyId = Date.now().toString();
+
+          // 创建历史记录项（不存储blob URL，因为页面刷新后会失效）
           const historyItem: HistoryItem = {
-            id: Date.now().toString(),
+            id: historyId,
             text: text.trim(),
             voice,
             voiceName,
@@ -215,14 +268,15 @@ export const useTTSStore = create<TTSStore>()(
             rate,
             pitch,
             locale,
-            audioUrl,
+            audioUrl: null, // 不存储blob URL
             createdAt: new Date(),
           };
 
           // 添加到历史记录
           get().addToHistory(historyItem);
 
-          set({ audioUrl, currentPlayingId: historyItem.id });
+          // 设置音频URL用于当前播放
+          set({ audioUrl: audioUrl, currentPlayingId: historyId });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to generate speech' });
         } finally {
@@ -378,15 +432,16 @@ export const useTTSStore = create<TTSStore>()(
       },
 
       playHistoryItem: (item: HistoryItem) => {
+        // 设置表单数据
         set({
-          audioUrl: item.audioUrl,
-          currentPlayingId: item.id,
           text: item.text,
           voice: item.voice,
           style: item.style || '',
           rate: item.rate,
           pitch: item.pitch,
           locale: item.locale,
+          currentPlayingId: item.id,
+          audioUrl: null, // 清空当前音频URL
         });
       },
     }),

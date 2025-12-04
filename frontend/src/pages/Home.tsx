@@ -47,6 +47,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         clearHistory,
         addToHistory,
         setCurrentPlayingId,
+        playHistoryItem,
         setAudioUrl,
     } = useTTSStore();
 
@@ -59,6 +60,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
 
     // 声音库模态框状态
     const [voiceLibraryOpen, setVoiceLibraryOpen] = useState(false);
+    const [openVoiceLibraryWithFavorites, setOpenVoiceLibraryWithFavorites] = useState(false);
 
     // 快捷键帮助弹窗状态
     const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
@@ -68,13 +70,19 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         initializeApp();
     }, [initializeApp]); // 包含 initializeApp 依赖
 
+    // 打开声音库（可选择是否默认显示收藏）
+    const openVoiceLibrary = (showFavorites = false) => {
+        setOpenVoiceLibraryWithFavorites(showFavorites);
+        setVoiceLibraryOpen(true);
+    };
+
     // 快捷键处理
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             // Ctrl+K 或 Cmd+K 打开声音库
             if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
                 event.preventDefault();
-                setVoiceLibraryOpen(true);
+                openVoiceLibrary(false);
             }
 
             // Ctrl+/ 或 Cmd+/ 显示快捷键帮助
@@ -89,7 +97,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 document.getElementById('text-input')?.focus();
             }
 
-            // Ctrl+Enter 或 Cmd+Enter 生成语音
+            // Ctrl+Enter 或 Cmd+Enter 生成
             if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
                 // 检查是否在文本输入框内
                 const activeElement = document.activeElement;
@@ -516,6 +524,10 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         // 清除之前的错误状态
         clearError();
 
+        // 清空播放器状态（音频URL和当前播放ID）
+        setAudioUrl(null);
+        setCurrentPlayingId(null);
+
         // 可选：滚动到页面顶部，让用户看到填充的表单
         window.scrollTo({top: 0, behavior: 'smooth'});
 
@@ -557,19 +569,31 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     };
 
     // 点击历史记录项播放音频
-    const handlePlayHistoryItem = (item: HistoryItem) => {
-        if (item.audioUrl) {
-            // 检查是否是同一个项目，如果是同一个则切换播放状态
-            if (currentPlayingId === item.id && audioUrl === item.audioUrl) {
-                // 如果是同一个项目且正在播放，则停止播放
-                setCurrentPlayingId(null);
-            } else {
-                // 否则切换到新的项目
-                setAudioUrl(item.audioUrl);
-                setCurrentPlayingId(item.id);
-            }
+    const handlePlayHistoryItem = async (item: HistoryItem) => {
+        try {
+            // 调用store的playHistoryItem方法，加载数据到表单
+            playHistoryItem(item);
+
+            // 自动生成新的音频
+            await generateSpeech();
+        } catch (error) {
+            console.error('播放历史记录失败:', error);
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+            errorMessage.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span>生成音频失败: ${error instanceof Error ? error.message : '未知错误'}</span>
+                </div>
+            `;
+            document.body.appendChild(errorMessage);
+            setTimeout(() => errorMessage.remove(), 3000);
         }
     };
+
+    // 重新生成历史记录音频功能已移除
 
     // 处理外部locale变化（如从声音库返回）
     const handleLocaleChange = (newLocale: string) => {
@@ -653,36 +677,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         }
     };
 
-    // 清空所有收藏
-    const handleClearAllFavorites = () => {
-        if (window.confirm('确定要清空所有收藏吗？此操作不可恢复。')) {
-            try {
-                FavoritesService.clearFavorites();
-
-                // 显示清空成功提示
-                const message = document.createElement('div');
-                message.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
-                message.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        <span>已清空所有收藏</span>
-                    </div>
-                `;
-                document.body.appendChild(message);
-
-                setTimeout(() => {
-                    message.remove();
-                }, 2000);
-
-                // 重新加载收藏列表
-                loadFavoriteVoices();
-            } catch (error) {
-                console.error('清空收藏失败:', error);
-            }
-        }
-    };
+    // 清空收藏功能已移至VoiceLibrary组件中
 
     // 处理收藏声音选择
     const handleFavoriteSelect = (favorite: FavoriteVoiceItem) => {
@@ -825,41 +820,43 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
 
                             <div className="flex items-center space-x-2">
                                 {/* 快速统计 */}
-                                <div className="hidden sm:flex items-center space-x-4 text-xs text-gray-500 mr-4">
+                                <div className="hidden sm:flex items-center text-xs text-gray-500 mr-4">
                                     <span>{voices.length} 声音</span>
-                                    <span>{history.length} 历史</span>
                                 </div>
 
                                 {/* 快速操作按钮 */}
                                 <button
-                                    onClick={() => setVoiceLibraryOpen(true)}
-                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    onClick={() => openVoiceLibrary(false)}
+                                    className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm font-medium"
                                     title="声音库 (Ctrl+K)"
                                 >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                     </svg>
+                                    <span className="hidden sm:inline">声音库</span>
                                 </button>
 
                                 <button
                                     onClick={() => setShortcutsHelpOpen(true)}
-                                    className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
                                     title="快捷键帮助 (Ctrl+/)"
                                 >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
+                                    <span className="hidden sm:inline">快捷键</span>
                                 </button>
 
                                 <button
                                     onClick={onOpenSettings}
-                                    className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
                                     title="设置"
                                 >
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
+                                    <span className="hidden sm:inline">设置</span>
                                 </button>
                             </div>
                         </div>
@@ -895,6 +892,18 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 {/* 收藏声音下拉框 */}
                                 {favoriteVoices.length > 0 && (
                                     <div className="mb-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-sm font-medium text-gray-700">
+                                                🌟 收藏声音 ({favoriteVoices.length})
+                                            </span>
+                                            <button
+                                                onClick={() => openVoiceLibrary(true)}
+                                                className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                                                title="在声音库中管理收藏"
+                                            >
+                                                管理 →
+                                            </button>
+                                        </div>
                                         <Select
                                             value={voice}
                                             onChange={(e) => {
@@ -904,37 +913,15 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                 }
                                             }}
                                             options={[
-                                                { value: '', label: '🌟 选择收藏声音' },
+                                                { value: '', label: '选择收藏声音...' },
                                                 ...favoriteVoices.map(fav => ({
                                                     value: fav.id,
                                                     label: `${fav.localName || fav.name} (${fav.locale})`,
                                                 }))
                                             ]}
-                                            placeholder="收藏声音"
+                                            placeholder="快速选择收藏声音"
                                             size="sm"
-                                            className="mb-3"
                                         />
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs text-gray-500">
-                                                已收藏 {favoriteVoices.length} 个声音
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setVoiceLibraryOpen(true)}
-                                                    className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
-                                                    title="管理收藏"
-                                                >
-                                                    管理收藏
-                                                </button>
-                                                <button
-                                                    onClick={handleClearAllFavorites}
-                                                    className="text-xs text-red-600 hover:text-red-700 transition-colors"
-                                                    title="清空所有收藏"
-                                                >
-                                                    清空
-                                                </button>
-                                            </div>
-                                        </div>
                                     </div>
                                 )}
 
@@ -1148,13 +1135,13 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                     </Button>
                                                 </div>
 
-                                                {/* 生成语音按钮 */}
+                                                {/* 生成按钮 */}
                                                 <Button
                                                     size="lg"
                                                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
                                                     onClick={handleGenerateSpeech}
                                                     disabled={isLoading || !text.trim() || !voice}
-                                                    title={isLoading ? '生成中...' : '生成语音 (Ctrl+Enter)'}
+                                                    title={isLoading ? '生成中...' : '生成 (Ctrl+Enter)'}
                                                 >
                                                     {isLoading ? (
                                                         <><svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
@@ -1168,7 +1155,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                             </svg>
-                                                            生成语音
+                                                            生成
                                                         </>
                                                     )}
                                                 </Button>
@@ -1225,7 +1212,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                     <div className="p-4">
                                         <UnifiedAudioPlayer
                                             audioUrl={audioUrl}
-                                            autoPlay={true}
+                                            autoPlay={false}
                                             itemId={currentPlayingId || undefined}
                                             variant="full"
                                             showProgress={true}
@@ -1303,7 +1290,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 <div className="mt-3 pt-3 border-t border-gray-200">
                                     <button
                                         onClick={() => {
-                                            setVoiceLibraryOpen(true);
+                                            openVoiceLibrary(true);
                                             setSidebarOpen(false);
                                         }}
                                         className="w-full text-center px-3 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
@@ -1328,8 +1315,12 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
             {/* 声音库模态框 */}
             <VoiceLibrary
                 isOpen={voiceLibraryOpen}
-                onClose={() => setVoiceLibraryOpen(false)}
+                onClose={() => {
+                    setVoiceLibraryOpen(false);
+                    setOpenVoiceLibraryWithFavorites(false);
+                }}
                 onFavoritesChange={handleFavoritesChange}
+                showFavoritesOnly={openVoiceLibraryWithFavorites}
             />
 
             {/* 快捷键帮助弹窗 */}
@@ -1386,7 +1377,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
-                                        <span className="font-medium text-gray-900">生成语音</span>
+                                        <span className="font-medium text-gray-900">生成</span>
                                     </div>
                                     <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
                                         {navigator.platform.includes('Mac') ? '⌘⏎' : 'Ctrl+⏎'}
@@ -1438,7 +1429,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
 
                             <div className="pt-4 border-t border-gray-200">
                                 <div className="text-sm text-gray-600 text-center">
-                                    💡 提示：生成语音快捷键仅在文本输入框内有效
+                                    💡 提示：生成快捷键仅在文本输入框内有效
                                 </div>
                             </div>
                         </div>

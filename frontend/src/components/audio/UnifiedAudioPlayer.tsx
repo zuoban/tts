@@ -71,10 +71,16 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
   const currentAudioUrl = audioUrl || historyItem?.audioUrl || null;
   const currentItemId = itemId || historyItem?.id || null;
 
-  // 清理函数
-  const cleanup = useCallback(() => {
-    if (currentAudioUrl?.startsWith('blob:') && audioRef.current?.src) {
-      URL.revokeObjectURL(currentAudioUrl);
+  // 清理函数 - 不立即撤销，只是标记为可清理
+  const markForCleanup = useCallback(() => {
+    if (currentAudioUrl?.startsWith('blob:')) {
+      console.log('标记 Blob URL 为可清理状态:', currentAudioUrl);
+      // 不立即撤销，让垃圾回收自然处理
+      const activeBlobs = (window as any).__activeBlobs;
+      if (activeBlobs && activeBlobs.has(currentAudioUrl)) {
+        activeBlobs.delete(currentAudioUrl);
+        console.log('Blob 对象已从全局映射中移除，但不立即撤销 URL');
+      }
     }
   }, [currentAudioUrl]);
 
@@ -86,11 +92,80 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
     setIsLoading(true);
     setError(null);
 
-    const handleLoadStart = () => setIsLoading(true);
-    const handleCanPlay = () => setIsLoading(false);
+    // 验证音频URL的有效性（使用更兼容的方式）
+    if (currentAudioUrl.startsWith('blob:')) {
+      // 对于 blob URL，不使用 HEAD 方法，而是直接设置
+      // 浏览器会在实际加载时验证 blob URL 的有效性
+      console.log('设置 Blob URL:', currentAudioUrl);
+    }
+
+    const handleLoadStart = () => {
+      console.log('音频开始加载');
+      setIsLoading(true);
+    };
+
+    const handleCanPlay = () => {
+      console.log('音频可以播放');
+      setIsLoading(false);
+    };
+
+    const handleLoadedData = () => {
+      console.log('音频数据加载完成');
+      // 这里可以添加额外的验证逻辑
+    };
+
+    const handleLoadedMetadata = () => {
+      console.log('音频元数据加载完成');
+      // 验证音频元数据
+      const audio = audioRef.current;
+      if (audio && audio.duration && !isNaN(audio.duration)) {
+        console.log('音频验证通过 - 时长:', audio.duration, '秒');
+      } else {
+        console.warn('音频元数据验证失败');
+      }
+    };
     const handleError = (e: Event) => {
       console.error('音频加载失败:', e);
-      setError('音频加载失败');
+      const audio = e.target as HTMLAudioElement;
+      let errorMessage = '音频加载失败';
+
+      // 详细调试信息
+      console.error('音频元素调试信息:', {
+        src: audio.src,
+        currentSrc: audio.currentSrc,
+        readyState: audio.readyState,
+        networkState: audio.networkState,
+        error: audio.error,
+        errorCode: audio.error?.code,
+        errorMessage: audio.error?.message,
+      });
+
+      // 检查具体错误类型
+      if (audio.error) {
+        switch (audio.error.code) {
+          case MediaError.MEDIA_ERR_ABORTED:
+            errorMessage = '音频加载被中断';
+            break;
+          case MediaError.MEDIA_ERR_NETWORK:
+            errorMessage = '网络错误，音频加载失败';
+            break;
+          case MediaError.MEDIA_ERR_DECODE:
+            errorMessage = '音频格式错误或文件损坏';
+            break;
+          case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage = '音频源不支持或已过期';
+            // 检查是否是 blob URL 问题
+            if (audio.src.startsWith('blob:')) {
+              errorMessage += ' (Blob URL 可能已失效)';
+            }
+            break;
+          default:
+            errorMessage = `音频加载失败 (错误代码: ${audio.error.code})`;
+        }
+        console.error('详细音频错误:', audio.error);
+      }
+
+      setError(errorMessage);
       setIsLoading(false);
       setIsPlaying(false);
     };
@@ -100,10 +175,21 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
       const audioDuration = audio.duration;
       if (!isNaN(audioDuration)) {
         setDuration(audioDuration);
+        console.log('音频时长:', audioDuration, '秒');
+
+        // 验证音频数据有效性
+        if (audioDuration <= 0) {
+          console.error('音频时长异常:', audioDuration);
+          setError('音频数据无效');
+          return;
+        }
+
         // 如果历史记录没有时长信息，更新它
         if (historyItem && !historyItem.duration && audioDuration > 0) {
           // 这里可以调用store更新历史记录的时长
         }
+      } else {
+        console.warn('无法获取音频时长');
       }
     };
 
@@ -112,10 +198,8 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
       setCurrentPlayingId(null);
       onPlayStateChange?.(false, currentItemId || undefined);
 
-      // 延迟清理 blob URL，给用户重新播放的机会
-      setTimeout(() => {
-        cleanup();
-      }, 5000); // 5秒后清理
+      // 暂时不清理 Blob URL，让浏览器自然处理
+      console.log('音频播放结束，但不立即清理 Blob URL');
     };
 
     const handlePlay = () => {
@@ -132,6 +216,8 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
     // 添加事件监听器
     audio.addEventListener('loadstart', handleLoadStart);
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('loadeddata', handleLoadedData);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('error', handleError);
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
@@ -140,16 +226,22 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
     audio.addEventListener('pause', handlePause);
 
     return () => {
+      // 移除所有事件监听器
       audio.removeEventListener('loadstart', handleLoadStart);
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('loadeddata', handleLoadedData);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
+
+      // 暂时禁用清理，让浏览器自然管理 Blob 生命周期
+      // console.log('组件清理，但不立即撤销 Blob URL');
     };
-  }, [currentAudioUrl, currentItemId, historyItem, setCurrentPlayingId, onPlayStateChange, cleanup]);
+  }, [currentAudioUrl, currentItemId, historyItem, setCurrentPlayingId, onPlayStateChange, markForCleanup]);
 
   
   // 自动播放
@@ -231,10 +323,10 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
   // 组件卸载时清理资源
   useEffect(() => {
     return () => {
-      // 确保在组件卸载时清理 blob URL
-      cleanup();
+      // 组件卸载时的清理工作
+      // 目前让浏览器自然管理 Blob 生命周期
     };
-  }, [cleanup]);
+  }, []);
 
   // 如果没有音频URL，不渲染
   if (!currentAudioUrl) return null;
@@ -242,7 +334,19 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
   // 渲染不同变体
   const renderMinimal = () => (
     <div className={className}>
-      <audio ref={audioRef} src={currentAudioUrl} preload="metadata" />
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-2 py-1 rounded text-xs mb-2">
+          {error}
+        </div>
+      )}
+      <audio
+        ref={audioRef}
+        src={currentAudioUrl}
+        preload="metadata"
+        crossOrigin="anonymous"
+        controls={false}
+        playsInline
+      />
       <Button
         onClick={togglePlay}
         variant="ghost"
@@ -261,7 +365,14 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
 
   const renderCompact = () => (
     <div className={`flex items-center gap-2 ${className}`}>
-      <audio ref={audioRef} src={currentAudioUrl} preload="metadata" />
+      <audio
+        ref={audioRef}
+        src={currentAudioUrl}
+        preload="metadata"
+        crossOrigin="anonymous"
+        controls={false}
+        playsInline
+      />
 
       <Button
         onClick={togglePlay}
@@ -315,11 +426,35 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
     <div className={`${className}`}>
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm mb-3">
-          {error}
+          <div className="flex items-center justify-between">
+            <span>{error}</span>
+            {error.includes('已过期') && historyItem && (
+              <button
+                onClick={() => {
+                  // 清除错误并触发重新生成
+                  setError(null);
+                  // 这里可以触发重新生成逻辑，但需要父组件处理
+                  if (onPlayStateChange) {
+                    onPlayStateChange(false, 'regenerate:' + historyItem.id);
+                  }
+                }}
+                className="ml-3 text-red-600 hover:text-red-800 underline text-xs"
+              >
+                重新生成
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      <audio ref={audioRef} src={currentAudioUrl} preload="metadata" />
+      <audio
+        ref={audioRef}
+        src={currentAudioUrl}
+        preload="metadata"
+        crossOrigin="anonymous"
+        controls={false}
+        playsInline
+      />
 
       {/* 紧凑的播放控制器 */}
       <div className="flex items-center gap-3">

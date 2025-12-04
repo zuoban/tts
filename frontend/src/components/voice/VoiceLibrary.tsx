@@ -11,12 +11,14 @@ interface VoiceLibraryProps {
   isOpen: boolean;
   onClose: () => void;
   onFavoritesChange?: () => void;
+  showFavoritesOnly?: boolean;
 }
 
 const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
   isOpen,
   onClose,
   onFavoritesChange,
+  showFavoritesOnly: initialShowFavoritesOnly = false,
 }) => {
   const {
     voices,
@@ -32,6 +34,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
   const [filteredVoices, setFilteredVoices] = useState<Voice[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [favoriteVoiceIds, setFavoriteVoiceIds] = useState<Set<string>>(
     new Set(),
   );
@@ -48,7 +51,14 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
   // 当语音库打开时，优先使用区域，如果没有区域则使用语言编码填入搜索框
   useEffect(() => {
     if (isOpen) {
-      if (currentLocale) {
+      // 设置收藏筛选状态
+      setShowFavoritesOnly(initialShowFavoritesOnly);
+
+      // 如果是从管理收藏进入，清空搜索框以提供更好的收藏浏览体验
+      // 否则根据当前locale设置搜索
+      if (initialShowFavoritesOnly) {
+        setSearchTerm("");
+      } else if (currentLocale) {
         // 填入当前的 locale（无论是完整的 zh-CN 还是语言编码 zh）
         setSearchTerm(currentLocale);
       } else {
@@ -63,7 +73,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
         }
       }, 100);
     }
-  }, [isOpen, currentLocale]);
+  }, [isOpen, currentLocale, initialShowFavoritesOnly]);
 
   // 加载收藏状态
   useEffect(() => {
@@ -75,10 +85,18 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
   // 使用声音列表直接过滤
   useEffect(() => {
     filterVoices();
-  }, [voices, searchTerm, selectedGender]);
+  }, [voices, searchTerm, selectedGender, showFavoritesOnly, favoriteVoiceIds]);
 
   const filterVoices = () => {
     let filtered = voices;
+
+    // 收藏过滤
+    if (showFavoritesOnly) {
+      filtered = filtered.filter((voice) => {
+        const voiceId = voice.short_name || voice.id;
+        return favoriteVoiceIds.has(voiceId);
+      });
+    }
 
     // 搜索过滤
     if (searchTerm) {
@@ -383,6 +401,49 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
     }, 2000);
   };
 
+  // 清空所有收藏
+  const handleClearAllFavorites = () => {
+    if (window.confirm('确定要清空所有收藏吗？此操作不可恢复。')) {
+      try {
+        FavoritesService.clearFavorites();
+
+        // 显示清空成功提示
+        const message = document.createElement("div");
+        message.className = "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm";
+        message.innerHTML = `
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>已清空所有收藏</span>
+          </div>
+        `;
+        document.body.appendChild(message);
+
+        setTimeout(() => {
+          message.remove();
+        }, 2000);
+
+        // 重新加载收藏状态
+        const favorites = FavoritesService.getFavorites();
+        const favoriteIds = new Set(favorites.map((item) => item.id));
+        setFavoriteVoiceIds(favoriteIds);
+
+        // 通知父组件收藏状态已改变
+        if (onFavoritesChange) {
+          onFavoritesChange();
+        }
+
+        // 如果没有收藏了，退出收藏筛选模式
+        if (favorites.length === 0) {
+          setShowFavoritesOnly(false);
+        }
+      } catch (error) {
+        console.error("清空收藏失败:", error);
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -391,10 +452,39 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
         {/* 头部 */}
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4 text-white">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">声音库</h2>
-              <p className="text-purple-100">
-                浏览所有可用的TTS声音，试听并选择最适合的声音
+            <div className="flex-1">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold">
+                  {showFavoritesOnly ? '我的收藏' : '声音库'}
+                </h2>
+                {showFavoritesOnly && favoriteVoiceIds.size > 0 && (
+                  <button
+                    onClick={handleClearAllFavorites}
+                    className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                    title="清空所有收藏"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    清空收藏
+                  </button>
+                )}
+              </div>
+              <p className="text-purple-100 mt-2">
+                {showFavoritesOnly
+                  ? `管理您的收藏声音 (共 ${favoriteVoiceIds.size} 个)`
+                  : '浏览所有可用的TTS声音，试听并选择最适合的声音'
+                }
               </p>
             </div>
             <button
@@ -451,13 +541,18 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
             </div>
             <div className="mt-3 text-sm text-gray-600">
               共 <span className="font-semibold">{voices.length}</span> 个声音
-              {searchTerm || selectedGender ? (
+              {searchTerm || selectedGender || showFavoritesOnly ? (
                 <>
                   ，已筛选出{" "}
                   <span className="font-semibold text-blue-600">
                     {filteredVoices.length}
                   </span>{" "}
                   个
+                  {showFavoritesOnly && (
+                    <span className="ml-2 text-yellow-600">
+                      (仅收藏)
+                    </span>
+                  )}
                 </>
               ) : (
                 ""
@@ -471,10 +566,19 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
               {filteredVoices.map((voice) => (
                 <div
                   key={voice.id}
-                  className="group bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden min-h-[280px]"
+                  className={`group bg-white border rounded-xl hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden min-h-[280px] ${
+                    favoriteVoiceIds.has(voice.short_name || voice.id)
+                      ? "border-yellow-300 shadow-lg hover:border-yellow-400 hover:shadow-xl"
+                      : "border-gray-200 hover:border-blue-300"
+                  }`}
                 >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500 ${
+                    favoriteVoiceIds.has(voice.short_name || voice.id)
+                      ? "from-yellow-50/50 to-orange-50/50"
+                      : "from-blue-50/50 to-purple-50/50"
+                  }`}></div>
 
+                  
                   <div className="relative p-4 space-y-3 min-h-[160px]">
                     <div className="absolute top-3 right-3">
                       <span
@@ -676,23 +780,76 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
           {/* 空状态 */}
           {!isLoading && filteredVoices.length === 0 && (
             <div className="text-center py-8">
-              <svg
-                className="w-12 h-12 text-gray-400 mx-auto mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                没有找到匹配的声音
-              </h3>
-              <p className="text-gray-500">尝试调整筛选条件或搜索关键词</p>
+              {showFavoritesOnly ? (
+                <>
+                  <svg
+                    className="w-12 h-12 text-yellow-400 mx-auto mb-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                    />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    暂无收藏的声音
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    点击声音卡片上的星星图标来添加收藏
+                  </p>
+                  <button
+                    onClick={() => setShowFavoritesOnly(false)}
+                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors"
+                  >
+                    浏览所有声音
+                  </button>
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="w-12 h-12 text-gray-400 mx-auto mb-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    没有找到匹配的声音
+                  </h3>
+                  <p className="text-gray-500 mb-4">尝试调整筛选条件或搜索关键词</p>
+                  <div className="flex items-center justify-center gap-3">
+                    {searchTerm || selectedGender ? (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setSelectedGender('');
+                        }}
+                        className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                      >
+                        清除筛选
+                      </button>
+                    ) : null}
+                    {favoriteVoiceIds.size > 0 && (
+                      <button
+                        onClick={() => setShowFavoritesOnly(true)}
+                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors"
+                      >
+                        浏览收藏 ({favoriteVoiceIds.size})
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

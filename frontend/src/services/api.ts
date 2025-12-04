@@ -6,7 +6,7 @@ const pendingRequests = new Map<string, Promise<unknown>>();
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/', // 使用相对路径，在生产环境中直接使用根路径
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/', // 使用相对路径
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -128,12 +128,58 @@ export class TTSApiService {
   static async synthesizeSpeech(params: TTSParams): Promise<Blob> {
     try {
         params['api_key'] = localStorage.getItem('tts_api_key') || '';
-      const response = await api.get('/api/v1/tts', {
-        params,
+      const response = await api.post('/api/v1/tts', params, {
         responseType: 'blob',
       });
-      return response.data;
+
+      // 调试响应信息
+      console.log('API 响应调试信息:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        dataType: response.data.constructor.name,
+        dataSize: response.data.size,
+        contentType: response.data.type,
+      });
+
+      // 验证响应数据
+      if (!(response.data instanceof Blob)) {
+        throw new Error('服务器返回的不是音频数据');
+      }
+
+      if (response.data.size === 0) {
+        throw new Error('音频数据为空');
+      }
+
+      // 验证音频数据的头部字节
+      const audioBlob = response.data;
+      try {
+        const headerBytes = await audioBlob.slice(0, 12).arrayBuffer();
+        const header = new Uint8Array(headerBytes);
+        console.log('音频文件头部字节:', Array.from(header).map(b => b.toString(16).padStart(2, '0')).join(' '));
+
+        // 检查是否为有效的音频文件格式
+        const isValidMp3 = header[0] === 0xFF && (header[1] & 0xE0) === 0xE0; // MP3 sync bytes
+        const isValidWav = header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46; // "RIFF"
+        const isValidMpeg = header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33; // "ID3"
+
+        console.log('音频格式验证:', {
+          isMp3: isValidMp3,
+          isWav: isValidWav,
+          isMpeg: isValidMpeg,
+          type: audioBlob.type
+        });
+
+        if (!isValidMp3 && !isValidWav && !isValidMpeg) {
+          console.warn('警告: 音频文件格式可能不正确');
+        }
+      } catch (headerError) {
+        console.warn('无法读取音频文件头部:', headerError);
+      }
+
+      return audioBlob;
     } catch (error) {
+      console.error('API 请求失败:', error);
       throw this.handleError(error);
     }
   }
