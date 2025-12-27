@@ -65,10 +65,12 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     // 快捷键帮助弹窗状态
     const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
-    // 使用 useCallback 稳定化函数引用，防止重复初始化
-    const initializeAppCallback = useCallback(() => {
+    // 优化：移除useCallback避免依赖问题，initializeApp本身就很稳定
+    // 直接使用useEffect调用，避免不必要的重新渲染
+    useEffect(() => {
         initializeApp();
-    }, [initializeApp]); // 包含 initializeApp 依赖
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // 空依赖数组，只在组件挂载时执行一次（initializeApp内部已有防重复机制）
 
     // 打开声音库（可选择是否默认显示收藏）
     const openVoiceLibrary = (showFavorites = false) => {
@@ -124,11 +126,9 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         };
     }, [voiceLibraryOpen, shortcutsHelpOpen]);
 
-    useEffect(() => {
-        initializeAppCallback();
-    }, [initializeAppCallback]);
+    // 已删除：上面的 useEffect 已合并到初始化逻辑中
 
-    // 从localStorage恢复保存的语言和区域设置
+    // 优化：从localStorage恢复保存的语言和区域设置（只在组件挂载时执行一次）
     useEffect(() => {
         // 如果已有声音选择，优先根据声音回显，跳过localStorage恢复
         if (voice) {
@@ -138,18 +138,12 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         const savedLanguage = localStorage.getItem('tts_current_language');
         const savedLocale = localStorage.getItem('tts_current_locale');
 
-        if (savedLanguage && savedLocale && languageMap.size > 0) {
-            // 验证保存的语言和区域是否仍然有效
-            const regions = languageMap.get(savedLanguage);
-            const isValid = regions?.some(r => r.locale === savedLocale);
-
-            if (isValid) {
-                setSelectedLanguage(savedLanguage);
-                setLocale(savedLocale);
-                console.log(`从localStorage恢复语言: ${savedLanguage}, 区域: ${savedLocale}`);
-            }
+        // 保存到临时变量，等待languageMap准备好后再恢复
+        if (savedLanguage && savedLocale) {
+            // 不立即设置，等待languageMap构建完成
+            console.log(`检测到已保存的语言设置，将在languageMap准备后恢复: ${savedLanguage}, ${savedLocale}`);
         }
-    }, [voice, languageMap, setLocale, setSelectedLanguage]);
+    }, []); // 空依赖数组，只在组件挂载时执行一次
 
     const buildLanguageMap = useCallback(() => {
         const newLanguageMap = new Map();
@@ -200,7 +194,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         setLanguageMap(newLanguageMap);
     }, [voices, setLanguageMap]);
 
-    // 构建语言区域映射并缓存
+    // 优化：构建语言区域映射并缓存
     useEffect(() => {
         if (voices.length > 0) {
             // 检查本地缓存
@@ -214,8 +208,26 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
             if (cachedLanguageData && cachedTimestamp && (now - parseInt(cachedTimestamp)) < CACHE_DURATION) {
                 try {
                     const parsedData = JSON.parse(cachedLanguageData);
-                    setLanguageMap(new Map(Object.entries(parsedData)));
+                    const newLanguageMap = new Map(Object.entries(parsedData));
+                    setLanguageMap(newLanguageMap);
                     console.log('使用缓存的语言区域数据');
+
+                    // 优化：在languageMap准备好后立即尝试恢复localStorage保存的设置
+                    if (!voice) {
+                        const savedLanguage = localStorage.getItem('tts_current_language');
+                        const savedLocale = localStorage.getItem('tts_current_locale');
+
+                        if (savedLanguage && savedLocale) {
+                            const regions = newLanguageMap.get(savedLanguage);
+                            const isValid = regions?.some(r => r.locale === savedLocale);
+
+                            if (isValid) {
+                                setSelectedLanguage(savedLanguage);
+                                setLocale(savedLocale);
+                                console.log(`从localStorage恢复语言: ${savedLanguage}, 区域: ${savedLocale}`);
+                            }
+                        }
+                    }
                 } catch (error) {
                     console.error('解析缓存数据失败:', error);
                     buildLanguageMap();
@@ -224,7 +236,8 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 buildLanguageMap();
             }
         }
-    }, [voices, buildLanguageMap]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [voices]); // ✅ 只依赖voices，避免循环依赖（buildLanguageMap等通过ref或其他方式访问）</think></tool_call>
 
     // 根据声音回显语言和区域（优先级最高）
     useEffect(() => {

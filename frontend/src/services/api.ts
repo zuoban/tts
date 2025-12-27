@@ -4,6 +4,46 @@ import type { Voice, TTSParams, Config } from '../types/index';
 // 请求去重缓存
 const pendingRequests = new Map<string, Promise<unknown>>();
 
+// 缓存配置
+const CACHE_DURATION = {
+  CONFIG: 24 * 60 * 60 * 1000, // 配置缓存24小时
+  VOICES: 4 * 60 * 60 * 1000,  // 声音列表缓存4小时
+};
+
+// 缓存辅助函数
+const saveToCache = (key: string, data: unknown): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn(`保存缓存失败 [${key}]:`, error);
+  }
+};
+
+const getFromCache = (key: string, maxAge: number): unknown | null => {
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const { data, timestamp } = JSON.parse(cached);
+    const now = Date.now();
+
+    if (now - timestamp < maxAge) {
+      console.log(`✓ 使用缓存数据 [${key}]，年龄: ${Math.round((now - timestamp) / 1000)}秒`);
+      return data;
+    } else {
+      console.log(`× 缓存已过期 [${key}]`);
+      localStorage.removeItem(key);
+      return null;
+    }
+  } catch (error) {
+    console.warn(`读取缓存失败 [${key}]:`, error);
+    return null;
+  }
+};
+
 // 创建 axios 实例
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/', // 使用相对路径
@@ -68,6 +108,13 @@ export class TTSApiService {
   // 获取配置信息
   static async getConfig(): Promise<Config> {
     const cacheKey = 'config';
+    const storageKey = 'tts_config_cache';
+
+    // 优化：检查localStorage缓存
+    const cached = getFromCache(storageKey, CACHE_DURATION.CONFIG);
+    if (cached) {
+      return cached as Config;
+    }
 
     // 如果已有请求在进行中，返回相同的 Promise
     if (pendingRequests.has(cacheKey)) {
@@ -79,6 +126,10 @@ export class TTSApiService {
 
     try {
       const result = await requestPromise;
+
+      // 保存到缓存
+      saveToCache(storageKey, result);
+
       return result as Config;
     } finally {
       pendingRequests.delete(cacheKey);
@@ -98,6 +149,13 @@ export class TTSApiService {
   // 获取声音列表
   static async getVoices(): Promise<Voice[]> {
     const cacheKey = 'voices-all';
+    const storageKey = 'tts_voices_cache';
+
+    // 优化：检查localStorage缓存
+    const cached = getFromCache(storageKey, CACHE_DURATION.VOICES);
+    if (cached) {
+      return cached as Voice[];
+    }
 
     // 如果已有请求在进行中，返回相同的 Promise
     if (pendingRequests.has(cacheKey)) {
@@ -109,6 +167,10 @@ export class TTSApiService {
 
     try {
       const result = await requestPromise;
+
+      // 保存到缓存
+      saveToCache(storageKey, result);
+
       return result as Voice[];
     } finally {
       pendingRequests.delete(cacheKey);
@@ -120,25 +182,31 @@ export class TTSApiService {
     try {
       const response = await api.get('/api/v1/voices');
 
-      // 映射后端数据到前端类型
-      return response.data.map((voice: Record<string, unknown>) => ({
-        id: (voice.short_name as string) || (voice.name as string),
-        name: voice.name as string,
-        locale: voice.locale as string,
-        gender: voice.gender as string,
-        styles: (voice.style_list as string[]) || (voice.styles as string[]) || [],
-        roles: (voice.roles as string[]) || [],
-        sampleRate: voice.sample_rate_hertz ? parseInt(voice.sample_rate_hertz as string) : undefined,
-        short_name: voice.short_name as string,
-        local_name: voice.local_name as string,
-        locale_name: voice.locale_name as string,
-        display_name: voice.display_name as string,
-        style_list: voice.style_list as string[],
-        sample_rate_hertz: voice.sample_rate_hertz as string,
-      }));
+      // 优化：使用独立的方法进行数据转换，提高可维护性
+      return response.data.map(TTSApiService.transformVoiceData);
     } catch (error) {
       throw this.handleError(error);
     }
+  }
+
+  // 优化：独立的数据转换方法，提高性能和可维护性
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static transformVoiceData(voice: any): Voice {
+    return {
+      id: voice.short_name || voice.name,
+      name: voice.name,
+      locale: voice.locale,
+      gender: voice.gender,
+      styles: voice.style_list || voice.styles || [],
+      roles: voice.roles || [],
+      sampleRate: voice.sample_rate_hertz ? parseInt(voice.sample_rate_hertz) : undefined,
+      short_name: voice.short_name,
+      local_name: voice.local_name,
+      locale_name: voice.locale_name,
+      display_name: voice.display_name,
+      style_list: voice.style_list,
+      sample_rate_hertz: voice.sample_rate_hertz,
+    };
   }
 
   // 文本转语音
