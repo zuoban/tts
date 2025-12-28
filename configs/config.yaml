@@ -13,9 +13,9 @@ tts:
   max_text_length: 65535 # 最大文本长度
   request_timeout: 30
   max_concurrent: 20
-  segment_threshold: 60 # 分段阈值，超过值时，会进行切分
-  min_sentence_length: 20 # 最小句子长度
-  max_sentence_length: 60 # 最大句子长度
+  segment_threshold: 100 # 分段阈值，超过值时，会进行切分
+  min_sentence_length: 60 # 最小句子长度
+  max_sentence_length: 100 # 最大句子长度
   api_key: ''
 
   # OpenAI 到微软 TTS 中文语音的映射
