@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -652,10 +653,81 @@ func splitTextBySentences(text string) []string {
 	maxLen := cfg.TTS.MaxSentenceLength
 	minLen := cfg.TTS.MinSentenceLength
 
-	// 第一次分割：按标点和长度限制分割
-	sentences := utils.SplitAndFilterEmptyLines(text)
-	// 第二次处理：合并过短的句子
-	shortSentences := utils.MergeStringsWithLimit(sentences, minLen, maxLen)
-	log.Printf("分割后的句子数: %d → %d", len(sentences), len(shortSentences))
-	return shortSentences
+	// 首先按换行符分割
+	lines := utils.SplitAndFilterEmptyLines(text)
+
+	// 定义标点符号正则表达式，匹配常见的中文和英文句子结束符
+	punctuation := regexp.MustCompile(`([。！？；.!?；])`)
+
+	// 按标点符号分割每个段落
+	var sentences []string
+	for _, line := range lines {
+		// 使用正则表达式分割，但保留分隔符
+		parts := punctuation.Split(line, -1)
+
+		// 重新构建带有分隔符的句子
+		for i, part := range parts {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+
+			// 如果不是最后一部分，需要找到对应的分隔符并添加回去
+			if i < len(parts)-1 {
+				// 在原文中查找这个位置对应的分隔符
+				partEndIndex := strings.Index(line, part)
+				if partEndIndex != -1 {
+					separatorEndIndex := partEndIndex + len(part)
+					if separatorEndIndex < len(line) {
+						separator := string(line[separatorEndIndex])
+						// 验证是否是标点符号
+						if punctuation.MatchString(separator) {
+							part += separator
+						}
+					}
+				}
+			}
+
+			sentences = append(sentences, part)
+		}
+	}
+
+	// 如果没有找到标点符号或分割后只有一段，按长度强制分割
+	if len(sentences) <= 1 {
+		sentences = splitLongTextByLength(text, maxLen)
+	}
+
+	// 合并过短的句子，但确保不超过 maxLen
+	mergedSentences := utils.MergeStringsWithLimit(sentences, minLen, maxLen)
+
+	// 最终检查：确保没有超过 maxLen 的句子
+	var finalSentences []string
+	for _, sentence := range mergedSentences {
+		sentenceLen := utf8.RuneCountInString(sentence)
+		if sentenceLen <= maxLen {
+			finalSentences = append(finalSentences, sentence)
+		} else {
+			// 如果句子过长，强制分割
+			finalSentences = append(finalSentences, splitLongTextByLength(sentence, maxLen)...)
+		}
+	}
+
+	log.Printf("分割后的句子数: %d → %d → %d", len(lines), len(sentences), len(finalSentences))
+	return finalSentences
+}
+
+// splitLongTextByLength 按长度强制分割长文本
+func splitLongTextByLength(text string, maxLen int) []string {
+	var result []string
+	runes := []rune(text)
+
+	for i := 0; i < len(runes); i += maxLen {
+		end := i + maxLen
+		if end > len(runes) {
+			end = len(runes)
+		}
+		result = append(result, string(runes[i:end]))
+	}
+
+	return result
 }
