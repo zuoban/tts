@@ -145,15 +145,16 @@ func MergeStringsWithLimit(strs []string, minLen int, maxLen int) []string {
 
 		for i < len(strs) {
 			currentLen := utf8.RuneCountInString(currentBuilder.String())
-			// 如果当前已达(或超过) minLen，先行结束本段合并
-			if currentLen >= minLen {
+
+			// 检查添加下一个段落后是否会超过 maxLen
+			nextLen := utf8.RuneCountInString(strs[i])
+			if currentLen+nextLen > maxLen {
+				// 加上下一个会超过硬上限 maxLen，结束本段合并
 				break
 			}
 
-			// 检查添加下一个段落后是否会超过 1.2 × minLen
-			nextLen := utf8.RuneCountInString(strs[i])
-			if currentLen+nextLen > int(float64(minLen)*1.2) {
-				// 加上下一个会超标，则结束合并
+			// 如果当前长度已经达到 minLen，且添加下一个会接近 maxLen，也结束合并
+			if currentLen >= minLen {
 				break
 			}
 
