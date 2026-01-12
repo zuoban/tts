@@ -66,6 +66,7 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
 
   // 引用
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hasAutoPlayed = useRef(false);
 
   // 计算实际的音频URL和项目ID
   const currentAudioUrl = audioUrl || historyItem?.audioUrl || null;
@@ -243,10 +244,16 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
     };
   }, [currentAudioUrl, currentItemId, historyItem, setCurrentPlayingId, onPlayStateChange, markForCleanup]);
 
-  
+
+  // 当音频 URL 改变时，重置自动播放标记
+  useEffect(() => {
+    hasAutoPlayed.current = false;
+  }, [currentAudioUrl]);
+
   // 自动播放
   useEffect(() => {
-    if (autoPlay && currentAudioUrl && audioRef.current) {
+    if (autoPlay && currentAudioUrl && audioRef.current && !hasAutoPlayed.current) {
+      hasAutoPlayed.current = true;
       // 延迟一下确保音频已加载
       const timer = setTimeout(() => {
         if (audioRef.current) {

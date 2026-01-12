@@ -65,8 +65,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     // 快捷键帮助弹窗状态
     const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
-    // 自动播放触发器 - 每次音频生成后递增，用于触发自动播放
-    const [autoPlayTrigger, setAutoPlayTrigger] = useState(0);
+    // 自动播放标志 - 在生成新音频时设置为 true
     const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
 
     // 优化：移除useCallback避免依赖问题，initializeApp本身就很稳定
@@ -313,18 +312,15 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         }
     }, [error, clearError]);
 
-    // 自动播放新生成的音频
+    // 重置自动播放标志（给播放器足够时间触发自动播放）
     useEffect(() => {
-        if (audioUrl && autoPlayTrigger > 0 && !shouldAutoPlay) {
-            console.log('触发自动播放', { audioUrl, autoPlayTrigger });
-            setShouldAutoPlay(true);
-            // 延迟重置，确保播放器已经接收到了 true 并开始播放
-            setTimeout(() => {
+        if (audioUrl && shouldAutoPlay) {
+            const timer = setTimeout(() => {
                 setShouldAutoPlay(false);
-                console.log('重置自动播放标志');
-            }, 1000);
+            }, 500);
+            return () => clearTimeout(timer);
         }
-    }, [audioUrl, autoPlayTrigger, shouldAutoPlay]);
+    }, [audioUrl, shouldAutoPlay]);
 
     // 通用的安全复制函数
     const safeCopyToClipboard = async (text: string, successMessage: string) => {
@@ -428,7 +424,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     };
 
     const handleGenerateSpeech = async () => {
-        setAutoPlayTrigger(prev => prev + 1);
+        setShouldAutoPlay(true);
         await generateSpeech();
     };
 
