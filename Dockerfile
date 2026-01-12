@@ -1,7 +1,7 @@
 # ======================
 # 前端构建阶段
 # ======================
-FROM node:18-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /frontend
 
