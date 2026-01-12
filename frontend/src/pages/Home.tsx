@@ -30,6 +30,7 @@ import {HistoryList} from '../components/audio/HistoryList';
 import {UnifiedAudioPlayer} from '../components/audio/UnifiedAudioPlayer';
 import VoiceLibrary from '../components/voice/VoiceLibrary';
 import FavoritesManager from '../components/voice/FavoritesManager';
+import TextTemplatesManager from '../components/text/TextTemplatesManager';
 
 interface HomeProps {
   onOpenSettings: () => void;
@@ -87,6 +88,9 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     // 快捷键帮助弹窗状态
     const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
+    // 文本模板管理器状态
+    const [templatesManagerOpen, setTemplatesManagerOpen] = useState(false);
+
     // 自动播放标志 - 在生成新音频时设置为 true
     const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
 
@@ -116,6 +120,12 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
             if ((event.ctrlKey || event.metaKey) && event.key === 'p') {
                 event.preventDefault();
                 setFavoritesManagerOpen(true);
+            }
+
+            // Ctrl+I 或 Cmd+I 打开文本模板管理器
+            if ((event.ctrlKey || event.metaKey) && event.key === 'i') {
+                event.preventDefault();
+                setTemplatesManagerOpen(true);
             }
 
             // Ctrl+/ 或 Cmd+/ 显示快捷键帮助
@@ -148,6 +158,9 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 if (favoritesManagerOpen) {
                     setFavoritesManagerOpen(false);
                 }
+                if (templatesManagerOpen) {
+                    setTemplatesManagerOpen(false);
+                }
                 if (shortcutsHelpOpen) {
                     setShortcutsHelpOpen(false);
                 }
@@ -158,7 +171,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [voiceLibraryOpen, favoritesManagerOpen, shortcutsHelpOpen]);
+    }, [voiceLibraryOpen, favoritesManagerOpen, templatesManagerOpen, shortcutsHelpOpen]);
 
     // 已删除：上面的 useEffect 已合并到初始化逻辑中
 
@@ -457,6 +470,10 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     const handleGenerateSpeech = async () => {
         setShouldAutoPlay(true);
         await generateSpeech();
+    };
+
+    const handleTemplateSelect = (content: string) => {
+        setText(content);
     };
 
     const handleImportReader = async () => {
@@ -968,6 +985,17 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 </button>
 
                                 <button
+                                    onClick={() => setTemplatesManagerOpen(true)}
+                                    className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-sm font-medium"
+                                    title="文本模板 (Ctrl+I)"
+                                >
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z" />
+                                    </svg>
+                                    <span className="hidden sm:inline">文本模板</span>
+                                </button>
+
+                                <button
                                     onClick={() => setShortcutsHelpOpen(true)}
                                     className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
                                     title="快捷键帮助 (Ctrl+/)"
@@ -1090,7 +1118,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                         />
                                     </div>
                                 )}
-                            </div>
+                             </div>
 
                             {/* 语音参数调节 */}
                             <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
@@ -1426,6 +1454,15 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 onFavoritesChange={handleFavoritesChange}
             />
 
+            {/* 文本模板管理器 */}
+            <TextTemplatesManager
+                isOpen={templatesManagerOpen}
+                onClose={() => setTemplatesManagerOpen(false)}
+                onSelectTemplate={handleTemplateSelect}
+                onTemplatesChange={() => {
+                }}
+            />
+
             {/* 快捷键帮助弹窗 */}
             {shortcutsHelpOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -1483,6 +1520,20 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                     </div>
                                     <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
                                         {navigator.platform.includes('Mac') ? '⌘P' : 'Ctrl+P'}
+                                    </kbd>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-medium text-gray-900">打开文本模板</span>
+                                    </div>
+                                    <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
+                                        {navigator.platform.includes('Mac') ? '⌘I' : 'Ctrl+I'}
                                     </kbd>
                                 </div>
 

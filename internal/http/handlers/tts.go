@@ -113,6 +113,33 @@ func NewTTSHandler(service tts.Service, cfg *config.Config) *TTSHandler {
 	}
 }
 
+// containsSSMLTags 检查文本是否包含SSML标签
+func (h *TTSHandler) containsSSMLTags(text string) bool {
+	// 常见的SSML标签列表
+	ssmlTags := []string{
+		"<speak>", "</speak>",
+		"<prosody", "</prosody>",
+		"<break", "</break>",
+		"<emphasis", "</emphasis>",
+		"<say-as", "</say-as>",
+		"<phoneme", "</phoneme>",
+		"<sub", "</sub>",
+		"<voice", "</voice>",
+		"<p>", "</p>",
+		"<s>", "</s>",
+		"<m", "</m>",
+	}
+
+	lowerText := strings.ToLower(text)
+	for _, tag := range ssmlTags {
+		if strings.Contains(lowerText, strings.ToLower(tag)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // processTTSRequest 处理TTS请求的核心逻辑
 func (h *TTSHandler) processTTSRequest(c *gin.Context, req models.TTSRequest, startTime time.Time, parseTime time.Duration, requestType string) {
 	// 验证必要参数
@@ -132,9 +159,15 @@ func (h *TTSHandler) processTTSRequest(c *gin.Context, req models.TTSRequest, st
 		return
 	}
 
+	// 检查是否包含SSML标签
+	containsSSML := h.containsSSMLTags(req.Text)
+	if containsSSML {
+		log.Printf("检测到SSML标签，跳过分段处理")
+	}
+
 	// 检查是否需要分段处理
 	segmentThreshold := h.config.TTS.SegmentThreshold
-	if reqTextLength > segmentThreshold && reqTextLength <= h.config.TTS.MaxTextLength {
+	if reqTextLength > segmentThreshold && reqTextLength <= h.config.TTS.MaxTextLength && !containsSSML {
 		log.Printf("文本长度 %d 超过阈值 %d，使用分段处理", reqTextLength, segmentThreshold)
 		h.handleSegmentedTTS(c, req)
 		return

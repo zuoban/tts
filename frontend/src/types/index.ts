@@ -128,6 +128,21 @@ export interface FavoritesState {
   lastUpdated: Date | null;
 }
 
+// 文本模板项
+export interface TextTemplate {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  order?: number;
+}
+
+// 文本模板状态
+export interface TemplatesState {
+  items: TextTemplate[];
+  lastUpdated: Date | null;
+}
+
 // 本地存储键
 export const STORAGE_KEYS = {
   API_KEY: 'tts_api_key',
@@ -147,4 +162,7 @@ export const STORAGE_KEYS = {
   LANGUAGE_MAP_TIMESTAMP: 'tts_language_map_timestamp',
   CURRENT_LANGUAGE: 'tts_current_language',
   CURRENT_LOCALE: 'tts_current_locale',
+
+  // 文本模板
+  TEXT_TEMPLATES: 'tts_text_templates',
 } as const;
