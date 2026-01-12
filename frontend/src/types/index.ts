@@ -138,4 +138,12 @@ export const STORAGE_KEYS = {
   LOCALE: 'tts_locale',
   HISTORY: 'tts_history',
   FAVORITES: 'tts_favorites',
+
+  // 新的 Store 存储键
+  FORM_STORE: 'tts-form-store',
+  DATA_STORE: 'tts-data-store',
+  LANGUAGE_MAP: 'tts_language_map',
+  LANGUAGE_MAP_TIMESTAMP: 'tts_language_map_timestamp',
+  CURRENT_LANGUAGE: 'tts_current_language',
+  CURRENT_LOCALE: 'tts_current_locale',
 } as const;

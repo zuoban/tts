@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from '../types';
 import type { Voice, TTSState, Config, AudioState, HistoryItem } from '../types/index';
 import TTSApiService from '../services/api';
+import { audioManager } from '../utils/audioResourceManager';
 
 interface TTSStore extends TTSState {
   // 初始化状态
@@ -212,12 +213,14 @@ export const useTTSStore = create<TTSStore>()(
             pitch: pitch || '0',
           });
 
-          // 调试音频数据
-          console.log('音频数据详情:', {
-            size: audioBlob.size,
-            type: audioBlob.type,
-            isAudio: audioBlob.type.startsWith('audio/'),
-          });
+          // 调试音频数据（仅开发环境）
+          if (process.env.NODE_ENV === 'development') {
+            console.log('音频数据详情:', {
+              size: audioBlob.size,
+              type: audioBlob.type,
+              isAudio: audioBlob.type.startsWith('audio/'),
+            });
+          }
 
           // 验证音频数据是否有效
           if (audioBlob.size === 0) {
@@ -227,28 +230,21 @@ export const useTTSStore = create<TTSStore>()(
           // 确保 MIME 类型正确
           let finalBlob = audioBlob;
           if (!audioBlob.type || !audioBlob.type.startsWith('audio/')) {
-            console.warn('音频类型不正确，尝试修复 MIME 类型');
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('音频类型不正确，尝试修复 MIME 类型');
+            }
             // 尝试创建具有正确 MIME 类型的 Blob
             const arrayBuffer = await audioBlob.arrayBuffer();
             finalBlob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
-            console.log('修复后的音频类型:', finalBlob.type);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('修复后的音频类型:', finalBlob.type);
+            }
           }
 
-          const audioUrl = URL.createObjectURL(finalBlob);
-          console.log('创建的音频URL:', audioUrl);
-
-          // 立即验证 Blob URL 是否有效
-          try {
-            const testUrl = audioUrl;
-            console.log('验证 Blob URL:', testUrl);
-
-            // 将 blob 对象存储在临时映射中，防止被垃圾回收
-            (window as any).__activeBlobs = (window as any).__activeBlobs || new Map();
-            (window as any).__activeBlobs.set(audioUrl, finalBlob);
-            console.log('Blob 对象已保存，防止垃圾回收，大小:', finalBlob.size);
-          } catch (error) {
-            console.error('Blob URL 验证失败:', error);
-            throw new Error('音频 URL 创建失败');
+          // 使用音频资源管理器创建 Blob URL
+          const audioUrl = audioManager.createBlobUrl(finalBlob);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('创建的音频URL:', audioUrl);
           }
 
           // 获取声音名称
@@ -396,7 +392,9 @@ export const useTTSStore = create<TTSStore>()(
               // 验证 blob URL 是否仍然有效
               const response = await fetch(item.audioUrl, { method: 'HEAD' });
               if (!response.ok) {
-                console.log('Blob URL已失效，尝试重新生成音频');
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Blob URL已失效，尝试重新生成音频');
+                }
                 // 重新生成音频
                 const audioBlob = await TTSApiService.regenerateSpeech(item as Record<string, unknown>);
                 const newAudioUrl = URL.createObjectURL(audioBlob);
@@ -409,7 +407,9 @@ export const useTTSStore = create<TTSStore>()(
                 return;
               }
             } catch (error) {
-              console.log('验证blob URL失败，尝试重新生成音频:', error);
+              if (process.env.NODE_ENV === 'development') {
+                console.log('验证blob URL失败，尝试重新生成音频:', error);
+              }
               // 重新生成音频
               const audioBlob = await TTSApiService.regenerateSpeech(item);
               const newAudioUrl = URL.createObjectURL(audioBlob);

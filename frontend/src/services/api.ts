@@ -59,14 +59,19 @@ api.interceptors.request.use(
     const apiKey = localStorage.getItem('tts_api_key');
     if (apiKey) {
       config.headers.Authorization = `Bearer ${apiKey}`;
-      console.log('API 请求认证:', {
-        url: config.url,
-        method: config.method,
-        hasApiKey: !!apiKey,
-        authHeader: config.headers.Authorization ? '已设置' : '未设置'
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('API 请求认证:', {
+          url: config.url,
+          method: config.method,
+          hasApiKey: !!apiKey,
+          authHeader: config.headers.Authorization ? '已设置' : '未设置'
+        });
+      }
     } else {
-      console.warn('API 请求缺少认证密钥:', config.url);
+      // API Key 是可选的，仅在开发环境输出调试信息
+      if (process.env.NODE_ENV === 'development') {
+        console.log('API 请求未设置认证密钥（可选）:', config.url);
+      }
     }
     return config;
   },

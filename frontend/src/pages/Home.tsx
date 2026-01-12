@@ -1,5 +1,17 @@
 import React, {useCallback, useEffect, useState} from 'react';
+// ============================================================
+// 📦 Store 导入 - 选择使用新旧版本
+// ============================================================
+// 选项 1: 使用新版本的组合 Hook（推荐，性能优化）
+// import {useTTSStoreV2 as useTTSStore} from '../hooks/useTTSStoreV2';
+
+// 选项 2: 使用旧版本（当前默认）
 import {useTTSStore} from '../hooks/useTTSStore';
+//
+// 💡 切换方式：只需注释/取消注释对应的导入行即可
+//    新版本提供相同的接口，但底层使用拆分的 Store，性能更好
+// ============================================================
+
 import {TTSApiService} from '../services/api';
 import {FavoritesService} from '../services/favorites';
 import type {HistoryItem, FavoriteVoiceItem} from '../types/index';
@@ -8,6 +20,12 @@ import {Button} from '../components/ui/Button';
 import {Textarea} from '../components/ui/Textarea';
 import {Select} from '../components/ui/Select';
 import {Slider} from '../components/ui/Slider';
+import {Alert} from '../components/ui/Alert';
+import {
+  VoiceSelectorSkeleton,
+  ParameterControlsSkeleton,
+  TextSkeleton,
+} from '../components/ui/Skeleton';
 import {HistoryList} from '../components/audio/HistoryList';
 import {UnifiedAudioPlayer} from '../components/audio/UnifiedAudioPlayer';
 import VoiceLibrary from '../components/voice/VoiceLibrary';
@@ -797,10 +815,67 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
 
     if (isLoading && voices.length === 0) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">正在初始化应用...</p>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
+                {/* 现代化背景装饰 */}
+                <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-500/20 to-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                    <div className="absolute top-1/3 left-1/2 w-60 h-60 bg-gradient-to-r from-cyan-400/10 to-teal-400/10 rounded-full blur-2xl animate-pulse delay-500"></div>
+                </div>
+
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    {/* 顶部导航骨架屏 */}
+                    <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100/50 sticky top-0 z-50 mb-6">
+                        <div className="flex items-center justify-between h-16">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <div className="h-8 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+                                <div className="h-8 w-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 主要内容骨架屏 */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* 左侧主要控制面板骨架屏 */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* 文本输入骨架屏 */}
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                                <TextSkeleton lines={3} />
+                            </div>
+
+                            {/* 语音选择骨架屏 */}
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                                <VoiceSelectorSkeleton />
+                            </div>
+
+                            {/* 参数控制骨架屏 */}
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                                <ParameterControlsSkeleton />
+                            </div>
+                        </div>
+
+                        {/* 右侧历史记录骨架屏 */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                                <div className="h-6 w-24 bg-gray-200 rounded mb-4 animate-pulse"></div>
+                                <div className="space-y-3">
+                                    {[...Array(5)].map((_, i) => (
+                                        <div key={i} className="flex items-start space-x-3 p-3 border border-gray-100 rounded-lg">
+                                            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse flex-shrink-0"></div>
+                                            <div className="flex-1 space-y-2">
+                                                <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+                                                <div className="h-3 w-2/3 bg-gray-200 rounded animate-pulse"></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -892,15 +967,15 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
 
                 {/* 主要内容区域 */}
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    {/* 错误提示 */}
+                    {/* 错误提示 - 使用 Alert 组件 */}
                     {error && (
-                        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg shadow-sm">
-                            <div className="flex items-center">
-                                <svg className="w-5 h-5 text-red-400 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <p className="text-red-700">{error}</p>
-                            </div>
+                        <div className="mb-6">
+                            <Alert
+                                type="error"
+                                message={error}
+                                onClose={() => setError('')}
+                                autoClose={5000}
+                            />
                         </div>
                     )}
 
