@@ -65,6 +65,10 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     // 快捷键帮助弹窗状态
     const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
+    // 自动播放触发器 - 每次音频生成后递增，用于触发自动播放
+    const [autoPlayTrigger, setAutoPlayTrigger] = useState(0);
+    const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+
     // 优化：移除useCallback避免依赖问题，initializeApp本身就很稳定
     // 直接使用useEffect调用，避免不必要的重新渲染
     useEffect(() => {
@@ -309,6 +313,19 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         }
     }, [error, clearError]);
 
+    // 自动播放新生成的音频
+    useEffect(() => {
+        if (audioUrl && autoPlayTrigger > 0 && !shouldAutoPlay) {
+            console.log('触发自动播放', { audioUrl, autoPlayTrigger });
+            setShouldAutoPlay(true);
+            // 延迟重置，确保播放器已经接收到了 true 并开始播放
+            setTimeout(() => {
+                setShouldAutoPlay(false);
+                console.log('重置自动播放标志');
+            }, 1000);
+        }
+    }, [audioUrl, autoPlayTrigger, shouldAutoPlay]);
+
     // 通用的安全复制函数
     const safeCopyToClipboard = async (text: string, successMessage: string) => {
         try {
@@ -411,6 +428,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     };
 
     const handleGenerateSpeech = async () => {
+        setAutoPlayTrigger(prev => prev + 1);
         await generateSpeech();
     };
 
@@ -1225,7 +1243,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                     <div className="p-4">
                                         <UnifiedAudioPlayer
                                             audioUrl={audioUrl}
-                                            autoPlay={false}
+                                            autoPlay={shouldAutoPlay}
                                             itemId={currentPlayingId || undefined}
                                             variant="full"
                                             showProgress={true}
