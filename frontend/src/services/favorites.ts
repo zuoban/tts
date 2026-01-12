@@ -9,9 +9,10 @@ export class FavoritesService {
       if (!stored) return [];
 
       const data: FavoritesState = JSON.parse(stored);
-      return data.items.map(item => ({
+      return data.items.map((item, index) => ({
         ...item,
-        addedAt: new Date(item.addedAt)
+        addedAt: new Date(item.addedAt),
+        order: item.order ?? index
       }));
     } catch (error) {
       console.error('获取收藏列表失败:', error);
@@ -51,7 +52,8 @@ export class FavoritesService {
         localeName: voice.locale_name,
         gender: voice.gender,
         styles: voice.style_list || voice.styles || [],
-        addedAt: new Date()
+        addedAt: new Date(),
+        order: favorites.length
       };
 
       favorites.push(newItem);
@@ -135,6 +137,30 @@ export class FavoritesService {
     } catch (error) {
       console.error('按语言分组收藏失败:', error);
       return {};
+    }
+  }
+
+  // 重新排序收藏
+  static reorderFavorites(sourceIndex: number, destinationIndex: number): boolean {
+    try {
+      const favorites = this.getFavorites();
+      if (sourceIndex === destinationIndex) {
+        return false;
+      }
+
+      const [removed] = favorites.splice(sourceIndex, 1);
+      favorites.splice(destinationIndex, 0, removed);
+
+      // 更新顺序
+      favorites.forEach((item, index) => {
+        item.order = index;
+      });
+
+      this.saveFavorites(favorites);
+      return true;
+    } catch (error) {
+      console.error('重新排序收藏失败:', error);
+      return false;
     }
   }
 }

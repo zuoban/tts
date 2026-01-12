@@ -119,6 +119,7 @@ export interface FavoriteVoiceItem {
   gender: 'Male' | 'Female';
   styles?: string[]; // 支持的风格
   addedAt: Date; // 收藏时间
+  order?: number; // 排序顺序
 }
 
 // 收藏夹状态

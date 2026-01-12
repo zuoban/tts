@@ -5,6 +5,7 @@ import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
 import { FavoritesService } from "../../services/favorites";
+import ConfirmModal from "../ui/ConfirmModal";
 import type { Voice } from "../../types/index";
 
 interface VoiceLibraryProps {
@@ -38,6 +39,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
   const [favoriteVoiceIds, setFavoriteVoiceIds] = useState<Set<string>>(
     new Set(),
   );
+  const [clearFavoritesConfirmOpen, setClearFavoritesConfirmOpen] = useState(false);
 
   // 搜索框引用
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -403,45 +405,48 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
 
   // 清空所有收藏
   const handleClearAllFavorites = () => {
-    if (window.confirm('确定要清空所有收藏吗？此操作不可恢复。')) {
-      try {
-        FavoritesService.clearFavorites();
+    setClearFavoritesConfirmOpen(true);
+  };
 
-        // 显示清空成功提示
-        const message = document.createElement("div");
-        message.className = "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm";
-        message.innerHTML = `
-          <div class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            <span>已清空所有收藏</span>
-          </div>
-        `;
-        document.body.appendChild(message);
+  const confirmClearAllFavorites = () => {
+    try {
+      FavoritesService.clearFavorites();
 
-        setTimeout(() => {
-          message.remove();
-        }, 2000);
+      // 显示清空成功提示
+      const message = document.createElement("div");
+      message.className = "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm";
+      message.innerHTML = `
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>已清空所有收藏</span>
+        </div>
+      `;
+      document.body.appendChild(message);
 
-        // 重新加载收藏状态
-        const favorites = FavoritesService.getFavorites();
-        const favoriteIds = new Set(favorites.map((item) => item.id));
-        setFavoriteVoiceIds(favoriteIds);
+      setTimeout(() => {
+        message.remove();
+      }, 2000);
 
-        // 通知父组件收藏状态已改变
-        if (onFavoritesChange) {
-          onFavoritesChange();
-        }
+      // 重新加载收藏状态
+      const favorites = FavoritesService.getFavorites();
+      const favoriteIds = new Set(favorites.map((item) => item.id));
+      setFavoriteVoiceIds(favoriteIds);
 
-        // 如果没有收藏了，退出收藏筛选模式
-        if (favorites.length === 0) {
-          setShowFavoritesOnly(false);
-        }
-      } catch (error) {
-        console.error("清空收藏失败:", error);
+      // 通知父组件收藏状态已改变
+      if (onFavoritesChange) {
+        onFavoritesChange();
       }
+
+      // 如果没有收藏了，退出收藏筛选模式
+      if (favorites.length === 0) {
+        setShowFavoritesOnly(false);
+      }
+    } catch (error) {
+      console.error("清空收藏失败:", error);
     }
+    setClearFavoritesConfirmOpen(false);
   };
 
   if (!isOpen) return null;
@@ -460,7 +465,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                 {showFavoritesOnly && favoriteVoiceIds.size > 0 && (
                   <button
                     onClick={handleClearAllFavorites}
-                    className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                    className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 transition-colors"
                     title="清空所有收藏"
                   >
                     <svg
@@ -476,7 +481,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
-                    清空收藏
+                    清空
                   </button>
                 )}
               </div>
@@ -851,11 +856,22 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                 </>
               )}
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+           )}
+         </div>
+       </div>
+
+      <ConfirmModal
+        isOpen={clearFavoritesConfirmOpen}
+        title="清空"
+        message="确定要清空所有收藏吗？此操作不可恢复。"
+        confirmText="清空"
+        cancelText="取消"
+        type="danger"
+        onConfirm={confirmClearAllFavorites}
+        onCancel={() => setClearFavoritesConfirmOpen(false)}
+      />
+     </div>
+   );
+ };
 
 export default VoiceLibrary;

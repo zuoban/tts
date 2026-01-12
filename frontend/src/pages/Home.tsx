@@ -29,6 +29,7 @@ import {
 import {HistoryList} from '../components/audio/HistoryList';
 import {UnifiedAudioPlayer} from '../components/audio/UnifiedAudioPlayer';
 import VoiceLibrary from '../components/voice/VoiceLibrary';
+import FavoritesManager from '../components/voice/FavoritesManager';
 
 interface HomeProps {
   onOpenSettings: () => void;
@@ -80,6 +81,9 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
     const [voiceLibraryOpen, setVoiceLibraryOpen] = useState(false);
     const [openVoiceLibraryWithFavorites, setOpenVoiceLibraryWithFavorites] = useState(false);
 
+    // 收藏管理器状态
+    const [favoritesManagerOpen, setFavoritesManagerOpen] = useState(false);
+
     // 快捷键帮助弹窗状态
     const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
 
@@ -106,6 +110,12 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
             if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
                 event.preventDefault();
                 openVoiceLibrary(false);
+            }
+
+            // Ctrl+P 或 Cmd+P 打开收藏管理器
+            if ((event.ctrlKey || event.metaKey) && event.key === 'p') {
+                event.preventDefault();
+                setFavoritesManagerOpen(true);
             }
 
             // Ctrl+/ 或 Cmd+/ 显示快捷键帮助
@@ -135,6 +145,9 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 if (voiceLibraryOpen) {
                     setVoiceLibraryOpen(false);
                 }
+                if (favoritesManagerOpen) {
+                    setFavoritesManagerOpen(false);
+                }
                 if (shortcutsHelpOpen) {
                     setShortcutsHelpOpen(false);
                 }
@@ -145,7 +158,7 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [voiceLibraryOpen, shortcutsHelpOpen]);
+    }, [voiceLibraryOpen, favoritesManagerOpen, shortcutsHelpOpen]);
 
     // 已删除：上面的 useEffect 已合并到初始化逻辑中
 
@@ -939,6 +952,22 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                 </button>
 
                                 <button
+                                    onClick={() => setFavoritesManagerOpen(true)}
+                                    className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors text-sm font-medium relative"
+                                    title="收藏管理 (Ctrl+P)"
+                                >
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                    </svg>
+                                    <span className="hidden sm:inline">收藏</span>
+                                    {favoriteVoices.length > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                                            {favoriteVoices.length}
+                                        </span>
+                                    )}
+                                </button>
+
+                                <button
                                     onClick={() => setShortcutsHelpOpen(true)}
                                     className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
                                     title="快捷键帮助 (Ctrl+/)"
@@ -990,42 +1019,6 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                         {selectedLanguage || '选择语言'}
                                     </span>
                                 </div>
-
-                                {/* 收藏声音下拉框 */}
-                                {favoriteVoices.length > 0 && (
-                                    <div className="mb-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <span className="text-sm font-medium text-gray-700">
-                                                🌟 收藏声音 ({favoriteVoices.length})
-                                            </span>
-                                            <button
-                                                onClick={() => openVoiceLibrary(true)}
-                                                className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
-                                                title="在声音库中管理收藏"
-                                            >
-                                                管理 →
-                                            </button>
-                                        </div>
-                                        <Select
-                                            value={voice}
-                                            onChange={(e) => {
-                                                const selectedFavorite = favoriteVoices.find(fav => fav.id === e.target.value);
-                                                if (selectedFavorite) {
-                                                    handleFavoriteSelect(selectedFavorite);
-                                                }
-                                            }}
-                                            options={[
-                                                { value: '', label: '选择收藏声音...' },
-                                                ...favoriteVoices.map(fav => ({
-                                                    value: fav.id,
-                                                    label: `${fav.localName || fav.name} (${fav.locale})`,
-                                                }))
-                                            ]}
-                                            placeholder="快速选择收藏声音"
-                                            size="sm"
-                                        />
-                                    </div>
-                                )}
 
                                 {/* 常用语言快捷选择 */}
                                 <div className="flex flex-wrap gap-2 mb-4">
@@ -1425,6 +1418,14 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                 showFavoritesOnly={openVoiceLibraryWithFavorites}
             />
 
+            {/* 收藏管理器 */}
+            <FavoritesManager
+                isOpen={favoritesManagerOpen}
+                onClose={() => setFavoritesManagerOpen(false)}
+                onSelectVoice={handleFavoriteSelect}
+                onFavoritesChange={handleFavoritesChange}
+            />
+
             {/* 快捷键帮助弹窗 */}
             {shortcutsHelpOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -1468,6 +1469,20 @@ const Home: React.FC<HomeProps> = ({ onOpenSettings }) => {
                                     </div>
                                     <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
                                         {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+                                    </kbd>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                            </svg>
+                                        </div>
+                                        <span className="font-medium text-gray-900">打开收藏管理</span>
+                                    </div>
+                                    <kbd className="px-2 py-1 text-xs font-mono bg-white border border-gray-200 rounded shadow-sm">
+                                        {navigator.platform.includes('Mac') ? '⌘P' : 'Ctrl+P'}
                                     </kbd>
                                 </div>
 
