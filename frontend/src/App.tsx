@@ -6,6 +6,7 @@ import { setupWebVitals, perfMonitor } from './utils/performanceMonitor';
 import { audioManager } from './utils/audioResourceManager';
 import { SettingsModal } from './components/layout/SettingsModal';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
 import './styles/globals.css';
 
 function App() {
@@ -96,6 +97,7 @@ function App() {
         {/* 路由内容 */}
         <Routes>
           <Route path="/" element={<Home onOpenSettings={handleOpenSettings} />} />
+          <Route path="/landing" element={<Landing />} />
         </Routes>
 
         {/* 设置弹窗 - 全局级别 */}
