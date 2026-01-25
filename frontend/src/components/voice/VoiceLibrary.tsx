@@ -7,6 +7,7 @@ import { Input } from "../ui/Input";
 import { FavoritesService } from "../../services/favorites";
 import ConfirmModal from "../ui/ConfirmModal";
 import type { Voice } from "../../types/index";
+import { showSuccess, showError, showInfo } from "../ui/Toast";
 
 interface VoiceLibraryProps {
   isOpen: boolean;
@@ -181,42 +182,12 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
       await audio.play();
 
       // 显示试听成功提示
-      const previewMessage = document.createElement("div");
-      previewMessage.className =
-        "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse";
-      previewMessage.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>正在试听: ${voice.local_name || voice.name}</span>
-        </div>
-      `;
-      document.body.appendChild(previewMessage);
-
-      setTimeout(() => {
-        previewMessage.remove();
-      }, 3000);
+      showSuccess(`正在试听: ${voice.local_name || voice.name}`, 3000);
     } catch (error) {
       console.error("Preview voice failed:", error);
 
-      const errorMessage = document.createElement("div");
-      errorMessage.className =
-        "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm";
-      errorMessage.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>试听失败，请重试</span>
-        </div>
-      `;
-      document.body.appendChild(errorMessage);
-
-      setTimeout(() => {
-        errorMessage.remove();
-      }, 3000);
+      // 显示试听失败提示
+      showError('试听失败,请重试', 3000);
     }
   };
 
@@ -270,55 +241,12 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
 
   // 显示成功消息
   const showSuccessMessage = (message: string) => {
-    const successDiv = document.createElement('div');
-    successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-    successDiv.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <span>${message}</span>
-      </div>
-    `;
-    document.body.appendChild(successDiv);
-    setTimeout(() => {
-      if (document.body.contains(successDiv)) {
-        document.body.removeChild(successDiv);
-      }
-    }, 3000);
+    showSuccess(message);
   };
 
   // 显示复制失败消息并提供手动复制选项
   const showCopyFailedMessage = (text: string) => {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg z-50 text-sm max-w-md';
-    errorDiv.innerHTML = `
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span class="font-semibold">自动复制失败</span>
-        </div>
-        <div class="text-xs opacity-90">
-          请手动复制以下内容：
-        </div>
-        <div class="bg-white bg-opacity-20 rounded p-2 text-xs font-mono break-all">
-          ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}
-        </div>
-        <button class="bg-white text-red-500 px-2 py-1 rounded text-xs font-semibold hover:bg-opacity-90 transition-colors" onclick="this.parentElement.remove()">
-          关闭
-        </button>
-      </div>
-    `;
-    document.body.appendChild(errorDiv);
-
-    // 10秒后自动移除
-    setTimeout(() => {
-      if (document.body.contains(errorDiv)) {
-        document.body.removeChild(errorDiv);
-      }
-    }, 10000);
+    showError(`自动复制失败，请手动复制: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`, 10000);
   };
 
   const copyVoiceId = (voiceId: string, voiceName: string) => {
@@ -342,24 +270,12 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
     setPitch("0");
 
     // 显示成功提示
-    const successMessage = document.createElement("div");
-    successMessage.className =
-      "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse";
-    successMessage.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>已选择 ${voice.local_name || voice.name}</span>
-        <span class="ml-2 text-xs opacity-75">${voice.locale_name || voice.locale}</span>
-      </div>
-    `;
-    document.body.appendChild(successMessage);
+    showSuccess(`已选择 ${voice.local_name || voice.name}`);
 
+    // 延迟关闭声音库
     setTimeout(() => {
-      successMessage.remove();
-      onClose(); // 关闭声音库
-    }, 1500);
+      onClose();
+    }, 500);
   };
 
   const toggleFavorite = (e: React.MouseEvent, voice: Voice) => {
@@ -380,27 +296,12 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
       onFavoritesChange();
     }
 
-    const message = document.createElement("div");
-    message.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse ${
-      result.added ? "bg-yellow-500 text-white" : "bg-gray-500 text-white"
-    }`;
-    message.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
-            result.added
-              ? "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-              : "M6 18L18 6M6 6l12 12"
-          }" />
-        </svg>
-        <span>${result.added ? "已添加到收藏" : "已移除收藏"}: ${voice.local_name || voice.name}</span>
-      </div>
-    `;
-    document.body.appendChild(message);
-
-    setTimeout(() => {
-      message.remove();
-    }, 2000);
+    // 显示收藏操作提示
+    if (result.added) {
+      showSuccess(`已添加到收藏: ${voice.local_name || voice.name}`);
+    } else {
+      showInfo(`已移除收藏: ${voice.local_name || voice.name}`);
+    }
   };
 
   // 清空所有收藏
@@ -413,21 +314,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
       FavoritesService.clearFavorites();
 
       // 显示清空成功提示
-      const message = document.createElement("div");
-      message.className = "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm";
-      message.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          <span>已清空所有收藏</span>
-        </div>
-      `;
-      document.body.appendChild(message);
-
-      setTimeout(() => {
-        message.remove();
-      }, 2000);
+      showInfo('已清空所有收藏');
 
       // 重新加载收藏状态
       const favorites = FavoritesService.getFavorites();
@@ -455,7 +342,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
         {/* 头部 */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4 text-white">
+        <div className="card-header-secondary">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-4">

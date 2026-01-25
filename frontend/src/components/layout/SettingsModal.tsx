@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTTSStore } from "../../hooks/useTTSStore";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { showSuccess, showInfo } from "../ui/Toast";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -26,23 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setApiKey(tempApiKey);
     clearError();
 
-    // 显示保存成功提示
-    const successMessage = document.createElement("div");
-    successMessage.className =
-      "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse";
-    successMessage.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>设置已保存</span>
-      </div>
-    `;
-    document.body.appendChild(successMessage);
-
-    setTimeout(() => {
-      successMessage.remove();
-    }, 2000);
+    showSuccess('设置已保存');
 
     onClose();
   };
@@ -53,23 +38,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setApiKey("");
     clearError();
 
-    // 显示清除成功提示
-    const clearMessage = document.createElement("div");
-    clearMessage.className =
-      "fixed top-4 right-4 bg-gray-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse";
-    clearMessage.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        <span>API Key 已清除</span>
-      </div>
-    `;
-    document.body.appendChild(clearMessage);
-
-    setTimeout(() => {
-      clearMessage.remove();
-    }, 2000);
+    showInfo('API Key 已清除');
 
     onClose();
   };
@@ -85,7 +54,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white backdrop-blur-xl rounded-2xl shadow-2xl border-0 w-full max-w-md max-h-[90vh] overflow-hidden">
         {/* 头部 */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
+        <div className="card-header-secondary">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center">

@@ -6,6 +6,7 @@ import type { TextTemplate } from '../../types/index';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import ConfirmModal from '../ui/ConfirmModal';
+import { showSuccess, showWarning, showInfo } from '../ui/Toast';
 
 interface TextTemplatesManagerProps {
   isOpen: boolean;
@@ -69,18 +70,7 @@ const TextTemplatesManager: React.FC<TextTemplatesManagerProps> = ({
     setTemplates(reordered);
     TextTemplatesService.reorderTemplates(sourceIndex, destinationIndex);
 
-    const message = document.createElement('div');
-    message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-    message.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>顺序已更新</span>
-      </div>
-    `;
-    document.body.appendChild(message);
-    setTimeout(() => message.remove(), 2000);
+    showSuccess('顺序已更新');
   };
 
   const handleAdd = () => {
@@ -106,18 +96,7 @@ const TextTemplatesManager: React.FC<TextTemplatesManagerProps> = ({
       const result = TextTemplatesService.deleteTemplate(removingTemplate.id);
 
       if (result) {
-        const message = document.createElement('div');
-        message.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-        message.innerHTML = `
-          <div class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            <span>已删除模板: ${removingTemplate.title}</span>
-          </div>
-        `;
-        document.body.appendChild(message);
-        setTimeout(() => message.remove(), 2000);
+        showWarning(`已删除模板: ${removingTemplate.title}`);
 
         loadTemplates();
         onTemplatesChange?.();
@@ -134,18 +113,7 @@ const TextTemplatesManager: React.FC<TextTemplatesManagerProps> = ({
   const confirmClearAll = () => {
     TextTemplatesService.clearTemplates();
 
-    const message = document.createElement('div');
-    message.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
-    message.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        <span>已清空所有模板</span>
-      </div>
-    `;
-    document.body.appendChild(message);
-    setTimeout(() => message.remove(), 2000);
+    showInfo('已清空所有模板');
 
     loadTemplates();
     onTemplatesChange?.();
@@ -164,36 +132,14 @@ const TextTemplatesManager: React.FC<TextTemplatesManagerProps> = ({
         content: formData.content
       });
 
-      const message = document.createElement('div');
-      message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-      message.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>模板已更新</span>
-        </div>
-      `;
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      showSuccess('模板已更新');
     } else {
       TextTemplatesService.addTemplate({
         title: formData.title,
         content: formData.content
       });
 
-      const message = document.createElement('div');
-      message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-      message.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          <span>模板已添加</span>
-        </div>
-      `;
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      showSuccess('模板已添加');
     }
 
     loadTemplates();
@@ -207,18 +153,7 @@ const TextTemplatesManager: React.FC<TextTemplatesManagerProps> = ({
     if (onSelectTemplate) {
       onSelectTemplate(template.content);
 
-      const message = document.createElement('div');
-      message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-      message.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>已填充模板: ${template.title}</span>
-        </div>
-      `;
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      showSuccess(`已填充模板: ${template.title}`);
 
       onClose();
     }

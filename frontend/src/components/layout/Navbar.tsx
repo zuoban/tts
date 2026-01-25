@@ -1,84 +1,158 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '../ui/Button';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone, faMusic, faCog, faVolumeUp } from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useTTSStore } from '../../hooks/useTTSStore';
+import { FavoritesService } from '../../services/favorites';
+import type { FavoriteVoiceItem } from '../../types/index';
 
 interface NavbarProps {
-  onOpenSettings: () => void;
+  // 不再需要 showShortcutsHelp prop
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
+export const Navbar: React.FC<NavbarProps> = () => {
+  const location = useLocation();
+  const { voices } = useTTSStore();
+  const [favoriteCount, setFavoriteCount] = useState(0);
+
+  const loadFavoriteVoices = useCallback(() => {
+    const favorites = FavoritesService.getFavorites();
+    setFavoriteCount(favorites.length);
+  }, []);
+
+  useEffect(() => {
+    loadFavoriteVoices();
+  }, [loadFavoriteVoices]);
+
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <nav className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm sticky top-0 z-50">
+    <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100/50 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo 和品牌 */}
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <FontAwesomeIcon
-                icon={faVolumeUp}
-                className="w-6 h-6 text-blue-600"
-              />
-              <h1 className="text-xl font-bold text-gray-900">TTS 服务</h1>
-            </div>
+          <div className="flex items-center">
+            {/* Logo和标题 */}
+            <Link to="/" className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">TTS Studio</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">AI 文本转语音</p>
+              </div>
+            </Link>
           </div>
 
-          {/* 导航链接 */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="flex items-center space-x-2">
+            {/* 快速统计 */}
+            <div className="hidden sm:flex items-center text-xs text-gray-500 mr-4">
+              <span>{voices.length} 声音</span>
+            </div>
+
+            {/* 首页按钮 */}
             <Link
               to="/"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                isActive('/')
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+              title="主页"
             >
-              <FontAwesomeIcon icon={faMicrophone} className="w-4 h-4" />
-              <span>文本转语音</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="hidden sm:inline">主页</span>
             </Link>
 
+            {/* 声音库按钮 */}
             <Link
-              to="/voice-library"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+              to="/voices"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                isActive('/voices')
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+              title="声音库"
             >
-              <FontAwesomeIcon icon={faMusic} className="w-4 h-4" />
-              <span>声音库</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span className="hidden sm:inline">声音库</span>
             </Link>
-          </div>
 
-          {/* 设置按钮 */}
-          <div className="flex items-center space-x-4">
+            {/* 收藏管理按钮 */}
+            <Link
+              to="/favorites"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium relative ${
+                isActive('/favorites')
+                  ? 'text-yellow-600 bg-yellow-50'
+                  : 'text-gray-600 hover:text-yellow-600 hover:bg-yellow-50'
+              }`}
+              title="收藏管理"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+              <span className="hidden sm:inline">收藏</span>
+              {favoriteCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {favoriteCount}
+                </span>
+              )}
+            </Link>
+
+            {/* 文本模板按钮 */}
+            <Link
+              to="/templates"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                isActive('/templates')
+                  ? 'text-purple-600 bg-purple-50'
+                  : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+              }`}
+              title="文本模板"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z" />
+              </svg>
+              <span className="hidden sm:inline">文本模板</span>
+            </Link>
+
+            {/* 快捷键帮助按钮 */}
+            <Link
+              to="/shortcuts"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                isActive('/shortcuts')
+                  ? 'text-gray-700 bg-gray-100'
+                  : 'text-gray-600 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+              title="快捷键帮助 (Ctrl+/)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="hidden sm:inline">快捷键</span>
+            </Link>
+
             {/* 设置按钮 */}
-            <Button
-              onClick={onOpenSettings}
-              variant="ghost"
-              size="sm"
-              className="text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            <Link
+              to="/settings"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                isActive('/settings')
+                  ? 'text-gray-700 bg-gray-100'
+                  : 'text-gray-600 hover:text-gray-700 hover:bg-gray-100'
+              }`}
               title="设置"
             >
-              <FontAwesomeIcon icon={faCog} className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* 移动端导航 */}
-        <div className="md:hidden border-t border-gray-200/50 py-3">
-          <div className="flex space-x-6">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium text-sm"
-            >
-              <FontAwesomeIcon icon={faMicrophone} className="w-4 h-4" />
-              <span>文本转语音</span>
-            </Link>
-
-            <Link
-              to="/voice-library"
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium text-sm"
-            >
-              <FontAwesomeIcon icon={faMusic} className="w-4 h-4" />
-              <span>声音库</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="hidden sm:inline">设置</span>
             </Link>
           </div>
         </div>
       </div>
-    </nav>
+    </header>
   );
 };

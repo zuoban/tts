@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 导入统一设计系统 */
+@import './design-system.css';
+
 /* 全局样式重置 */
 @layer base {
   * {

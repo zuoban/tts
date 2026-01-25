@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useTTSStore } from './hooks/useTTSStore';
 import { needsMigration, migrateFromOldStore } from './utils/migration';
 import { setupWebVitals, perfMonitor } from './utils/performanceMonitor';
 import { audioManager } from './utils/audioResourceManager';
-import { SettingsModal } from './components/layout/SettingsModal';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
+import Settings from './pages/Settings';
+import Favorites from './pages/Favorites';
+import Templates from './pages/Templates';
+import Voices from './pages/Voices';
+import Shortcuts from './pages/Shortcuts';
 import './styles/globals.css';
 
 function App() {
   const { apiKey } = useTTSStore();
-  const [showSettings, setShowSettings] = useState(false);
 
   // ========== 性能监控和 Web Vitals ==========
   // 应用启动时初始化性能监控
@@ -68,40 +71,19 @@ function App() {
     }
   }, [apiKey]);
 
-  // 全局键盘事件处理
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // ESC 键关闭设置弹窗
-      if (event.key === 'Escape' && showSettings) {
-        setShowSettings(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showSettings]);
-
-  const handleOpenSettings = () => {
-    setShowSettings(true);
-  };
-
-  const handleCloseSettings = () => {
-    setShowSettings(false);
-  };
-
   return (
     <Router>
       <div className="App">
         {/* 路由内容 */}
         <Routes>
-          <Route path="/" element={<Home onOpenSettings={handleOpenSettings} />} />
+          <Route path="/" element={<Home />} />
           <Route path="/landing" element={<Landing />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/templates" element={<Templates />} />
+          <Route path="/voices" element={<Voices />} />
+          <Route path="/shortcuts" element={<Shortcuts />} />
         </Routes>
-
-        {/* 设置弹窗 - 全局级别 */}
-        <SettingsModal isOpen={showSettings} onClose={handleCloseSettings} />
       </div>
     </Router>
   );
