@@ -342,7 +342,7 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
   const renderMinimal = () => (
     <div className={className}>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-2 py-1 rounded text-xs mb-2">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-2 py-1 rounded text-xs mb-2">
           {error}
         </div>
       )}
@@ -358,7 +358,7 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
         onClick={togglePlay}
         variant="ghost"
         size="sm"
-        className={`p-1.5 h-7 w-7 ${isPlaying ? 'text-green-600' : 'text-gray-600'} hover:text-green-700`}
+        className={`p-1.5 h-7 w-7 ${isPlaying ? 'text-cyan-400' : 'text-gray-400'} hover:text-cyan-300`}
         disabled={!currentAudioUrl}
         title={isPlaying ? "暂停" : "播放"}
       >
@@ -385,7 +385,7 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
         onClick={togglePlay}
         variant={isPlaying ? "default" : "ghost"}
         size="sm"
-        className={`p-1.5 h-8 w-8 ${isPlaying ? 'bg-green-500 hover:bg-green-600 text-white' : 'text-gray-600 hover:text-gray-800'}`}
+        className={`p-1.5 h-8 w-8 ${isPlaying ? 'bg-cyan-500 hover:bg-cyan-600 text-white' : 'text-gray-400 hover:text-cyan-400'}`}
         disabled={!currentAudioUrl}
       >
         <FontAwesomeIcon
@@ -402,14 +402,14 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
             max={duration || 0}
             value={currentTime}
             onChange={handleSeek}
-            className="flex-1 h-1 bg-gray-200 rounded-full appearance-none cursor-pointer accent-green-500"
+            className="flex-1 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-cyan-500"
             style={{
-              background: `linear-gradient(to right, rgb(34 197 94) 0%, rgb(34 197 94) ${duration > 0 ? (currentTime / duration) * 100 : 0}%, rgb(229 231 235) ${duration > 0 ? (currentTime / duration) * 100 : 0}%, rgb(229 231 235) 100%)`
+              background: `linear-gradient(to right, rgb(6 182 212) 0%, rgb(6 182 212) ${duration > 0 ? (currentTime / duration) * 100 : 0}%, rgb(55 65 81) ${duration > 0 ? (currentTime / duration) * 100 : 0}%, rgb(55 65 81) 100%)`
             }}
           />
-          <div className="flex items-center gap-1 text-xs text-gray-500 min-w-[60px] font-mono">
+          <div className="flex items-center gap-1 text-xs text-gray-400 min-w-[60px] font-mono">
             <span>{formatTime(currentTime)}</span>
-            <span className="text-gray-400">/</span>
+            <span className="text-gray-600">/</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
@@ -420,7 +420,7 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
           onClick={handleDownload}
           variant="ghost"
           size="sm"
-          className="p-1.5 h-8 w-8 text-gray-600 hover:text-green-600"
+          className="p-1.5 h-8 w-8 text-gray-400 hover:text-cyan-400"
           title="下载"
         >
           <FontAwesomeIcon icon={faDownload} className="text-xs" />
@@ -432,9 +432,14 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
   const renderFull = () => (
     <div className={`${className}`}>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm mb-3">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-4 backdrop-blur-sm">
           <div className="flex items-center justify-between">
-            <span>{error}</span>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <span>{error}</span>
+            </div>
             {error.includes('已过期') && historyItem && (
               <button
                 onClick={() => {
@@ -445,7 +450,7 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
                     onPlayStateChange(false, 'regenerate:' + historyItem.id);
                   }
                 }}
-                className="ml-3 text-red-600 hover:text-red-800 underline text-xs"
+                className="ml-3 text-red-400 hover:text-red-300 underline text-xs font-mono transition-colors"
               >
                 重新生成
               </button>
@@ -464,28 +469,35 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
       />
 
       {/* 紧凑的播放控制器 */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {/* 左侧播放和下载按钮 */}
         <div className="flex items-center gap-2">
           <button
             onClick={togglePlay}
             disabled={!currentAudioUrl}
-            className="h-8 w-8 flex items-center justify-center text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+            className={`group relative h-11 w-11 flex items-center justify-center rounded-lg border transition-all duration-200 ${
+              isPlaying
+                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:border-cyan-500/70 hover:shadow-lg hover:shadow-cyan-500/20'
+                : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 hover:border-gray-600 disabled:bg-gray-900/30 disabled:text-gray-600 disabled:border-gray-800 disabled:cursor-not-allowed'
+            }`}
             title={isPlaying ? "暂停" : "播放"}
           >
+            {isPlaying && (
+              <div className="absolute inset-0 bg-cyan-400/10 rounded-lg animate-pulse"></div>
+            )}
             <FontAwesomeIcon
               icon={isPlaying ? faPause : faPlay}
-              className="w-3.5 h-3.5"
+              className="w-4 h-4 relative z-10"
             />
           </button>
 
           {showDownload && (
             <button
               onClick={handleDownload}
-              className="h-8 w-8 flex items-center justify-center text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
+              className="h-11 w-11 flex items-center justify-center text-gray-400 bg-gray-800/50 border border-gray-700 rounded-lg hover:bg-gray-700/50 hover:text-gray-200 hover:border-gray-600 transition-all duration-200 hover:shadow-lg hover:shadow-green-500/10"
               title="下载音频"
             >
-              <FontAwesomeIcon icon={faDownload} className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faDownload} className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -493,40 +505,53 @@ export const UnifiedAudioPlayer: React.FC<UnifiedAudioPlayerProps> = ({
         {/* 中间进度条 */}
         {showProgress && duration > 0 && (
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-gray-600 min-w-[35px] text-right">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono text-gray-400 min-w-[40px] text-right tabular-nums">
                 {formatTime(currentTime)}
               </span>
-              <div className="flex-1 relative">
+              <div className="flex-1 relative group h-6">
+                {/* 轨道背景 */}
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full h-1.5 bg-gray-700 rounded-full"></div>
+                </div>
+                {/* 进度填充 */}
+                <div className="absolute inset-0 flex items-center">
+                  <div
+                    className="h-1.5 bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full transition-all duration-100"
+                    style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                  ></div>
+                </div>
+                {/* 滑块 */}
+                <div
+                  className="absolute top-1/2 -mt-1.5 w-3 h-3 bg-cyan-400 rounded-full shadow-lg shadow-cyan-500/50 transition-all duration-100 group-hover:scale-125"
+                  style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`, transform: 'translateX(-50%)' }}
+                ></div>
+                {/* 交互层 */}
                 <input
                   type="range"
                   min="0"
                   max={duration || 0}
                   value={currentTime}
                   onChange={handleSeek}
-                  className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-green-500"
-                  style={{
-                    background: `linear-gradient(to right, rgb(34 197 94) 0%, rgb(34 197 94) ${duration > 0 ? (currentTime / duration) * 100 : 0}%, rgb(229 231 235) ${duration > 0 ? (currentTime / duration) * 100 : 0}%, rgb(229 231 235) 100%)`
-                  }}
+                  className="w-full h-full appearance-none cursor-pointer opacity-0 absolute inset-0 z-10"
                 />
               </div>
-              <span className="text-xs font-mono text-gray-600 min-w-[35px]">
+              <span className="text-xs font-mono text-gray-500 min-w-[40px] tabular-nums">
                 {formatTime(duration)}
               </span>
             </div>
           </div>
         )}
 
-  
         {/* 其他操作按钮 */}
         {showCopyLink && historyItem && onCopyLink && (
           <Button
             onClick={handleCopyLink}
             variant="outline"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-9 px-3 text-xs font-mono"
           >
-            <FontAwesomeIcon icon={faCopy} className="mr-1" />
+            <FontAwesomeIcon icon={faCopy} className="mr-1.5" />
             复制
           </Button>
         )}

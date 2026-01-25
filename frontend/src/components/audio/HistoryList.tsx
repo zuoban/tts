@@ -46,7 +46,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
       setPlayError('播放失败，请重试');
     }
   };
-  
+
     const formatDate = (date: Date | string) => {
     const now = new Date();
     const dateObj = typeof date === 'string' ? new Date(date) : date;
@@ -75,12 +75,12 @@ export const HistoryList: React.FC<HistoryListProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  
+
   if (items.length === 0) {
     return (
-      <div className="bg-gray-50/50 backdrop-blur-sm border border-gray-200/50 rounded-lg p-8 text-center">
-        <FontAwesomeIcon icon={faClock} className="w-12 h-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">暂无历史记录</h3>
+      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-8 text-center">
+        <FontAwesomeIcon icon={faClock} className="w-12 h-12 text-gray-600 mb-4" />
+        <h3 className="text-lg font-medium text-gray-300 mb-2 font-mono">暂无历史记录</h3>
         <p className="text-gray-500 text-sm">生成声音后，历史记录将在这里显示</p>
       </div>
     );
@@ -89,109 +89,113 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   return (
     <div className="space-y-3">
       {playError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-2 rounded-md text-sm">
           {playError}
         </div>
       )}
 
-      <div className="flex items-center justify-between py-1">
-        <h3 className="text-base font-semibold text-gray-800">
-          历史记录 ({items.length})
-        </h3>
-        {items.length > 0 && (
-          <Button
-            onClick={onClearAll}
-            variant="ghost"
-            size="sm"
-            className="text-red-600 hover:text-red-700 px-2 py-1 text-xs"
-          >
-            <FontAwesomeIcon icon={faTrash} className="mr-1" />
-            清空
-          </Button>
-        )}
-      </div>
-
-
-      <div className="space-y-2 max-h-80 overflow-y-auto">
+      <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
         {items.map((item) => (
           <div
             key={item.id}
-            className={`bg-white/80 backdrop-blur-sm border rounded-md p-3 transition-all duration-200 cursor-pointer ${
+            className={`bg-gray-800/80 backdrop-blur-sm border rounded-lg p-4 transition-all duration-200 cursor-pointer group ${
               currentPlayingId === item.id
-                ? 'border-green-300 shadow-sm'
-                : 'border-gray-200/50 hover:shadow-sm hover:bg-gray-50'
+                ? 'border-green-500 shadow-lg shadow-green-500/20'
+                : 'border-gray-700 hover:shadow-lg hover:border-gray-600'
             }`}
             onClick={() => handlePlayItem(item)}
             title="点击播放音频"
           >
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <FontAwesomeIcon
-                    icon={faVolumeUp}
-                    className="text-gray-400 flex-shrink-0 text-xs"
-                  />
-                  <span className="font-medium text-gray-800 truncate text-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                    currentPlayingId === item.id
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-gray-700 text-gray-400 group-hover:bg-gray-600'
+                  }`}>
+                    <FontAwesomeIcon
+                      icon={faVolumeUp}
+                      className="text-xs"
+                    />
+                  </div>
+                  <span className={`font-medium truncate text-sm font-mono ${
+                    currentPlayingId === item.id
+                      ? 'text-green-400'
+                      : 'text-gray-200 group-hover:text-gray-100'
+                  }`}>
                     {item.voiceName}
                   </span>
                   {item.duration && (
-                    <span className="text-xs text-gray-500 ml-auto">
+                    <span className="text-xs text-gray-500 ml-auto font-mono">
                       {formatTime(item.duration)}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-600 mb-1" style={{
+                <p className="text-xs text-gray-400 mb-2 leading-relaxed" style={{
                   display: '-webkit-box',
-                  WebkitLineClamp: 1,
+                  WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}>
                   {item.text}
                 </p>
-                <div className="flex items-center gap-3 text-xs text-gray-500">
-                  <span>{formatDate(item.createdAt)}</span>
-                  {item.style && <span>风格: {item.style}</span>}
-                  {item.rate !== '0' && <span>语速: {item.rate}%</span>}
-                  {item.pitch !== '0' && <span>语调: {item.pitch}%</span>}
+                <div className="flex items-center gap-3 text-xs text-gray-500 font-mono">
+                  <span className="flex items-center gap-1">
+                    <FontAwesomeIcon icon={faClock} className="text-[10px]" />
+                    {formatDate(item.createdAt)}
+                  </span>
+                  {item.style && <span className="text-purple-400">风格: {item.style}</span>}
+                  {item.rate !== '0' && <span className="text-green-400">语速: {item.rate}%</span>}
+                  {item.pitch !== '0' && <span className="text-orange-400">语调: {item.pitch}%</span>}
                 </div>
               </div>
 
               {/* 右侧操作按钮 */}
-              <div className="flex gap-1 flex-shrink-0">
+              <div className="flex flex-col gap-1 flex-shrink-0">
                 {/* 加载到表单按钮 */}
                 <Button
-                  onClick={() => onLoadToForm(item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLoadToForm(item);
+                  }}
                   variant="ghost"
                   size="sm"
-                  className="p-1.5 text-blue-600 hover:text-blue-800"
+                  className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded transition-all"
                   title="加载到表单"
                 >
                   <FontAwesomeIcon icon={faUpload} className="text-xs" />
                 </Button>
                 {/* 下载按钮 */}
                 <Button
-                  onClick={() => onDownloadItem(item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDownloadItem(item);
+                  }}
                   variant="ghost"
                   size="sm"
-                  className="p-1.5 text-gray-600 hover:text-gray-800"
+                  className="p-2 text-gray-400 hover:text-gray-300 hover:bg-gray-700 rounded transition-all"
                   title="下载"
                 >
                   <FontAwesomeIcon icon={faDownload} className="text-xs" />
                 </Button>
                 {/* 删除按钮 */}
                 <Button
-                  onClick={() => onRemoveItem(item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveItem(item.id);
+                  }}
                   variant="ghost"
                   size="sm"
-                  className="p-1.5 text-red-500 hover:text-red-600"
+                  className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-all"
                   title="删除"
                 >
                   <FontAwesomeIcon icon={faTrash} className="text-xs" />
                 </Button>
               </div>
             </div>
-            </div>
+          </div>
         ))}
       </div>
     </div>

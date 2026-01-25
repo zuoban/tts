@@ -662,53 +662,64 @@ const Home: React.FC = () => {
 
     if (isLoading && voices.length === 0) {
         return (
-            <div className="page-bg">
-                <div className="page-container">
+            <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+                {/* 动态背景网格 */}
+                <div className="fixed inset-0 opacity-10">
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: `
+                            linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+                            linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px)
+                        `,
+                        backgroundSize: '50px 50px'
+                    }}></div>
+                </div>
+
+                <div className="relative z-10">
                     {/* 顶部导航骨架屏 */}
-                    <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100/50 sticky top-0 z-50 mb-6">
-                        <div className="flex items-center justify-between h-16">
+                    <div className="bg-gray-900/80 backdrop-blur-xl border-b border-gray-800 sticky top-0 z-50 mb-6">
+                        <div className="flex items-center justify-between h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
-                                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+                                <div className="w-8 h-8 bg-gray-800 rounded-lg animate-pulse"></div>
+                                <div className="h-6 w-32 bg-gray-800 rounded animate-pulse"></div>
                             </div>
                             <div className="flex items-center space-x-3">
-                                <div className="h-8 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
-                                <div className="h-8 w-8 bg-gray-200 rounded-lg animate-pulse"></div>
+                                <div className="h-8 w-24 bg-gray-800 rounded-lg animate-pulse"></div>
+                                <div className="h-8 w-8 bg-gray-800 rounded-lg animate-pulse"></div>
                             </div>
                         </div>
                     </div>
 
                     {/* 主要内容骨架屏 */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 xl:grid-cols-12 gap-6">
                         {/* 左侧主要控制面板骨架屏 */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="xl:col-span-8 space-y-6">
                             {/* 文本输入骨架屏 */}
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6">
                                 <TextSkeleton lines={3} />
                             </div>
 
                             {/* 语音选择骨架屏 */}
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6">
                                 <VoiceSelectorSkeleton />
                             </div>
 
                             {/* 参数控制骨架屏 */}
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6">
                                 <ParameterControlsSkeleton />
                             </div>
                         </div>
 
                         {/* 右侧历史记录骨架屏 */}
-                        <div className="lg:col-span-1">
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
-                                <div className="h-6 w-24 bg-gray-200 rounded mb-4 animate-pulse"></div>
+                        <div className="xl:col-span-4">
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6">
+                                <div className="h-6 w-24 bg-gray-800 rounded mb-4 animate-pulse"></div>
                                 <div className="space-y-3">
                                     {[...Array(5)].map((_, i) => (
-                                        <div key={i} className="flex items-start space-x-3 p-3 border border-gray-100 rounded-lg">
-                                            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse flex-shrink-0"></div>
+                                        <div key={i} className="flex items-start space-x-3 p-3 border border-gray-800 rounded-lg">
+                                            <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse flex-shrink-0"></div>
                                             <div className="flex-1 space-y-2">
-                                                <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
-                                                <div className="h-3 w-2/3 bg-gray-200 rounded animate-pulse"></div>
+                                                <div className="h-4 w-full bg-gray-800 rounded animate-pulse"></div>
+                                                <div className="h-3 w-2/3 bg-gray-800 rounded animate-pulse"></div>
                                             </div>
                                         </div>
                                     ))}
@@ -722,13 +733,48 @@ const Home: React.FC = () => {
     }
 
     return (
-        <div className="page-bg">
+        <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+            {/* 动态背景网格 */}
+            <div className="fixed inset-0 opacity-10">
+                <div className="absolute inset-0" style={{
+                    backgroundImage: `
+                        linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+                        linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px)
+                    `,
+                    backgroundSize: '50px 50px'
+                }}></div>
+            </div>
+
+            {/* 音频波形装饰 */}
+            <div className="fixed top-20 left-0 right-0 h-32 opacity-20 pointer-events-none">
+                <div className="h-full flex items-center justify-around">
+                    {[...Array(20)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="w-1 bg-gradient-to-t from-green-500 to-transparent rounded-full"
+                            style={{
+                                height: `${20 + Math.random() * 60}%`,
+                                animation: `wave ${1 + Math.random()}s ease-in-out infinite`,
+                                animationDelay: `${i * 0.1}s`
+                            }}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes wave {
+                    0%, 100% { transform: scaleY(1); }
+                    50% { transform: scaleY(1.5); }
+                }
+            `}</style>
+
             <div className="relative z-10">
                 {/* 顶部导航栏 */}
                 <Navbar />
 
                 {/* 主要内容区域 */}
-                <main className="page-container">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* 错误提示 - 使用 Alert 组件 */}
                     {error && (
                         <div className="mb-6">
@@ -741,37 +787,43 @@ const Home: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                         {/* 左侧主要控制面板 */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className="xl:col-span-8 space-y-6">
                             {/* 快速选择 */}
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-lg font-semibold text-gray-800">快速选择</h3>
-                                    <span className="text-xs text-gray-500">
-                                        {selectedLanguage || '选择语言'}
-                                    </span>
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6 shadow-2xl">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                        <h3 className="text-lg font-semibold text-gray-100 font-mono tracking-tight">快速选择</h3>
+                                    </div>
+                                    <div className="px-3 py-1 bg-gray-800 rounded text-xs text-green-400 font-mono">
+                                        {selectedLanguage || '请选择语言'}
+                                    </div>
                                 </div>
 
                                 {/* 常用语言快捷选择 */}
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                    {commonLanguagesAvailable.slice(0, 12).map(lang => (
-                                        <button
-                                            key={lang}
-                                            onClick={() => handleLanguageChange(lang)}
-                                            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-                                                selectedLanguage === lang
-                                                    ? 'bg-blue-500 text-white shadow-lg'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700 border border-gray-200'
-                                                }`}
-                                        >
-                                            {lang}
-                                        </button>
-                                    ))}
+                                <div className="mb-6">
+                                    <div className="text-xs text-gray-500 mb-2 font-mono uppercase tracking-wider">快速预设</div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {commonLanguagesAvailable.slice(0, 12).map(lang => (
+                                            <button
+                                                key={lang}
+                                                onClick={() => handleLanguageChange(lang)}
+                                                className={`px-4 py-2 text-sm font-medium rounded transition-all duration-200 ${
+                                                    selectedLanguage === lang
+                                                        ? 'bg-green-500 text-gray-900 shadow-lg shadow-green-500/50 font-mono'
+                                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200 border border-gray-700 font-mono'
+                                                    }`}
+                                            >
+                                                {lang}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* 高级选择 */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <Select
                                         value={selectedLanguage}
                                         onChange={(e) => handleLanguageChange(e.target.value)}
@@ -810,7 +862,7 @@ const Home: React.FC = () => {
 
                                 {/* 风格选择 */}
                                 {voice && selectedVoiceStyles.length > 0 && (
-                                    <div className="mt-3">
+                                    <div className="mt-4">
                                         <Select
                                             value={style}
                                             onChange={(e) => setStyle(e.target.value)}
@@ -826,168 +878,266 @@ const Home: React.FC = () => {
                              </div>
 
                             {/* 语音参数调节 */}
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-4">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-4">语音参数</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center">
-                                                <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                                </svg>
-                                                语速
-                                            </label>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-mono bg-blue-50 text-blue-700 px-2 py-1 rounded-md font-medium border border-blue-200">{rate}%</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setRate(config?.defaultRate || '0')}
-                                                    disabled={rate === (config?.defaultRate || '0')}
-                                                    title="重置为默认值"
-                                                    className="w-10 h-8 flex items-center justify-center text-sm font-mono bg-blue-50 text-blue-700 rounded-md font-medium border border-blue-200 hover:bg-blue-100 hover:border-blue-300 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors duration-200"
-                                                >
-                                                    ↺
-                                                </button>
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6 shadow-2xl">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                                        <h3 className="text-lg font-semibold text-gray-100 font-mono tracking-tight">语音参数</h3>
+                                    </div>
+                                    <div className="px-3 py-1 bg-gray-800/50 rounded text-xs text-orange-400 font-mono border border-orange-500/20">
+                                        参数调节
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    {/* 语速控制 */}
+                                    <div className="relative group">
+                                        {/* 角落装饰 */}
+                                        <div className="absolute -top-px -left-px w-4 h-4 border-l-2 border-t-2 border-green-500/20 rounded-tl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="absolute -top-px -right-px w-4 h-4 border-r-2 border-t-2 border-green-500/20 rounded-tr-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="absolute -bottom-px -left-px w-4 h-4 border-l-2 border-b-2 border-green-500/20 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="absolute -bottom-px -right-px w-4 h-4 border-r-2 border-b-2 border-green-500/20 rounded-br-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                        <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 group-hover:border-gray-600/50 transition-all duration-300">
+                                            {/* 标签和值显示 */}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0">
+                                                        <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                        </svg>
+                                                    </div>
+                                                    <label className="text-sm font-medium text-gray-300 font-mono">语速</label>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-mono text-green-400 font-semibold">
+                                                        {rate}%
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setRate(config?.defaultRate || '0')}
+                                                        disabled={rate === (config?.defaultRate || '0')}
+                                                        title="重置为默认值"
+                                                        className="w-9 h-9 flex items-center justify-center text-lg font-mono text-gray-500 hover:text-green-400 disabled:text-gray-700 disabled:cursor-not-allowed transition-all duration-200"
+                                                    >
+                                                        ↺
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* 滑块区域 */}
+                                            <div className="space-y-3">
+                                                <div className="relative">
+                                                    {/* 滑块 */}
+                                                    <Slider
+                                                        value={Number(rate)}
+                                                        onChange={(e) => setRate(e.target.value)}
+                                                        min={-100}
+                                                        max={100}
+                                                        className="slider-no-label"
+                                                    />
+                                                </div>
+
+                                                {/* 刻度标记 */}
+                                                <div className="flex justify-between items-center px-1">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-px h-2 bg-gray-600"></div>
+                                                        <span className="text-[10px] text-gray-500 font-mono mt-1">-100</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-px h-2 bg-green-500/50"></div>
+                                                        <span className="text-[10px] text-gray-400 font-mono mt-1">0</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-px h-2 bg-gray-600"></div>
+                                                        <span className="text-[10px] text-gray-500 font-mono mt-1">+100</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <Slider
-                                            value={Number(rate)}
-                                            onChange={(e) => setRate(e.target.value)}
-                                            min={-100}
-                                            max={100}
-                                            className="slider-no-label"
-                                        />
                                     </div>
 
-                                    <div className="space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-sm font-medium text-gray-700 flex items-center">
-                                                <svg className="w-4 h-4 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                                </svg>
-                                                语调
-                                            </label>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-mono bg-purple-50 text-purple-700 px-2 py-1 rounded-md font-medium border border-purple-200">{pitch}%</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setPitch(config?.defaultPitch || '0')}
-                                                    disabled={pitch === (config?.defaultPitch || '0')}
-                                                    title="重置为默认值"
-                                                    className="w-10 h-8 flex items-center justify-center text-sm font-mono bg-purple-50 text-purple-700 rounded-md font-medium border border-purple-200 hover:bg-purple-100 hover:border-purple-300 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors duration-200"
-                                                >
-                                                    ↺
-                                                </button>
+                                    {/* 语调控制 */}
+                                    <div className="relative group">
+                                        {/* 角落装饰 */}
+                                        <div className="absolute -top-px -left-px w-4 h-4 border-l-2 border-t-2 border-orange-500/20 rounded-tl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="absolute -top-px -right-px w-4 h-4 border-r-2 border-t-2 border-orange-500/20 rounded-tr-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="absolute -bottom-px -left-px w-4 h-4 border-l-2 border-b-2 border-orange-500/20 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <div className="absolute -bottom-px -right-px w-4 h-4 border-r-2 border-b-2 border-orange-500/20 rounded-br-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                                        <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 group-hover:border-gray-600/50 transition-all duration-300">
+                                            {/* 标签和值显示 */}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
+                                                        <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                                        </svg>
+                                                    </div>
+                                                    <label className="text-sm font-medium text-gray-300 font-mono">语调</label>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-mono text-orange-400 font-semibold">
+                                                        {pitch}%
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPitch(config?.defaultPitch || '0')}
+                                                        disabled={pitch === (config?.defaultPitch || '0')}
+                                                        title="重置为默认值"
+                                                        className="w-9 h-9 flex items-center justify-center text-lg font-mono text-gray-500 hover:text-orange-400 disabled:text-gray-700 disabled:cursor-not-allowed transition-all duration-200"
+                                                    >
+                                                        ↺
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* 滑块区域 */}
+                                            <div className="space-y-3">
+                                                <div className="relative">
+                                                    {/* 滑块 */}
+                                                    <Slider
+                                                        value={Number(pitch)}
+                                                        onChange={(e) => setPitch(e.target.value)}
+                                                        min={-100}
+                                                        max={100}
+                                                        className="slider-no-label"
+                                                    />
+                                                </div>
+
+                                                {/* 刻度标记 */}
+                                                <div className="flex justify-between items-center px-1">
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-px h-2 bg-gray-600"></div>
+                                                        <span className="text-[10px] text-gray-500 font-mono mt-1">-100</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-px h-2 bg-orange-500/50"></div>
+                                                        <span className="text-[10px] text-gray-400 font-mono mt-1">0</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="w-px h-2 bg-gray-600"></div>
+                                                        <span className="text-[10px] text-gray-500 font-mono mt-1">+100</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <Slider
-                                            value={Number(pitch)}
-                                            onChange={(e) => setPitch(e.target.value)}
-                                            min={-100}
-                                            max={100}
-                                            className="slider-no-label"
-                                        />
                                     </div>
                                 </div>
                             </div>
 
                             {/* 文本输入和生成区域 */}
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden">
-                                <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
-                                    <h3 className="text-white font-semibold flex items-center">
-                                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        文本内容
-                                    </h3>
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6 shadow-2xl">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <h3 className="text-lg font-semibold text-gray-100 font-mono tracking-tight">文本内容</h3>
+                                    </div>
+                                    <div className="px-3 py-1 bg-gray-800 rounded text-xs text-green-400 font-mono">
+                                        SSML支持
+                                    </div>
                                 </div>
-                                <div className="p-6">
-                                    <div className="space-y-4">
+
+                                <div className="space-y-4">
+                                    {/* 文本输入框 */}
+                                    <div className="relative group">
                                         <Textarea
                                             id="text-input"
                                             value={text}
                                             onChange={(e) => setText(e.target.value)}
                                             placeholder="在此输入要转换为语音的文本内容，支持 SSML 标记语言..."
-                                            rows={8}
-                                            className="resize-none text-base leading-relaxed border-0 focus:ring-2 focus:ring-blue-500/20"
+                                            rows={12}
+                                            className="resize-none text-base leading-relaxed bg-gray-950 text-gray-100 placeholder-gray-600 border-2 border-gray-800 focus:border-green-500 focus:ring-2 focus:ring-green-500/50 focus:ring-offset-0 focus:ring-offset-gray-900 font-mono transition-all duration-200"
                                         />
+                                        {/* 角标装饰 */}
+                                        <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-green-500/30 rounded-tl-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-200"></div>
+                                        <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-green-500/30 rounded-tr-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-200"></div>
+                                        <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-green-500/30 rounded-bl-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-200"></div>
+                                        <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-green-500/30 rounded-br-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-200"></div>
+                                    </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center text-sm text-gray-500">
-                                                <svg className="w-4 h-4 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    {/* 信息栏 */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center text-sm font-mono">
+                                            <svg className="w-4 h-4 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <span className="text-gray-400">字符数:</span>
+                                            <span className="text-green-400 ml-1">{text.length}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {/* 清空按钮 */}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-gray-400 hover:text-red-400 hover:bg-red-500/10 font-mono text-xs p-2 rounded-lg transition-all"
+                                                onClick={() => setText('')}
+                                                disabled={!text.trim()}
+                                                title="清空"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
-                                                支持 SSML，字符数: {text.length}
-                                            </div>
+                                            </Button>
 
-                                            <div className="flex items-center gap-2">
-                                                {/* 清空按钮 */}
+                                            {/* 快速导入按钮组 */}
+                                            <div className="flex items-center gap-1 border-l border-gray-700 pl-2">
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-gray-600 hover:text-red-600 hover:bg-red-50"
-                                                    onClick={() => setText('')}
-                                                    disabled={!text.trim()}
-                                                    title="清空"
+                                                    className="text-gray-400 hover:text-green-400 hover:bg-green-500/10 font-mono text-xs p-2 rounded-lg transition-all"
+                                                    onClick={handleImportReader}
+                                                    disabled={!text.trim() || !voice}
+                                                    title="导入阅读"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                                     </svg>
                                                 </Button>
-
-                                                {/* 快速导入按钮组 */}
-                                                <div className="flex items-center gap-1 border-l border-gray-200 pl-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-gray-600 hover:text-green-600 hover:bg-green-50"
-                                                        onClick={handleImportReader}
-                                                        disabled={!text.trim() || !voice}
-                                                        title="导入阅读"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                                        </svg>
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-gray-600 hover:text-purple-600 hover:bg-purple-50"
-                                                        onClick={handleImportIfreetime}
-                                                        disabled={!text.trim() || !voice}
-                                                        title="导入爱阅记"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                        </svg>
-                                                    </Button>
-                                                </div>
-
-                                                {/* 生成按钮 */}
                                                 <Button
-                                                    size="lg"
-                                                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 px-6 py-2 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
-                                                    onClick={handleGenerateSpeech}
-                                                    disabled={isLoading || !text.trim() || !voice}
-                                                    title={isLoading ? '生成中...' : '生成 (Ctrl+Enter)'}
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-gray-400 hover:text-orange-400 hover:bg-orange-500/10 font-mono text-xs p-2 rounded-lg transition-all"
+                                                    onClick={handleImportIfreetime}
+                                                    disabled={!text.trim() || !voice}
+                                                    title="导入爱阅记"
                                                 >
-                                                    {isLoading ? (
-                                                        <><svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                </Button>
+                                            </div>
+
+                                            {/* 生成按钮 */}
+                                            <Button
+                                                size="lg"
+                                                className={`bg-gradient-to-r hover:from-green-600 hover:to-emerald-700 text-white border-0 px-8 py-3 shadow-lg transition-all duration-200 font-mono font-semibold rounded-lg ${
+                                                    isLoading
+                                                        ? 'from-gray-600 to-gray-700 cursor-not-allowed'
+                                                        : 'from-green-600 to-emerald-700 hover:shadow-green-500/50 hover:shadow-xl animate-pulse'
+                                                }`}
+                                                onClick={handleGenerateSpeech}
+                                                disabled={isLoading || !text.trim() || !voice}
+                                                title={isLoading ? '生成中...' : '生成 (Ctrl+Enter)'}
+                                            >
+                                                {isLoading ? (
+                                                    <>
+                                                        <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
                                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                         </svg>
-                                                        生成中...</>
-                                                    ) : (
-                                                        <>
-                                                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                            生成
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            </div>
+                                                        生成中...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        生成
+                                                    </>
+                                                )}
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -995,23 +1145,19 @@ const Home: React.FC = () => {
                         </div>
 
                         {/* 右侧面板 */}
-                        <div className="space-y-6">
+                        <div className="xl:col-span-4 space-y-6">
                             {/* 历史记录 */}
-                            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden">
-                                <div className="bg-gradient-to-r from-orange-500 to-red-600 px-6 py-4">
-                                    <h3 className="text-white font-semibold flex items-center justify-between">
-                                        <span className="flex items-center">
-                                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            历史记录
-                                        </span>
-                                        <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                                            {history.length}
-                                        </span>
-                                    </h3>
+                            <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6 shadow-2xl">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                        <h3 className="text-lg font-semibold text-gray-100 font-mono tracking-tight">历史记录</h3>
+                                    </div>
+                                    <div className="px-3 py-1 bg-gray-800 rounded text-xs text-orange-400 font-mono">
+                                        {history.length}
+                                    </div>
                                 </div>
-                                <div className="p-4 max-h-[400px] overflow-y-auto">
+                                <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
                                     <HistoryList
                                         items={history}
                                         currentPlayingId={currentPlayingId}
@@ -1027,41 +1173,42 @@ const Home: React.FC = () => {
 
                             {/* 音频播放器 */}
                             {audioUrl && (
-                                <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 overflow-hidden">
-                                    <div className="bg-gradient-to-r from-green-500 to-teal-600 px-6 py-4">
-                                        <h3 className="text-white font-semibold flex items-center">
-                                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            播放器
-                                        </h3>
+                                <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 p-6 shadow-2xl">
+                                    <div className="flex items-center justify-between mb-5">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="relative">
+                                                <div className="absolute inset-0 bg-cyan-400 blur-sm rounded-full animate-pulse"></div>
+                                                <div className="relative w-2 h-2 bg-cyan-400 rounded-full"></div>
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-gray-100 font-mono tracking-tight">播放器</h3>
+                                        </div>
+                                        <div className="px-3 py-1 bg-cyan-500/10 rounded text-xs text-cyan-400 font-mono border border-cyan-500/20">
+                                            音频控制
+                                        </div>
                                     </div>
-                                    <div className="p-4">
-                                        <UnifiedAudioPlayer
-                                            audioUrl={audioUrl}
-                                            autoPlay={shouldAutoPlay}
-                                            itemId={currentPlayingId || undefined}
-                                            variant="full"
-                                            showProgress={true}
-                                            showVolume={true}
-                                            showDownload={true}
-                                            onDownload={(audioUrl, text) => {
-                                                const a = document.createElement('a');
-                                                a.href = audioUrl;
-                                                const cleanText = text
-                                                    .substring(0, 20)
-                                                    .replace(/[<>:"/\\|?*]/g, '')
-                                                    .replace(/\s+/g, '_')
-                                                    .trim();
-                                                const filename = cleanText ? `tts_${cleanText}_${Date.now()}.mp3` : `tts_audio_${Date.now()}.mp3`;
-                                                a.download = filename;
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                document.body.removeChild(a);
-                                            }}
-                                        />
-                                    </div>
+                                    <UnifiedAudioPlayer
+                                        audioUrl={audioUrl}
+                                        autoPlay={shouldAutoPlay}
+                                        itemId={currentPlayingId || undefined}
+                                        variant="full"
+                                        showProgress={true}
+                                        showVolume={true}
+                                        showDownload={true}
+                                        onDownload={(audioUrl, text) => {
+                                            const a = document.createElement('a');
+                                            a.href = audioUrl;
+                                            const cleanText = text
+                                                .substring(0, 20)
+                                                .replace(/[<>:"/\\|?*]/g, '')
+                                                .replace(/\s+/g, '_')
+                                                .trim();
+                                            const filename = cleanText ? `tts_${cleanText}_${Date.now()}.mp3` : `tts_audio_${Date.now()}.mp3`;
+                                            a.download = filename;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            document.body.removeChild(a);
+                                        }}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -1070,23 +1217,23 @@ const Home: React.FC = () => {
             </div>
 
             {/* 移动端侧边栏（抽屉式） */}
-            <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${
+            <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-gray-900 border-r border-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             }`}>
                 <div className="flex flex-col h-full">
                     {/* 抽屉头部 */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-800">
                         <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
                                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                                 </svg>
                             </div>
-                            <h2 className="text-lg font-semibold text-gray-800">TTS Studio</h2>
+                            <h2 className="text-lg font-semibold text-gray-100 font-mono">TTS Studio</h2>
                         </div>
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="p-2 text-gray-400 hover:text-gray-600"
+                            className="p-2 text-gray-400 hover:text-gray-200"
                         >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1098,28 +1245,28 @@ const Home: React.FC = () => {
                     <div className="flex-1 overflow-y-auto p-4 space-y-6">
 
                         {/* 统计信息 */}
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <h3 className="text-sm font-semibold text-gray-700 mb-3">使用统计</h3>
+                        <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                            <h3 className="text-sm font-semibold text-gray-300 mb-3 font-mono">使用统计</h3>
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">可用声音</span>
-                                    <span className="font-medium">{voices.length}</span>
+                                    <span className="text-gray-400">可用声音</span>
+                                    <span className="font-mono text-green-400">{voices.length}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">历史记录</span>
-                                    <span className="font-medium">{history.length}</span>
+                                    <span className="text-gray-400">历史记录</span>
+                                    <span className="font-mono text-orange-400">{history.length}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">收藏声音</span>
-                                    <span className="font-medium">{favoriteVoices.length}</span>
+                                    <span className="text-gray-400">收藏声音</span>
+                                    <span className="font-mono text-cyan-400">{favoriteVoices.length}</span>
                                 </div>
                             </div>
                             {favoriteVoices.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                <div className="mt-3 pt-3 border-t border-gray-700">
                                     <Link
                                         to="/voices?favorites=true"
                                         onClick={() => setSidebarOpen(false)}
-                                        className="block w-full text-center px-3 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                                        className="block w-full text-center px-3 py-2 text-sm text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-lg transition-colors font-mono"
                                     >
                                         管理收藏 ({favoriteVoices.length})
                                     </Link>
@@ -1133,7 +1280,7 @@ const Home: React.FC = () => {
             {/* 遮罩层 */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/80 z-40 lg:hidden backdrop-blur-sm"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}

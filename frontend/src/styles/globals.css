@@ -1,18 +1,18 @@
+/* 导入统一设计系统 */
+@import './design-system.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 导入统一设计系统 */
-@import './design-system.css';
-
 /* 全局样式重置 */
 @layer base {
   * {
-    @apply border-gray-200;
+    @apply border-gray-700;
   }
 
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-gray-950 text-gray-100;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 

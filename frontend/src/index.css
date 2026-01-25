@@ -2,25 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 :root {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.6;
   font-weight: 400;
 
-  color-scheme: light;
-  color: #1f2937;
-  background-color: #ffffff;
+  color-scheme: dark;
+  color: #e5e7eb;
+  background-color: #030712;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* 自定义滚动条样式 */
+  /* 自定义滚动条样式 - 深色主题 */
   --scrollbar-width: 8px;
-  --scrollbar-track-color: #f1f5f9;
-  --scrollbar-thumb-color: #cbd5e1;
-  --scrollbar-thumb-hover-color: #94a3b8;
+  --scrollbar-track-color: #111827;
+  --scrollbar-thumb-color: #374151;
+  --scrollbar-thumb-hover-color: #4b5563;
+
+  /* 自定义滚动条样式 - 用于历史记录等 */
+  --custom-scrollbar-track-color: #1f2937;
+  --custom-scrollbar-thumb-color: #4b5563;
+  --custom-scrollbar-thumb-hover-color: #6b7280;
 }
 
 /* 重置基础样式 */
@@ -36,19 +43,19 @@ html, body {
 }
 
 body {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background: #030712;
   background-attachment: fixed;
 }
 
 /* 链接样式 */
 a {
-  color: #3b82f6;
+  color: #22c55e;
   text-decoration: none;
   transition: color 0.2s ease, text-decoration 0.2s ease;
 }
 
 a:hover {
-  color: #2563eb;
+  color: #16a34a;
   text-decoration: underline;
 }
 
@@ -56,7 +63,7 @@ a:hover {
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
-  color: #1f2937;
+  color: #f3f4f6;
 }
 
 h1 {
@@ -101,18 +108,18 @@ h3 {
 
 /* 选择文本样式 */
 ::selection {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #22c55e;
+  color: #030712;
 }
 
 ::-moz-selection {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #22c55e;
+  color: #030712;
 }
 
 /* 焦点样式 */
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #22c55e;
   outline-offset: 2px;
 }
 
@@ -131,10 +138,10 @@ h3 {
 
 /* 玻璃态效果 */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(17, 24, 39, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(55, 65, 81, 0.5);
 }
 
 /* 卡片阴影效果 */
@@ -239,30 +246,64 @@ h3 {
 
 /* 工具类 */
 .text-gradient {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .bg-gradient-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
 }
 
 .bg-gradient-secondary {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 }
 
 .bg-gradient-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
 }
 
 .bg-gradient-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
 }
 
 .bg-gradient-danger {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* 自定义滚动条样式（用于历史记录等组件） */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--custom-scrollbar-track-color);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--custom-scrollbar-thumb-color);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--custom-scrollbar-thumb-hover-color);
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--custom-scrollbar-thumb-color) var(--custom-scrollbar-track-color);
+}
+
+/* 字体变体 */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
 }
 
 /* 打印样式 */
