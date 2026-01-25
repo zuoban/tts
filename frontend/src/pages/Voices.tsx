@@ -223,269 +223,299 @@ export default function Voices() {
   };
 
   return (
-    <div className="page-bg">
-      <Navbar />
-      <div className="page-container">
-        <div className="card overflow-hidden">
-          <div className="card-header-secondary">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/20 rounded-xl p-3">
-                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                    </svg>
-                  </div>
-                  <h1 className="text-3xl font-bold">
-                    {showFavoritesOnlyState ? '我的收藏' : '声音库'}
-                  </h1>
-                  {showFavoritesOnlyState && favoriteVoiceIds.size > 0 && (
-                    <button
-                      onClick={handleClearAllFavorites}
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-                      title="清空所有收藏"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      清空
-                    </button>
-                  )}
-                </div>
-                <p className="text-purple-100 text-lg mt-3">
-                  {showFavoritesOnlyState
-                    ? `管理您的收藏声音 (共 ${favoriteVoiceIds.size} 个)`
-                    : '浏览所有可用的TTS声音，试听并选择最适合的声音'
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+      {/* 动态背景网格 */}
+      <div className="fixed inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+            linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px'
+        }}></div>
+      </div>
 
-          <div className="card-body">
-            {/* 筛选控件 */}
-            <div className="mb-8 p-6 border border-gray-200 rounded-xl bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
-                  <Input
-                    ref={searchInputRef}
-                    placeholder="搜索声音名称、区域..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pr-10 text-base"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      title="清除搜索"
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-                <Select
-                  value={selectedGender}
-                  onChange={(e) => setSelectedGender(e.target.value)}
-                  options={genderOptions}
-                  className="text-base"
-                />
-              </div>
-              <div className="mt-4 text-base text-gray-600">
-                共 <span className="font-bold text-lg">{voices.length}</span> 个声音
-                {searchTerm || selectedGender || showFavoritesOnlyState ? (
-                  <>
-                    ，已筛选出{" "}
-                    <span className="font-bold text-lg text-blue-600">
-                      {filteredVoices.length}
-                    </span>{" "}
-                    个
-                    {showFavoritesOnlyState && (
-                      <span className="ml-2 text-yellow-600 font-medium">
-                        (仅收藏)
-                      </span>
+      {/* 音频波形装饰 */}
+      <div className="fixed top-20 left-0 right-0 h-32 opacity-20 pointer-events-none">
+        <div className="h-full flex items-center justify-around">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="w-1 bg-gradient-to-t from-green-500 to-transparent rounded-full"
+              style={{
+                height: `${20 + Math.random() * 60}%`,
+                animation: `wave ${1 + Math.random()}s ease-in-out infinite`,
+                animationDelay: `${i * 0.1}s`
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes wave {
+          0%, 100% { transform: scaleY(1); }
+          50% { transform: scaleY(1.5); }
+        }
+      `}</style>
+
+      <div className="relative z-10">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 shadow-2xl overflow-hidden">
+            {/* 头部 - 简洁设计 */}
+            <div className="px-6 py-5 border-b border-gray-800">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-2xl font-bold text-white">
+                      {showFavoritesOnlyState ? '我的收藏' : '声音库'}
+                    </h1>
+                    {showFavoritesOnlyState && favoriteVoiceIds.size > 0 && (
+                      <button
+                        onClick={handleClearAllFavorites}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30 rounded-lg transition-all duration-200"
+                        title="清空所有收藏"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        清空
+                      </button>
                     )}
-                  </>
-                ) : (
-                  ""
-                )}
+                  </div>
+                  <p className="text-gray-400 text-sm">
+                    {showFavoritesOnlyState
+                      ? `管理您的收藏声音 (共 ${favoriteVoiceIds.size} 个)`
+                      : '浏览所有可用的TTS声音，试听并选择最适合的声音'
+                    }
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* 声音列表 */}
-            {filteredVoices.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredVoices.map((voice) => (
-                  <div
-                    key={voice.id}
-                    className={`group bg-white border-2 rounded-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden ${
-                      favoriteVoiceIds.has(voice.short_name || voice.id)
-                        ? "border-yellow-400 shadow-xl"
-                        : "border-gray-200 hover:border-blue-400"
-                    }`}
-                  >
-                    <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br rounded-full -mr-16 -mt-16 ${
-                      favoriteVoiceIds.has(voice.short_name || voice.id)
-                        ? "from-yellow-100 to-orange-100"
-                        : "from-blue-100 to-purple-100"
-                    }`}></div>
-
-                    <div className="relative p-6 space-y-4">
-                      <div className="absolute top-4 right-4">
-                        <button
-                          onClick={(e) => toggleFavorite(e, voice)}
-                          className={`p-2 rounded-xl transition-all duration-200 ${
-                            favoriteVoiceIds.has(voice.short_name || voice.id)
-                              ? "bg-yellow-100 text-yellow-600"
-                              : "bg-gray-100 text-gray-400 hover:bg-yellow-50 hover:text-yellow-500"
-                          }`}
-                          title={
-                            favoriteVoiceIds.has(voice.short_name || voice.id)
-                              ? "取消收藏"
-                              : "添加收藏"
-                          }
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill={favoriteVoiceIds.has(voice.short_name || voice.id) ? "currentColor" : "none"}
-                            viewBox="0 0 24 24"
-                            strokeWidth={2}
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <div>
-                        <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                          voice.gender === "Female"
-                            ? "bg-pink-100 text-pink-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}>
-                          {voice.gender === "Female" ? "女声" : "男声"}
+            <div className="p-6">
+              {/* 筛选控件 */}
+              <div className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <Input
+                      ref={searchInputRef}
+                      placeholder="搜索声音名称、区域..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pr-10"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                        title="清除搜索"
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  <Select
+                    value={selectedGender}
+                    onChange={(e) => setSelectedGender(e.target.value)}
+                    options={genderOptions}
+                  />
+                </div>
+                <div className="mt-3 text-sm text-gray-400">
+                  共 <span className="font-semibold text-green-400">{voices.length}</span> 个声音
+                  {searchTerm || selectedGender || showFavoritesOnlyState ? (
+                    <>
+                      ，已筛选出{" "}
+                      <span className="font-semibold text-green-400">
+                        {filteredVoices.length}
+                      </span>{" "}
+                      个
+                      {showFavoritesOnlyState && (
+                        <span className="ml-2 text-yellow-400 font-medium">
+                          (仅收藏)
                         </span>
-                      </div>
+                      )}
+                    </>
+                  ) : (
+                    ""
+                  )}
+                </div>
+              </div>
 
-                      <div>
-                        <h3 className="font-bold text-gray-900 text-lg">
-                          {voice.local_name || voice.name}
-                        </h3>
-                        <div className="mt-3 space-y-2 text-sm">
-                          <div className="flex items-baseline">
-                            <span className="font-medium text-gray-700 w-16">区域</span>
-                            <span className="text-gray-600">{voice.locale_name || voice.locale}</span>
-                          </div>
-                          {voice.sample_rate_hertz && (
+              {/* 声音列表 */}
+              {filteredVoices.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredVoices.map((voice) => (
+                    <div
+                      key={voice.id}
+                      className={`group bg-gray-800/50 backdrop-blur-xl border-2 rounded-xl hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden ${
+                        favoriteVoiceIds.has(voice.short_name || voice.id)
+                          ? "border-yellow-400 shadow-lg"
+                          : "border-gray-700 hover:border-green-500"
+                      }`}
+                    >
+                      <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br rounded-full -mr-12 -mt-12 ${
+                        favoriteVoiceIds.has(voice.short_name || voice.id)
+                          ? "from-yellow-500/20 to-orange-500/20"
+                          : "from-green-500/20 to-emerald-500/20"
+                      } group-hover:scale-150 transition-transform duration-500`}></div>
+
+                      <div className="relative p-4 space-y-3">
+                        <div className="absolute top-3 right-3">
+                          <button
+                            onClick={(e) => toggleFavorite(e, voice)}
+                            className={`p-2 rounded-lg transition-all duration-200 ${
+                              favoriteVoiceIds.has(voice.short_name || voice.id)
+                                ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                : "bg-gray-700/50 text-gray-400 hover:bg-yellow-500/10 hover:text-yellow-400 border border-gray-600"
+                            }`}
+                            title={
+                              favoriteVoiceIds.has(voice.short_name || voice.id)
+                                ? "取消收藏"
+                                : "添加收藏"
+                            }
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill={favoriteVoiceIds.has(voice.short_name || voice.id) ? "currentColor" : "none"}
+                              viewBox="0 0 24 24"
+                              strokeWidth={2}
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            voice.gender === "Female"
+                              ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
+                              : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                          }`}>
+                            {voice.gender === "Female" ? "女声" : "男声"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h3 className="font-semibold text-gray-100 text-sm font-mono">
+                            {voice.local_name || voice.name}
+                          </h3>
+                          <div className="mt-2 space-y-1.5 text-xs">
                             <div className="flex items-baseline">
-                              <span className="font-medium text-gray-700 w-16">采样率</span>
-                              <span className="font-mono text-gray-600">{voice.sample_rate_hertz}Hz</span>
+                              <span className="font-medium text-gray-500 w-12">区域</span>
+                              <span className="text-gray-400 font-mono">{voice.locale_name || voice.locale}</span>
                             </div>
-                          )}
+                            {voice.sample_rate_hertz && (
+                              <div className="flex items-baseline">
+                                <span className="font-medium text-gray-500 w-12">采样率</span>
+                                <span className="font-mono text-gray-400">{voice.sample_rate_hertz}Hz</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="border-t border-gray-100 bg-gray-50 p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex gap-2">
+                      <div className="border-t border-gray-700 bg-gray-800/50 p-3">
+                        <div className="flex items-center justify-between gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               previewVoice(voice.id);
                             }}
-                            className="flex items-center justify-center w-10 h-10 bg-white border-2 border-gray-300 rounded-xl text-gray-800 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200"
+                            className="flex items-center justify-center w-8 h-8 bg-gray-700 border border-gray-600 rounded-lg text-gray-300 hover:bg-green-500/20 hover:border-green-500 hover:text-green-400 transition-all duration-200"
                             title="试听此声音"
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                               <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                           </button>
-                        </div>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            selectVoiceForForm(voice);
-                          }}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          选择
-                        </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              selectVoiceForForm(voice);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-semibold text-sm font-mono"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            选择
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
 
-            {/* 空状态 */}
-            {!isLoading && filteredVoices.length === 0 && (
-              <div className="text-center py-16">
-                {showFavoritesOnlyState ? (
-                  <>
-                    <svg className="w-24 h-24 text-yellow-400 mx-auto mb-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                      暂无收藏的声音
-                    </h3>
-                    <p className="text-gray-500 text-lg mb-6">
-                      点击声音卡片上的星星图标来添加收藏
-                    </p>
-                    <button
-                      onClick={() => navigate('/voices')}
-                      className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl transition-colors font-semibold"
-                    >
-                      浏览所有声音
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-24 h-24 text-gray-400 mx-auto mb-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                      没有找到匹配的声音
-                    </h3>
-                    <p className="text-gray-500 text-lg mb-6">尝试调整筛选条件或搜索关键词</p>
-                    <div className="flex items-center justify-center gap-4">
-                      {searchTerm || selectedGender ? (
-                        <button
-                          onClick={() => {
-                            setSearchTerm('');
-                            setSelectedGender('');
-                          }}
-                          className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl transition-colors font-semibold"
-                        >
-                          清除筛选
-                        </button>
-                      ) : null}
-                      {favoriteVoiceIds.size > 0 && (
-                        <button
-                          onClick={() => navigate('/voices?favorites=true')}
-                          className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl transition-colors font-semibold"
-                        >
-                          浏览收藏 ({favoriteVoiceIds.size})
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+              {/* 空状态 */}
+              {!isLoading && filteredVoices.length === 0 && (
+                <div className="text-center py-12">
+                  {showFavoritesOnlyState ? (
+                    <>
+                      <svg className="w-16 h-16 text-yellow-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      <h3 className="text-xl font-semibold text-gray-100 mb-2 font-mono">
+                        暂无收藏的声音
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-4">
+                        点击声音卡片上的星星图标来添加收藏
+                      </p>
+                      <button
+                        onClick={() => navigate('/voices')}
+                        className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-all duration-200 font-semibold font-mono shadow-md hover:shadow-lg"
+                      >
+                        浏览所有声音
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-16 h-16 text-gray-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <h3 className="text-xl font-semibold text-gray-100 mb-2 font-mono">
+                        没有找到匹配的声音
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-4">尝试调整筛选条件或搜索关键词</p>
+                      <div className="flex items-center justify-center gap-3">
+                        {searchTerm || selectedGender ? (
+                          <button
+                            onClick={() => {
+                              setSearchTerm('');
+                              setSelectedGender('');
+                            }}
+                            className="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all duration-200 font-semibold font-mono shadow-md hover:shadow-lg"
+                          >
+                            清除筛选
+                          </button>
+                        ) : null}
+                        {favoriteVoiceIds.size > 0 && (
+                          <button
+                            onClick={() => navigate('/voices?favorites=true')}
+                            className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-all duration-200 font-semibold font-mono shadow-md hover:shadow-lg"
+                          >
+                            浏览收藏 ({favoriteVoiceIds.size})
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </main>
       </div>
 
       <ConfirmModal

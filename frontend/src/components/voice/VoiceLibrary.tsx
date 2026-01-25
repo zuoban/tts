@@ -339,24 +339,24 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
-        {/* 头部 */}
-        <div className="card-header-secondary">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-gray-900/95 backdrop-blur-xl rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden border border-gray-800">
+        {/* 头部 - 简洁设计 */}
+        <div className="px-6 py-5 border-b border-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-bold">
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-2xl font-bold text-white">
                   {showFavoritesOnly ? '我的收藏' : '声音库'}
                 </h2>
                 {showFavoritesOnly && favoriteVoiceIds.size > 0 && (
                   <button
                     onClick={handleClearAllFavorites}
-                    className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30 rounded-lg transition-all duration-200"
                     title="清空所有收藏"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-3.5 h-3.5"
                       fill="none"
                       viewBox="0 0 24 24"
                       strokeWidth={2}
@@ -372,7 +372,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                   </button>
                 )}
               </div>
-              <p className="text-purple-100 mt-2">
+              <p className="text-gray-400 text-sm">
                 {showFavoritesOnly
                   ? `管理您的收藏声音 (共 ${favoriteVoiceIds.size} 个)`
                   : '浏览所有可用的TTS声音，试听并选择最适合的声音'
@@ -381,7 +381,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-white rounded-lg transition-all duration-200"
             >
               <svg
                 className="w-6 h-6"
@@ -401,9 +401,9 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
         </div>
 
         {/* 主体内容 */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)] custom-scrollbar">
           {/* 筛选控件 */}
-          <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+          <div className="mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <Input
@@ -416,7 +416,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                     title="清除搜索"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -431,12 +431,12 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                 options={genderOptions}
               />
             </div>
-            <div className="mt-3 text-sm text-gray-600">
-              共 <span className="font-semibold">{voices.length}</span> 个声音
+            <div className="mt-3 text-sm text-gray-400">
+              共 <span className="font-semibold text-green-400">{voices.length}</span> 个声音
               {searchTerm || selectedGender || showFavoritesOnly ? (
                 <>
                   ，已筛选出{" "}
-                  <span className="font-semibold text-blue-600">
+                  <span className="font-semibold text-green-400">
                     {filteredVoices.length}
                   </span>{" "}
                   个
@@ -458,26 +458,25 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
               {filteredVoices.map((voice) => (
                 <div
                   key={voice.id}
-                  className={`group bg-white border rounded-xl hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden min-h-[280px] ${
+                  className={`group bg-gray-800/50 backdrop-blur-xl border-2 rounded-xl hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden min-h-[240px] ${
                     favoriteVoiceIds.has(voice.short_name || voice.id)
-                      ? "border-yellow-300 shadow-lg hover:border-yellow-400 hover:shadow-xl"
-                      : "border-gray-200 hover:border-blue-300"
+                      ? "border-yellow-400 shadow-lg"
+                      : "border-gray-700 hover:border-green-500"
                   }`}
                 >
-                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500 ${
+                  <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br rounded-full -mr-12 -mt-12 ${
                     favoriteVoiceIds.has(voice.short_name || voice.id)
-                      ? "from-yellow-50/50 to-orange-50/50"
-                      : "from-blue-50/50 to-purple-50/50"
-                  }`}></div>
+                      ? "from-yellow-500/20 to-orange-500/20"
+                      : "from-green-500/20 to-emerald-500/20"
+                  } group-hover:scale-150 transition-transform duration-500`}></div>
 
-                  
                   <div className="relative p-4 space-y-3 min-h-[160px]">
                     <div className="absolute top-3 right-3">
                       <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full shadow-sm ${
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
                           voice.gender === "Female"
-                            ? "bg-pink-100 text-pink-700 border border-pink-200"
-                            : "bg-blue-100 text-blue-700 border border-blue-200"
+                            ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
+                            : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                         }`}
                       >
                         {voice.gender === "Female" ? "女声" : "男声"}
@@ -486,85 +485,69 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
 
                     <div className="space-y-3">
                       <div className="flex items-center">
-                        <div className="flex-1 pr-12">
-                          <h3 className="font-semibold text-gray-900 text-sm">
+                        <div className="flex-1 pr-10">
+                          <h3 className="font-semibold text-gray-100 text-sm font-mono">
                             {voice.local_name || voice.name}
                           </h3>
                         </div>
                       </div>
 
-                      <table className="w-full text-sm">
-                        <tbody>
-                          <tr>
-                            <td className="px-0 py-1.5 font-medium text-gray-700 w-16 text-xs">
-                              区域
-                            </td>
-                            <td className="px-2 py-1.5 text-gray-600 text-xs">
-                              {voice.locale_name || voice.locale}
-                            </td>
-                          </tr>
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-baseline">
+                          <span className="font-medium text-gray-500 w-12">区域</span>
+                          <span className="text-gray-400 font-mono">{voice.locale_name || voice.locale}</span>
+                        </div>
 
-                          {voice.sample_rate_hertz && (
-                            <tr>
-                              <td className="px-0 py-1.5 font-medium text-gray-700 w-16 text-xs">
-                                采样率
-                              </td>
-                              <td className="px-2 py-1.5">
-                                <span className="font-mono text-gray-600 text-xs">
-                                  {voice.sample_rate_hertz}Hz
-                                </span>
-                              </td>
-                            </tr>
+                        {voice.sample_rate_hertz && (
+                          <div className="flex items-baseline">
+                            <span className="font-medium text-gray-500 w-12">采样率</span>
+                            <span className="font-mono text-gray-400">{voice.sample_rate_hertz}Hz</span>
+                          </div>
+                        )}
+
+                        {(voice.style_list || voice.styles) &&
+                          (voice.style_list || voice.styles)!.length > 0 && (
+                            <div className="flex items-start">
+                              <span className="font-medium text-gray-500 w-12 pt-1">风格</span>
+                              <div className="flex flex-wrap gap-1 flex-1">
+                                {(voice.style_list || voice.styles)!
+                                  .slice(0, 2)
+                                  .map((style) => (
+                                    <span
+                                      key={style}
+                                      className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30 font-mono"
+                                    >
+                                      {style}
+                                    </span>
+                                  ))}
+                                {(voice.style_list || voice.styles)!
+                                  .length > 2 && (
+                                  <span className="px-2 py-0.5 bg-gray-700/50 text-gray-400 text-xs rounded border border-gray-600 font-mono">
+                                    +
+                                    {(voice.style_list || voice.styles)!
+                                      .length - 2}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           )}
-
-                          {(voice.style_list || voice.styles) &&
-                            (voice.style_list || voice.styles)!.length > 0 && (
-                              <tr>
-                                <td className="px-0 py-1.5 font-medium text-gray-700 w-16 text-xs align-top">
-                                  风格
-                                </td>
-                                <td className="px-2 py-1.5">
-                                  <div className="flex flex-wrap gap-0.5">
-                                    {(voice.style_list || voice.styles)!
-                                      .slice(0, 2)
-                                      .map((style) => (
-                                        <span
-                                          key={style}
-                                          className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-xs rounded border border-blue-100"
-                                        >
-                                          {style}
-                                        </span>
-                                      ))}
-                                    {(voice.style_list || voice.styles)!
-                                      .length > 2 && (
-                                      <span className="px-1.5 py-0.5 bg-gray-50 text-gray-500 text-xs rounded border border-gray-200">
-                                        +
-                                        {(voice.style_list || voice.styles)!
-                                          .length - 2}
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                        </tbody>
-                      </table>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="absolute bottom-0 left-0 right-0 border-t border-gray-100 bg-gray-50/50 p-4">
-                    <div className="flex items-center justify-between gap-3 w-full">
+                  <div className="absolute bottom-0 left-0 right-0 border-t border-gray-700 bg-gray-800/50 p-3">
+                    <div className="flex items-center justify-between gap-2 w-full">
                       <div className="flex gap-2 flex-1">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             previewVoice(voice.id);
                           }}
-                          className="flex items-center justify-center w-8 h-8 bg-white border border-gray-300 rounded-lg text-gray-800 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow"
+                          className="flex items-center justify-center w-8 h-8 bg-gray-700 border border-gray-600 rounded-lg text-gray-300 hover:bg-green-500/20 hover:border-green-500 hover:text-green-400 transition-all duration-200"
                           title="试听此声音"
                         >
                           <svg
-                            className="w-3 h-3"
+                            className="w-3.5 h-3.5"
                             fill="none"
                             viewBox="0 0 24 24"
                             strokeWidth={2}
@@ -590,11 +573,11 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                               voice.local_name || voice.name,
                             );
                           }}
-                          className="flex items-center justify-center w-8 h-8 bg-white border border-gray-300 rounded-lg text-gray-800 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow"
+                          className="flex items-center justify-center w-8 h-8 bg-gray-700 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-600/50 hover:border-gray-500 transition-all duration-200"
                           title="复制声音ID"
                         >
                           <svg
-                            className="w-3 h-3"
+                            className="w-3.5 h-3.5"
                             fill="none"
                             viewBox="0 0 24 24"
                             strokeWidth={2}
@@ -609,10 +592,10 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                         </button>
                         <button
                           onClick={(e) => toggleFavorite(e, voice)}
-                          className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all duration-200 shadow-sm hover:shadow ${
+                          className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all duration-200 ${
                             favoriteVoiceIds.has(voice.short_name || voice.id)
-                              ? "bg-yellow-50 border-yellow-400 text-yellow-600 hover:bg-yellow-100"
-                              : "bg-white border-gray-300 text-gray-800 hover:bg-yellow-50 hover:border-yellow-400"
+                              ? "bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30"
+                              : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-yellow-500/10 hover:border-yellow-500/30 hover:text-yellow-400"
                           }`}
                           title={
                             favoriteVoiceIds.has(voice.short_name || voice.id)
@@ -621,7 +604,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                           }
                         >
                           <svg
-                            className="w-3 h-3"
+                            className="w-3.5 h-3.5"
                             fill={
                               favoriteVoiceIds.has(voice.short_name || voice.id)
                                 ? "currentColor"
@@ -645,11 +628,11 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                           e.stopPropagation();
                           selectVoiceForForm(voice);
                         }}
-                        className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                        className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
                         title="选择此声音"
                       >
                         <svg
-                          className="w-3 h-3"
+                          className="w-3.5 h-3.5"
                           fill="none"
                           viewBox="0 0 24 24"
                           strokeWidth={2}
@@ -671,11 +654,11 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
 
           {/* 空状态 */}
           {!isLoading && filteredVoices.length === 0 && (
-            <div className="text-center py-8">
+            <div className="text-center py-12">
               {showFavoritesOnly ? (
                 <>
                   <svg
-                    className="w-12 h-12 text-yellow-400 mx-auto mb-4"
+                    className="w-16 h-16 text-yellow-400 mx-auto mb-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
@@ -687,15 +670,15 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                       d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
                     />
                   </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-100 mb-2 font-mono">
                     暂无收藏的声音
                   </h3>
-                  <p className="text-gray-500 mb-4">
+                  <p className="text-gray-400 text-sm mb-4">
                     点击声音卡片上的星星图标来添加收藏
                   </p>
                   <button
                     onClick={() => setShowFavoritesOnly(false)}
-                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors"
+                    className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-all duration-200 font-semibold font-mono shadow-md hover:shadow-lg"
                   >
                     浏览所有声音
                   </button>
@@ -703,7 +686,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
               ) : (
                 <>
                   <svg
-                    className="w-12 h-12 text-gray-400 mx-auto mb-4"
+                    className="w-16 h-16 text-gray-500 mx-auto mb-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
@@ -715,10 +698,10 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-100 mb-2 font-mono">
                     没有找到匹配的声音
                   </h3>
-                  <p className="text-gray-500 mb-4">尝试调整筛选条件或搜索关键词</p>
+                  <p className="text-gray-400 text-sm mb-4">尝试调整筛选条件或搜索关键词</p>
                   <div className="flex items-center justify-center gap-3">
                     {searchTerm || selectedGender ? (
                       <button
@@ -726,7 +709,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                           setSearchTerm('');
                           setSelectedGender('');
                         }}
-                        className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                        className="px-6 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all duration-200 font-semibold font-mono shadow-md hover:shadow-lg"
                       >
                         清除筛选
                       </button>
@@ -734,7 +717,7 @@ const VoiceLibrary: React.FC<VoiceLibraryProps> = ({
                     {favoriteVoiceIds.size > 0 && (
                       <button
                         onClick={() => setShowFavoritesOnly(true)}
-                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors"
+                        className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-all duration-200 font-semibold font-mono shadow-md hover:shadow-lg"
                       >
                         浏览收藏 ({favoriteVoiceIds.size})
                       </button>
