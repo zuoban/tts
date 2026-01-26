@@ -7,7 +7,7 @@ import { STORAGE_KEYS } from '../../types';
  * 数据状态接口
  * 管理应用数据（声音列表、配置、历史记录）
  */
-interface DataState {
+export interface DataState {
   // 声音列表
   voices: Voice[];
 

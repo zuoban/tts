@@ -5,6 +5,7 @@ import { FavoritesService } from '../../services/favorites';
 import { useTTSStore } from '../../hooks/useTTSStore';
 import type { FavoriteVoiceItem } from '../../types/index';
 import ConfirmModal from '../ui/ConfirmModal';
+import { showSuccess, showWarning, showInfo } from '../ui/Toast';
 
 interface FavoritesManagerProps {
   isOpen: boolean;
@@ -59,18 +60,7 @@ const FavoritesManager: React.FC<FavoritesManagerProps> = ({
 
     const success = FavoritesService.reorderFavorites(sourceIndex, destinationIndex);
     if (success) {
-      const message = document.createElement('div');
-      message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-      message.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>顺序已更新</span>
-        </div>
-      `;
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      showSuccess('顺序已更新');
     }
   };
 
@@ -85,18 +75,7 @@ const FavoritesManager: React.FC<FavoritesManagerProps> = ({
       const result = FavoritesService.removeFromFavorites(removingFavorite.id);
 
       if (result) {
-        const message = document.createElement('div');
-        message.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-        message.innerHTML = `
-          <div class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            <span>已移除收藏: ${removingFavorite.localName || removingFavorite.name}</span>
-          </div>
-        `;
-        document.body.appendChild(message);
-        setTimeout(() => message.remove(), 2000);
+        showWarning(`已移除收藏: ${removingFavorite.localName || removingFavorite.name}`);
 
         loadFavorites();
         onFavoritesChange?.();
@@ -127,18 +106,7 @@ const FavoritesManager: React.FC<FavoritesManagerProps> = ({
     if (onSelectVoice) {
       onSelectVoice(favorite);
     } else {
-      const message = document.createElement('div');
-      message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-      message.innerHTML = `
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>已选择收藏声音: ${favorite.localName || favorite.name}</span>
-        </div>
-      `;
-      document.body.appendChild(message);
-      setTimeout(() => message.remove(), 2000);
+      showSuccess(`已选择收藏声音: ${favorite.localName || favorite.name}`);
     }
 
     onClose();
@@ -151,18 +119,7 @@ const FavoritesManager: React.FC<FavoritesManagerProps> = ({
   const confirmClearAll = () => {
     FavoritesService.clearFavorites();
 
-    const message = document.createElement('div');
-    message.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
-    message.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        <span>已清空所有收藏</span>
-      </div>
-    `;
-    document.body.appendChild(message);
-    setTimeout(() => message.remove(), 2000);
+    showInfo('已清空所有收藏');
 
     loadFavorites();
     onFavoritesChange?.();

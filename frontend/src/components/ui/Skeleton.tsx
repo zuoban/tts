@@ -1,42 +1,34 @@
 import React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-/**
- * Skeleton 组件的属性
- */
-export interface SkeletonProps {
-  /**
-   * 额外的 CSS 类名
-   */
-  className?: string;
+const skeletonVariants = cva(
+  "animate-pulse rounded-md bg-muted",
+  {
+    variants: {
+      variant: {
+        default: "",
+        circle: "rounded-full",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
 
-  /**
-   * 是否在加载中
-   */
+export interface SkeletonProps 
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof skeletonVariants> {
   loading?: boolean;
-
-  /**
-   * 加载完成时显示的子元素
-   */
-  children?: React.ReactNode;
 }
 
-/**
- * Skeleton 组件
- *
- * 用于显示加载占位符
- *
- * @example
- * ```tsx
- * <Skeleton className="h-4 w-3/4" />
- * <Skeleton className="h-32 w-full" />
- * ```
- */
 export const Skeleton: React.FC<SkeletonProps> = React.memo(
-  ({ className = '' }) => {
+  ({ className, variant, loading, ...props }) => {
     return (
       <div
-        className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
+        className={skeletonVariants({ variant, className })}
         aria-hidden="true"
+        {...props}
       />
     );
   }
@@ -44,9 +36,6 @@ export const Skeleton: React.FC<SkeletonProps> = React.memo(
 
 Skeleton.displayName = 'Skeleton';
 
-/**
- * 文本骨架屏
- */
 export const TextSkeleton: React.FC<{ lines?: number; className?: string }> =
   React.memo(({ lines = 3, className = '' }) => {
     return (
@@ -64,9 +53,6 @@ export const TextSkeleton: React.FC<{ lines?: number; className?: string }> =
 
 TextSkeleton.displayName = 'TextSkeleton';
 
-/**
- * 圆形骨架屏（用于头像）
- */
 export const CircleSkeleton: React.FC<{ size?: number; className?: string }> =
   React.memo(({ size = 40, className = '' }) => {
     return (
@@ -79,13 +65,10 @@ export const CircleSkeleton: React.FC<{ size?: number; className?: string }> =
 
 CircleSkeleton.displayName = 'CircleSkeleton';
 
-/**
- * 卡片骨架屏
- */
 export const CardSkeleton: React.FC<{ className?: string }> = React.memo(
   ({ className = '' }) => {
     return (
-      <div className={`border rounded-lg p-4 space-y-3 ${className}`}>
+      <div className={`border border-border rounded-lg p-4 space-y-3 ${className}`}>
         <Skeleton className="h-4 w-1/4" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-5/6" />
@@ -97,9 +80,6 @@ export const CardSkeleton: React.FC<{ className?: string }> = React.memo(
 
 CardSkeleton.displayName = 'CardSkeleton';
 
-/**
- * 列表骨架屏
- */
 export const ListSkeleton: React.FC<{
   count?: number;
   className?: string;
@@ -121,9 +101,6 @@ export const ListSkeleton: React.FC<{
 
 ListSkeleton.displayName = 'ListSkeleton';
 
-/**
- * 表格骨架屏
- */
 export const TableSkeleton: React.FC<{
   rows?: number;
   cols?: number;
@@ -131,13 +108,11 @@ export const TableSkeleton: React.FC<{
 }> = React.memo(({ rows = 5, cols = 4, className = '' }) => {
   return (
     <div className={`space-y-2 ${className}`}>
-      {/* 表头 */}
       <div className="flex space-x-2">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={`header-${i}`} className="h-8 flex-1" />
         ))}
       </div>
-      {/* 表体 */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <div key={`row-${rowIndex}`} className="flex space-x-2">
           {Array.from({ length: cols }).map((_, colIndex) => (
@@ -154,23 +129,17 @@ export const TableSkeleton: React.FC<{
 
 TableSkeleton.displayName = 'TableSkeleton';
 
-/**
- * 带有加载状态的包装器
- */
 export const WithSkeleton: React.FC<
   SkeletonProps & { showSkeleton?: boolean }
-> = React.memo(({ loading = false, children, className = '' }) => {
+> = React.memo(({ loading = false, children, className = '', ...props }) => {
   if (loading) {
-    return <Skeleton className={className} />;
+    return <Skeleton className={className} {...props} />;
   }
   return <>{children}</>;
 });
 
 WithSkeleton.displayName = 'WithSkeleton';
 
-/**
- * 语音选择器骨架屏（专门为 TTS 应用设计）
- */
 export const VoiceSelectorSkeleton: React.FC<{ className?: string }> =
   React.memo(({ className = '' }) => {
     return (
@@ -193,9 +162,6 @@ export const VoiceSelectorSkeleton: React.FC<{ className?: string }> =
 
 VoiceSelectorSkeleton.displayName = 'VoiceSelectorSkeleton';
 
-/**
- * 参数控制骨架屏
- */
 export const ParameterControlsSkeleton: React.FC<{ className?: string }> =
   React.memo(({ className = '' }) => {
     return (

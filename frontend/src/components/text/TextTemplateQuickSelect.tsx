@@ -4,6 +4,7 @@ import type { DropResult } from '@hello-pangea/dnd';
 import { TextTemplatesService } from '../../services/textTemplates';
 import type { TextTemplate } from '../../types/index';
 import { Input } from '../ui/Input';
+import { showSuccess } from '../ui/Toast';
 
 interface TextTemplateQuickSelectProps {
   onSelectTemplate: (content: string) => void;
@@ -50,18 +51,7 @@ const TextTemplateQuickSelect: React.FC<TextTemplateQuickSelectProps> = ({
   const handleSelect = (template: TextTemplate) => {
     onSelectTemplate(template.content);
 
-    const message = document.createElement('div');
-    message.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm animate-pulse';
-    message.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <span>已填充模板: ${template.title}</span>
-      </div>
-    `;
-    document.body.appendChild(message);
-    setTimeout(() => message.remove(), 2000);
+    showSuccess(`已填充模板: ${template.title}`);
   };
 
   const filteredTemplates = searchKeyword.trim()
