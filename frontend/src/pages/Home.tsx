@@ -93,252 +93,38 @@ const Home: React.FC = () => {
         }
     }, []);
 
-    // 已删除：上面的 useEffect 已合并到初始化逻辑中
-
-    // 优化：从localStorage恢复保存的语言和区域设置（只在组件挂载时执行一次）
-    useEffect(() => {
-        // 如果已有声音选择，优先根据声音回显，跳过localStorage恢复
-        if (voice) {
-            return;
-        }
-
-        const savedLanguage = localStorage.getItem('tts_current_language');
-        const savedLocale = localStorage.getItem('tts_current_locale');
-
-        // 保存到临时变量，等待languageMap准备好后再恢复
-        if (savedLanguage && savedLocale) {
-            // 不立即设置，等待languageMap构建完成
-            console.log(`检测到已保存的语言设置，将在languageMap准备后恢复: ${savedLanguage}, ${savedLocale}`);
-        }
-    }, []); // 空依赖数组，只在组件挂载时执行一次
-
-    const buildLanguageMap = useCallback(() => {
-        const newLanguageMap = new Map();
-
-        voices.forEach(voice => {
-            if (voice.locale && voice.locale_name) {
-                const nameMatch = voice.locale_name.match(/^(.+?)\s*\(([^)]+)\)$/);
-                if (nameMatch) {
-                    const [, languageName, regionCode] = nameMatch;
-                    if (!newLanguageMap.has(languageName)) {
-                        newLanguageMap.set(languageName, new Map());
-                    }
-                    // 使用Map存储，自动去重
-                    newLanguageMap.get(languageName).set(voice.locale, {
-                        locale: voice.locale,
-                        regionCode: regionCode,
-                        displayName: voice.locale_name
-                    });
-                } else {
-                    // 没有括号的情况，作为单一语言
-                    if (!newLanguageMap.has(voice.locale_name)) {
-                        newLanguageMap.set(voice.locale_name, new Map());
-                    }
-                    newLanguageMap.get(voice.locale_name).set(voice.locale, {
-                        locale: voice.locale,
-                        regionCode: voice.locale,
-                        displayName: voice.locale_name
-                    });
-                }
-            }
-        });
-
-        // 将Map转换为数组格式
-        newLanguageMap.forEach((regionsMap, languageName) => {
-            newLanguageMap.set(languageName, Array.from(regionsMap.values()));
-        });
-
-        // 缓存到localStorage
-        try {
-            const mapObject = Object.fromEntries(newLanguageMap);
-            localStorage.setItem('tts_language_map', JSON.stringify(mapObject));
-            localStorage.setItem('tts_language_map_timestamp', Date.now().toString());
-            console.log('语言区域数据已缓存');
-        } catch (error) {
-            console.error('缓存语言区域数据失败:', error);
-        }
-
-        setLanguageMap(newLanguageMap);
-    }, [voices, setLanguageMap]);
-
-    // 优化：构建语言区域映射并缓存
-    useEffect(() => {
-        if (voices.length > 0) {
-            // 检查本地缓存
-            const cachedLanguageData = localStorage.getItem('tts_language_map');
-            const cachedTimestamp = localStorage.getItem('tts_language_map_timestamp');
-
-            // 缓存有效期为4小时
-            const CACHE_DURATION = 4 * 60 * 60 * 1000;
-            const now = Date.now();
-
-            if (cachedLanguageData && cachedTimestamp && (now - parseInt(cachedTimestamp)) < CACHE_DURATION) {
-                try {
-                    const parsedData = JSON.parse(cachedLanguageData);
-                    const newLanguageMap = new Map(Object.entries(parsedData));
-                    setLanguageMap(newLanguageMap);
-                    console.log('使用缓存的语言区域数据');
-
-                    // 优化：在languageMap准备好后立即尝试恢复localStorage保存的设置
-                    if (!voice) {
-                        const savedLanguage = localStorage.getItem('tts_current_language');
-                        const savedLocale = localStorage.getItem('tts_current_locale');
-
-                        if (savedLanguage && savedLocale) {
-                            const regions = newLanguageMap.get(savedLanguage);
-                            const isValid = regions?.some(r => r.locale === savedLocale);
-
-                            if (isValid) {
-                                setSelectedLanguage(savedLanguage);
-                                setLocale(savedLocale);
-                                console.log(`从localStorage恢复语言: ${savedLanguage}, 区域: ${savedLocale}`);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error('解析缓存数据失败:', error);
-                    buildLanguageMap();
-                }
-            } else {
-                buildLanguageMap();
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [voices]); // ✅ 只依赖voices，避免循环依赖（buildLanguageMap等通过ref或其他方式访问）</think></tool_call>
-
-    // 根据声音回显语言和区域（优先级最高）
-    useEffect(() => {
-        console.log(`主页面回显检查 - voice: ${voice}, voices: ${voices.length}, languageMap: ${languageMap.size}`);
-
-        if (voice && voices.length > 0 && languageMap.size > 0) {
-            // 根据选择的voice查找对应的语音信息
-            const selectedVoiceInfo = voices.find(v => (v.short_name || v.id) === voice);
-
-            console.log(`查找语音信息:`, selectedVoiceInfo);
-
-            if (selectedVoiceInfo && selectedVoiceInfo.locale) {
-                const voiceLocale = selectedVoiceInfo.locale;
-                console.log(`语音locale: ${voiceLocale}`);
-
-                // 查找locale对应的语言
-                let foundLanguage = '';
-                for (const [languageName, regions] of languageMap.entries()) {
-                    const region = regions.find(r => r.locale === voiceLocale);
-                    if (region) {
-                        foundLanguage = languageName;
-                        console.log(`找到对应语言: ${languageName} -> ${voiceLocale}`);
-                        break;
-                    }
-                }
-
-                if (foundLanguage) {
-                    // 避免重复设置（防止无限循环）
-                    if (selectedLanguage !== foundLanguage || locale !== voiceLocale) {
-                        console.log(`更新语言区域: ${selectedLanguage} -> ${foundLanguage}, ${locale} -> ${voiceLocale}`);
-                        setSelectedLanguage(foundLanguage);
-                        setLocale(voiceLocale);
-
-                        // 保存到localStorage
-                        localStorage.setItem('tts_current_language', foundLanguage);
-                        localStorage.setItem('tts_current_locale', voiceLocale);
-                    } else {
-                        console.log(`语言区域无需更新，当前已是: ${foundLanguage}, ${voiceLocale}`);
-                    }
-                } else {
-                    console.log(`未找到locale ${voiceLocale} 对应的语言`);
-                }
-            } else {
-                console.log(`未找到语音信息或语音无locale`);
-            }
-        } else {
-            console.log(`条件不满足，跳过回显: voice=${!!voice}, voices=${voices.length}, languageMap=${languageMap.size}`);
-        }
-    }, [voice, voices, languageMap, setLocale, selectedLanguage, locale]);
-
-    // 根据选择的locale恢复selectedLanguage（仅在voice为空时生效）
-    useEffect(() => {
-        if (!voice && locale && languageMap.size > 0) {
-            // 查找locale对应的语言
-            for (const [languageName, regions] of languageMap.entries()) {
-                const region = regions.find(r => r.locale === locale);
-                if (region) {
-                    setSelectedLanguage(languageName);
-                    break;
-                }
-            }
-        }
-    }, [voice, locale, languageMap]);
-
-    useEffect(() => {
-        if (error) {
-            const timer = setTimeout(() => clearError(), 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [error, clearError]);
-
-    // 重置自动播放标志（给播放器足够时间触发自动播放）
-    useEffect(() => {
-        if (audioUrl && shouldAutoPlay) {
-            const timer = setTimeout(() => {
-                setShouldAutoPlay(false);
-            }, 500);
-            return () => clearTimeout(timer);
-        }
-    }, [audioUrl, shouldAutoPlay]);
-
-    // 通用的安全复制函数
-    const safeCopyToClipboard = async (text: string, successMessage: string) => {
-        try {
-            // 首先尝试使用现代的 Clipboard API
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(text);
-                showSuccess(successMessage);
-            } else {
-                // 降级到传统的复制方法
-                fallbackCopyTextToClipboard(text, successMessage);
-            }
-        } catch (error) {
-            console.warn('Clipboard API failed, using fallback:', error);
-            // 如果现代API失败，使用降级方案
-            fallbackCopyTextToClipboard(text, successMessage);
-        }
-    };
-
-    // 传统的复制方法降级方案
-    const fallbackCopyTextToClipboard = (text: string, successMessage: string) => {
-        try {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-
-            // 避免滚动到底部
-            textArea.style.top = '0';
-            textArea.style.left = '0';
-            textArea.style.position = 'fixed';
-            textArea.style.opacity = '0';
-
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-
-            const successful = document.execCommand('copy');
-            document.body.removeChild(textArea);
-
-            if (successful) {
-                showSuccess(successMessage);
-            } else {
-                showError('复制失败,请手动复制: ' + text.substring(0, 50), 10000);
-            }
-        } catch (error) {
-            console.error('Fallback copy failed:', error);
-            showError('复制失败,请手动复制: ' + text.substring(0, 50), 10000);
-        }
-    };
-
-
     const handleGenerateSpeech = async () => {
         setShouldAutoPlay(true);
         await generateSpeech();
     };
+
+    // 监听快捷键
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+            // Ctrl+E / Cmd+E: 聚焦文本输入框
+            if (isCtrlOrCmd && e.key.toLowerCase() === 'e') {
+                e.preventDefault();
+                const textarea = document.getElementById('text-input');
+                if (textarea) {
+                    textarea.focus();
+                }
+            }
+
+            // Ctrl+Enter / Cmd+Enter: 生成语音
+            if (isCtrlOrCmd && e.key === 'Enter') {
+                // 只有当不在 loading 状态，且有文本和声音时才触发
+                if (!isLoading && text.trim() && voice) {
+                    e.preventDefault();
+                    handleGenerateSpeech();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isLoading, text, voice]); // 移除了 handleGenerateSpeech 依赖，因为它是组件内定义的
 
     const handleImportReader = async () => {
         if (!voice) {
@@ -754,7 +540,10 @@ const Home: React.FC = () => {
                             className="w-1 bg-gradient-to-t from-green-500 to-transparent rounded-full"
                             style={{
                                 height: `${20 + Math.random() * 60}%`,
-                                animation: `wave ${1 + Math.random()}s ease-in-out infinite`,
+                                animationName: 'wave',
+                                animationDuration: `${1 + Math.random()}s`,
+                                animationTimingFunction: 'ease-in-out',
+                                animationIterationCount: 'infinite',
                                 animationDelay: `${i * 0.1}s`
                             }}
                         />
@@ -1121,21 +910,15 @@ const Home: React.FC = () => {
                                                 title={isLoading ? '生成中...' : '生成 (Ctrl+Enter)'}
                                             >
                                                 {isLoading ? (
-                                                    <>
-                                                        <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                        </svg>
-                                                        生成中...
-                                                    </>
+                                                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
                                                 ) : (
-                                                    <>
-                                                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        生成
-                                                    </>
+                                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
                                                 )}
                                             </Button>
                                         </div>

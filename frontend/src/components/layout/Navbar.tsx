@@ -44,12 +44,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* 快速统计 */}
-            <div className="hidden sm:flex items-center text-xs text-gray-400 mr-4 font-mono">
-              <span className="text-green-400">{voices.length}</span>
-              <span className="ml-1">声音</span>
-            </div>
-
             {/* 首页按钮 */}
             <Link
               to="/"
@@ -96,11 +90,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
               <span className="hidden sm:inline font-mono">收藏</span>
-              {favoriteCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center font-mono">
-                  {favoriteCount}
-                </span>
-              )}
             </Link>
 
             {/* 文本模板按钮 */}
@@ -117,22 +106,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z" />
               </svg>
               <span className="hidden sm:inline font-mono">文本模板</span>
-            </Link>
-
-            {/* 快捷键帮助按钮 */}
-            <Link
-              to="/shortcuts"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
-                isActive('/shortcuts')
-                  ? 'text-gray-300 bg-gray-700 border border-gray-600'
-                  : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800 border border-transparent'
-              }`}
-              title="快捷键帮助 (Ctrl+/)"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="hidden sm:inline font-mono">快捷键</span>
             </Link>
 
             {/* 设置按钮 */}

@@ -11,6 +11,7 @@ import Favorites from './pages/Favorites';
 import Templates from './pages/Templates';
 import Voices from './pages/Voices';
 import Shortcuts from './pages/Shortcuts';
+import { ShortcutsFloatButton } from './components/layout/ShortcutsFloatButton';
 import './styles/globals.css';
 
 function App() {
@@ -84,6 +85,7 @@ function App() {
           <Route path="/voices" element={<Voices />} />
           <Route path="/shortcuts" element={<Shortcuts />} />
         </Routes>
+        <ShortcutsFloatButton />
       </div>
     </Router>
   );

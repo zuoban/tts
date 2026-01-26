@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 // ============================================
 // 设计理念: "声波的诗意" - 将文字转化为声音的魔法
 // ============================================
-// 美学方向: 深邃午夜蓝 + 电光青 + 琥珀金
-// 避免常见的紫色渐变，采用独特的声波形态视觉语言
+// 美学方向: 深邃灰 + 活力绿 + 温暖橙
+// 统一应用 Home 页面的设计语言
 // ============================================
 
 const Landing: React.FC = () => {
@@ -121,7 +121,7 @@ const Landing: React.FC = () => {
         }
     ];
 
-    // 声波动画组件
+    // 声波动画组件 - 改为绿色/橙色主题
     const SoundWave: React.FC<{ delay: number; color: string }> = ({ delay, color }) => (
         <div
             className="absolute rounded-full"
@@ -139,36 +139,36 @@ const Landing: React.FC = () => {
     return (
         <div
             ref={containerRef}
-            className="relative min-h-screen overflow-hidden bg-[#0a0a1a] text-white font-sans selection:bg-[#00f5d4] selection:text-[#0a0a1a]"
+            className="relative min-h-screen overflow-hidden bg-gray-950 text-white font-sans selection:bg-green-500/30 selection:text-white"
         >
-            {/* 背景渐变 */}
-            <div className="fixed inset-0 bg-gradient-to-br from-[#0a0a1a] via-[#0f0f24] to-[#1a1a2e]" />
+            {/* 背景渐变 - 简化为与Home一致 */}
+            <div className="fixed inset-0 bg-gray-950" />
 
-            {/* 动态光效 */}
+            {/* 动态光效 - 改为绿色 */}
             <div
                 className="fixed w-[600px] h-[600px] rounded-full pointer-events-none opacity-20 transition-all duration-100 ease-out"
                 style={{
-                    background: 'radial-gradient(circle, rgba(0, 245, 212, 0.4) 0%, transparent 70%)',
+                    background: 'radial-gradient(circle, rgba(34, 197, 94, 0.4) 0%, transparent 70%)',
                     left: mousePosition.x - 300,
                     top: mousePosition.y - 300,
                 }}
             />
 
-            {/* 装饰性声波 */}
+            {/* 装饰性声波 - 改为绿色系 */}
             <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <SoundWave delay={0} color="#00f5d4" />
-                <SoundWave delay={500} color="#00d4aa" />
-                <SoundWave delay={1000} color="#00b38a" />
+                <SoundWave delay={0} color="#22c55e" />
+                <SoundWave delay={500} color="#10b981" />
+                <SoundWave delay={1000} color="#14b8a6" />
             </div>
 
-            {/* 网格背景 */}
-            <div className="fixed inset-0 opacity-5">
+            {/* 网格背景 - 与Home完全一致 */}
+            <div className="fixed inset-0 opacity-10">
                 <div
                     className="w-full h-full"
                     style={{
                         backgroundImage: `
-                            linear-gradient(rgba(0, 245, 212, 0.3) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(0, 245, 212, 0.3) 1px, transparent 1px)
+                            linear-gradient(90deg, rgba(34, 197, 94, 0.1) 1px, transparent 1px),
+                            linear-gradient(rgba(34, 197, 94, 0.1) 1px, transparent 1px)
                         `,
                         backgroundSize: '50px 50px',
                     }}
@@ -180,8 +180,8 @@ const Landing: React.FC = () => {
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     {/* Logo */}
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00f5d4] to-[#00b894] flex items-center justify-center shadow-lg shadow-[#00f5d4]/20">
-                            <svg className="w-6 h-6 text-[#0a0a1a]" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
+                            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                             </svg>
                         </div>
@@ -193,11 +193,11 @@ const Landing: React.FC = () => {
                         onClick={handleGetStarted}
                         className="group relative px-6 py-2.5 rounded-full font-medium text-sm overflow-hidden transition-all duration-300 hover:scale-105"
                         style={{
-                            background: 'linear-gradient(135deg, #00f5d4 0%, #00b894 100%)',
-                            boxShadow: '0 4px 20px rgba(0, 245, 212, 0.3)',
+                            background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+                            boxShadow: '0 4px 20px rgba(34, 197, 94, 0.3)',
                         }}
                     >
-                        <span className="relative z-10 text-[#0a0a1a]">开始使用</span>
+                        <span className="relative z-10 text-white">开始使用</span>
                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                     </button>
                 </div>
@@ -207,15 +207,15 @@ const Landing: React.FC = () => {
             <section className="relative z-10 min-h-screen flex items-center justify-center px-6">
                 <div className="max-w-5xl mx-auto text-center">
                     {/* 小标签 */}
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#00f5d4]/30 bg-[#00f5d4]/5 mb-8">
-                        <span className="w-2 h-2 rounded-full bg-[#00f5d4] animate-pulse" />
-                        <span className="text-sm text-[#00f5d4]">AI 文本转语音服务</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/30 bg-green-500/5 mb-8">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-sm text-green-400">AI 文本转语音服务</span>
                     </div>
 
                     {/* 主标题 */}
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
                         <span className="block text-white mb-2">让文字</span>
-                        <span className="block bg-gradient-to-r from-[#00f5d4] via-[#ffb800] to-[#ff6b35] bg-clip-text text-transparent animate-gradient">
+                        <span className="block bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent animate-gradient">
                             拥有声音
                         </span>
                     </h1>
@@ -224,7 +224,7 @@ const Landing: React.FC = () => {
                     <div className="h-8 mb-12">
                         <p className="text-xl md:text-2xl text-gray-400 font-light">
                             {typedText}
-                            <span className="inline-block w-0.5 h-6 bg-[#00f5d4] ml-1 animate-pulse" />
+                            <span className="inline-block w-0.5 h-6 bg-green-500 ml-1 animate-pulse" />
                         </p>
                     </div>
 
@@ -234,11 +234,11 @@ const Landing: React.FC = () => {
                             onClick={handleGetStarted}
                             className="group relative px-8 py-4 rounded-2xl font-semibold text-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                             style={{
-                                background: 'linear-gradient(135deg, #00f5d4 0%, #00b894 100%)',
-                                boxShadow: '0 8px 30px rgba(0, 245, 212, 0.3)',
+                                background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+                                boxShadow: '0 8px 30px rgba(34, 197, 94, 0.3)',
                             }}
                         >
-                            <span className="relative z-10 text-[#0a0a1a] flex items-center gap-2">
+                            <span className="relative z-10 text-white flex items-center gap-2">
                                 立即开始
                                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -248,7 +248,7 @@ const Landing: React.FC = () => {
 
                         <button
                             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="px-8 py-4 rounded-2xl font-semibold text-lg border border-gray-700 hover:border-[#00f5d4]/50 hover:bg-[#00f5d4]/5 transition-all duration-300 flex items-center gap-2"
+                            className="px-8 py-4 rounded-2xl font-semibold text-lg border border-gray-700 hover:border-green-500/50 hover:bg-green-500/5 transition-all duration-300 flex items-center gap-2"
                         >
                             了解更多
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -289,7 +289,7 @@ const Landing: React.FC = () => {
                 <div className="max-w-7xl mx-auto">
                     {/* 区域标题 */}
                     <div className="text-center mb-20">
-                        <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-[#ffb800]/10 text-[#ffb800] border border-[#ffb800]/20 mb-4">
+                        <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-orange-500/10 text-orange-500 border border-orange-500/20 mb-4">
                             功能特点
                         </span>
                         <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -305,7 +305,7 @@ const Landing: React.FC = () => {
                         {features.map((feature, index) => (
                             <div
                                 key={index}
-                                className="group relative p-8 rounded-3xl border border-gray-800 bg-[#0f0f24]/50 hover:border-[#00f5d4]/30 transition-all duration-500 hover:scale-[1.02]"
+                                className="group relative p-8 rounded-3xl border border-gray-800 bg-gray-900/50 hover:border-green-500/30 transition-all duration-500 hover:scale-[1.02]"
                                 style={{
                                     animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
                                 }}
@@ -314,7 +314,7 @@ const Landing: React.FC = () => {
                                 <div
                                     className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                                     style={{
-                                        background: 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 245, 212, 0.1) 0%, transparent 50%)',
+                                        background: 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(34, 197, 94, 0.1) 0%, transparent 50%)',
                                     }}
                                 />
 
@@ -323,10 +323,10 @@ const Landing: React.FC = () => {
                                     <div
                                         className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6"
                                         style={{
-                                            background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.2) 0%, rgba(0, 184, 148, 0.1) 100%)',
+                                            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%)',
                                         }}
                                     >
-                                        <div className="text-[#00f5d4]">{feature.icon}</div>
+                                        <div className="text-green-500">{feature.icon}</div>
                                     </div>
                                     <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
                                     <p className="text-gray-400 leading-relaxed">{feature.description}</p>
@@ -343,13 +343,13 @@ const Landing: React.FC = () => {
                     <div
                         className="relative rounded-3xl p-12 md:p-16 overflow-hidden"
                         style={{
-                            background: 'linear-gradient(135deg, rgba(0, 245, 212, 0.1) 0%, rgba(255, 184, 0, 0.1) 100%)',
-                            border: '1px solid rgba(0, 245, 212, 0.2)',
+                            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%)',
+                            border: '1px solid rgba(34, 197, 94, 0.2)',
                         }}
                     >
                         {/* 装饰光效 */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00f5d4]/20 rounded-full blur-3xl" />
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#ffb800]/20 rounded-full blur-3xl" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/20 rounded-full blur-3xl" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl" />
 
                         {/* 内容 */}
                         <div className="relative z-10 text-center">
@@ -363,12 +363,12 @@ const Landing: React.FC = () => {
                                 onClick={handleGetStarted}
                                 className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-white transition-all duration-300 hover:scale-105"
                                 style={{
-                                    background: 'linear-gradient(135deg, #00f5d4 0%, #00b894 100%)',
-                                    boxShadow: '0 8px 30px rgba(0, 245, 212, 0.3)',
+                                    background: 'linear-gradient(135deg, #22c55e 0%, #059669 100%)',
+                                    boxShadow: '0 8px 30px rgba(34, 197, 94, 0.3)',
                                 }}
                             >
-                                <span className="text-[#0a0a1a]">免费开始使用</span>
-                                <svg className="w-5 h-5 text-[#0a0a1a]" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                <span className="text-white">免费开始使用</span>
+                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                                 </svg>
                             </button>
@@ -381,8 +381,8 @@ const Landing: React.FC = () => {
             <footer className="relative z-10 py-12 px-6 border-t border-gray-800">
                 <div className="max-w-7xl mx-auto text-center">
                     <div className="flex items-center justify-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00f5d4] to-[#00b894] flex items-center justify-center">
-                            <svg className="w-5 h-5 text-[#0a0a1a]" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                             </svg>
                         </div>
@@ -438,16 +438,16 @@ const Landing: React.FC = () => {
                 }
 
                 ::-webkit-scrollbar-track {
-                    background: #0a0a1a;
+                    background: #030712; /* gray-950 */
                 }
 
                 ::-webkit-scrollbar-thumb {
-                    background: #1f1f3a;
+                    background: #1f2937; /* gray-800 */
                     border-radius: 4px;
                 }
 
                 ::-webkit-scrollbar-thumb:hover {
-                    background: #00f5d4;
+                    background: #22c55e; /* green-500 */
                 }
             `}</style>
         </div>

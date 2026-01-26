@@ -126,9 +126,32 @@ export default function Favorites() {
         }}></div>
       </div>
 
-      {/* 装饰性光晕 */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2"></div>
-      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none translate-y-1/2"></div>
+      {/* 音频波形装饰 */}
+      <div className="fixed top-20 left-0 right-0 h-32 opacity-20 pointer-events-none">
+          <div className="h-full flex items-center justify-around">
+              {[...Array(20)].map((_, i) => (
+                  <div
+                      key={i}
+                      className="w-1 bg-gradient-to-t from-green-500 to-transparent rounded-full"
+                      style={{
+                          height: `${20 + Math.random() * 60}%`,
+                          animationName: 'wave',
+                          animationDuration: `${1 + Math.random()}s`,
+                          animationTimingFunction: 'ease-in-out',
+                          animationIterationCount: 'infinite',
+                          animationDelay: `${i * 0.1}s`
+                      }}
+                  />
+              ))}
+          </div>
+      </div>
+
+      <style>{`
+          @keyframes wave {
+              0%, 100% { transform: scaleY(1); }
+              50% { transform: scaleY(1.5); }
+          }
+      `}</style>
 
       <div className="relative z-10">
         <Navbar />
@@ -199,7 +222,7 @@ export default function Favorites() {
                               {...provided.draggableProps}
                               onClick={() => handleSelect(favorite)}
                                 className={`
-                                group relative flex items-center gap-4 p-4 rounded-xl border cursor-pointer overflow-hidden
+                                group relative flex items-center gap-3 p-3 rounded-lg border cursor-pointer overflow-hidden
                                 ${snapshot.isDragging ? 'shadow-2xl ring-1 ring-green-500/50 z-50 bg-gray-800' : 'transition-all duration-300'}
                                 ${selectedId === favorite.id
                                   ? 'bg-green-500/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.1)]' 
@@ -218,16 +241,16 @@ export default function Favorites() {
                               {/* 拖拽手柄 */}
                               <div
                                 {...provided.dragHandleProps}
-                                className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded text-gray-600 group-hover:text-gray-400 hover:bg-gray-700/50 transition-colors cursor-grab active:cursor-grabbing"
+                                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-gray-600 group-hover:text-gray-400 hover:bg-gray-700/50 transition-colors cursor-grab active:cursor-grabbing"
                               >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
                                 </svg>
                               </div>
 
                               {/* 头像/图标 */}
                               <div className={`
-                                flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-lg font-bold shadow-inner relative overflow-hidden
+                                flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center text-base font-bold shadow-inner relative overflow-hidden
                                 ${favorite.gender === 'Female' 
                                   ? 'bg-gradient-to-br from-pink-500/20 to-rose-600/20 text-pink-400 border border-pink-500/30' 
                                   : 'bg-gradient-to-br from-blue-500/20 to-cyan-600/20 text-blue-400 border border-blue-500/30'
@@ -238,25 +261,25 @@ export default function Favorites() {
                               </div>
 
                               {/* 信息区域 */}
-                              <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
+                              <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                                 <div className="min-w-0">
-                                  <h3 className={`font-medium text-lg truncate transition-colors ${selectedId === favorite.id ? 'text-green-400' : 'text-gray-200 group-hover:text-white'}`}>
+                                  <h3 className={`font-medium text-sm truncate transition-colors ${selectedId === favorite.id ? 'text-green-400' : 'text-gray-200 group-hover:text-white'}`}>
                                     {favorite.localName || favorite.name}
                                   </h3>
-                                  <div className="flex items-center gap-2 mt-1 md:hidden">
-                                    <span className="text-xs font-mono text-gray-500">{favorite.locale}</span>
+                                  <div className="flex items-center gap-2 mt-0.5 md:hidden">
+                                    <span className="text-[10px] font-mono text-gray-500">{favorite.locale}</span>
                                   </div>
                                 </div>
 
-                                <div className="hidden md:flex items-center gap-3 ml-auto mr-4">
+                                <div className="hidden md:flex items-center gap-2 ml-auto mr-2">
                                   {/* 区域标签 */}
-                                  <div className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-gray-800 border border-gray-700 text-gray-400">
-                                    {favorite.localeName || favorite.locale}
+                                  <div className="px-2 py-0.5 rounded text-[10px] font-mono bg-gray-800 border border-gray-700 text-gray-400">
+                                    {(favorite.localeName || favorite.locale).replace(/\s*\(.*?\)\s*/g, '')}
                                   </div>
                                   
                                   {/* 性别标签 */}
                                   <div className={`
-                                    px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                    px-2 py-0.5 rounded text-[10px] font-medium border
                                     ${favorite.gender === 'Female' 
                                       ? 'bg-pink-500/10 border-pink-500/20 text-pink-400' 
                                       : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
@@ -268,22 +291,22 @@ export default function Favorites() {
                               </div>
 
                               {/* 操作按钮组 */}
-                              <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                              <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
                                 <button
                                   onClick={(e) => handleRemove(e, favorite)}
-                                  className="w-9 h-9 flex items-center justify-center rounded-lg border border-transparent hover:bg-red-500/10 hover:border-red-500/30 text-gray-500 hover:text-red-400 transition-all duration-200"
+                                  className="w-8 h-8 flex items-center justify-center rounded-md border border-transparent hover:bg-red-500/10 hover:border-red-500/30 text-gray-500 hover:text-red-400 transition-all duration-200"
                                   title="移除收藏"
                                 >
-                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                   </svg>
                                 </button>
                                 
                                 <button
-                                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-green-500/10 border border-green-500/20 text-green-500 hover:bg-green-500/20 hover:border-green-500/40 transition-all duration-200 shadow-[0_0_10px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+                                  className="w-8 h-8 flex items-center justify-center rounded-md bg-green-500/10 border border-green-500/20 text-green-500 hover:bg-green-500/20 hover:border-green-500/40 transition-all duration-200 shadow-[0_0_10px_rgba(34,197,94,0.1)] hover:shadow-[0_0_15px_rgba(34,197,94,0.2)]"
                                   title="使用此声音"
                                 >
-                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75" />
                                   </svg>
                                 </button>

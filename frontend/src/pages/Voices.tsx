@@ -175,7 +175,7 @@ export default function Voices() {
     showSuccess(`已选择 ${voice.local_name || voice.name} (${voice.locale_name || voice.locale})`);
 
     setTimeout(() => {
-      navigate(-1);
+      navigate('/');
     }, 1500);
   };
 
@@ -244,7 +244,10 @@ export default function Voices() {
               className="w-1 bg-gradient-to-t from-green-500 to-transparent rounded-full"
               style={{
                 height: `${20 + Math.random() * 60}%`,
-                animation: `wave ${1 + Math.random()}s ease-in-out infinite`,
+                animationName: 'wave',
+                animationDuration: `${1 + Math.random()}s`,
+                animationTimingFunction: 'ease-in-out',
+                animationIterationCount: 'infinite',
                 animationDelay: `${i * 0.1}s`
               }}
             />
@@ -261,39 +264,43 @@ export default function Voices() {
 
       <div className="relative z-10">
         <Navbar />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-gray-900/80 backdrop-blur-xl rounded-lg border border-gray-800 shadow-2xl overflow-hidden">
-            {/* 头部 - 简洁设计 */}
-            <div className="px-6 py-5 border-b border-gray-800">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl font-bold text-white">
-                      {showFavoritesOnlyState ? '我的收藏' : '声音库'}
-                    </h1>
-                    {showFavoritesOnlyState && favoriteVoiceIds.size > 0 && (
-                      <button
-                        onClick={handleClearAllFavorites}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30 rounded-lg transition-all duration-200"
-                        title="清空所有收藏"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        清空
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-gray-400 text-sm">
-                    {showFavoritesOnlyState
-                      ? `管理您的收藏声音 (共 ${favoriteVoiceIds.size} 个)`
-                      : '浏览所有可用的TTS声音，试听并选择最适合的声音'
-                    }
-                  </p>
-                </div>
-              </div>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* 头部区域 */}
+          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="relative group">
+               <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+               
+               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 tracking-tight mb-2">
+                 {showFavoritesOnlyState ? '我的收藏' : '声音库'}
+               </h1>
+               <p className="text-gray-400 font-mono text-sm tracking-wide flex items-center gap-3">
+                 {showFavoritesOnlyState
+                   ? `管理您的收藏声音 (共 ${favoriteVoiceIds.size} 个)`
+                   : (
+                     <>
+                        <span>浏览所有可用的TTS声音，试听并选择最适合的声音</span>
+                        <span className="text-cyan-500/50">///</span>
+                        <span>共 {voices.length} 个声音</span>
+                     </>
+                   )
+                 }
+               </p>
             </div>
 
+            {showFavoritesOnlyState && favoriteVoiceIds.size > 0 && (
+                <button
+                onClick={handleClearAllFavorites}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 hover:border-red-500/40 transition-all duration-300 backdrop-blur-sm whitespace-nowrap"
+                >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span className="text-sm font-medium">清空</span>
+                </button>
+            )}
+          </div>
+
+          <div className="bg-gray-900/40 backdrop-blur-xl rounded-2xl border border-gray-800/50 shadow-2xl overflow-hidden">
             <div className="p-6">
               {/* 筛选控件 */}
               <div className="mb-6">
@@ -351,7 +358,7 @@ export default function Voices() {
                   {filteredVoices.map((voice) => (
                     <div
                       key={voice.id}
-                      className={`group bg-gray-800/50 backdrop-blur-xl border-2 rounded-xl hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden ${
+                      className={`group bg-gray-800/50 backdrop-blur-xl border-2 rounded-xl hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col ${
                         favoriteVoiceIds.has(voice.short_name || voice.id)
                           ? "border-yellow-400 shadow-lg"
                           : "border-gray-700 hover:border-green-500"
@@ -363,7 +370,7 @@ export default function Voices() {
                           : "from-green-500/20 to-emerald-500/20"
                       } group-hover:scale-150 transition-transform duration-500`}></div>
 
-                      <div className="relative p-4 space-y-3">
+                      <div className="relative p-4 space-y-3 flex-1">
                         <div className="absolute top-3 right-3">
                           <button
                             onClick={(e) => toggleFavorite(e, voice)}
