@@ -79,10 +79,10 @@ export const ShortcutsFloatButton: React.FC = () => {
       {/* 悬浮按钮 */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+        className="fixed bottom-6 right-6 z-40 w-8 h-8 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
         title="快捷键帮助 (Ctrl+/)"
       >
-        <FontAwesomeIcon icon={faQuestion} className="w-5 h-5" />
+        <FontAwesomeIcon icon={faQuestion} className="w-3 h-3" />
       </button>
 
       {/* 弹窗 Modal */}
