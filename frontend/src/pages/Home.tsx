@@ -56,11 +56,8 @@ const Home: React.FC = () => {
         clearError,
         setLoading,
         generateSpeech,
-        downloadHistoryAudio,
         removeFromHistory,
         clearHistory,
-        addToHistory,
-        setCurrentPlayingId,
         playHistoryItem,
         setAudioUrl,
     } = useTTSStore();
@@ -177,7 +174,24 @@ const Home: React.FC = () => {
          const apiKey = localStorage.getItem('tts_api_key');
          if (apiKey) params.append('api_key', apiKey);
          
-         await safeCopyToClipboard(`${window.location.origin}/api/v1/reader.json?${params.toString()}`, '导入阅读链接已复制');
+         const url = `${window.location.origin}/api/v1/reader.json?${params.toString()}`;
+         if (navigator.clipboard) {
+             await safeCopyToClipboard(url, '导入阅读链接已复制');
+         } else {
+             // Fallback
+             try {
+                 const textArea = document.createElement("textarea");
+                 textArea.value = url;
+                 document.body.appendChild(textArea);
+                 textArea.select();
+                 document.execCommand("copy");
+                 document.body.removeChild(textArea);
+                 showSuccess('导入阅读链接已复制');
+             } catch (err) {
+                 showError('复制失败，请手动复制');
+                 console.error('Fallback copy failed', err);
+             }
+         }
     };
 
     const handleImportIfreetime = async () => {
@@ -189,7 +203,24 @@ const Home: React.FC = () => {
          const apiKey = localStorage.getItem('tts_api_key');
          if (apiKey) params.append('api_key', apiKey);
 
-         await safeCopyToClipboard(`${window.location.origin}/api/v1/ifreetime.json?${params.toString()}`, '导入爱阅记链接已复制');
+         const url = `${window.location.origin}/api/v1/ifreetime.json?${params.toString()}`;
+         if (navigator.clipboard) {
+             await safeCopyToClipboard(url, '导入爱阅记链接已复制');
+         } else {
+             // Fallback
+             try {
+                 const textArea = document.createElement("textarea");
+                 textArea.value = url;
+                 document.body.appendChild(textArea);
+                 textArea.select();
+                 document.execCommand("copy");
+                 document.body.removeChild(textArea);
+                 showSuccess('导入爱阅记链接已复制');
+             } catch (err) {
+                 showError('复制失败，请手动复制');
+                 console.error('Fallback copy failed', err);
+             }
+         }
     };
 
     const handlePlayHistoryItem = async (item: HistoryItem) => {
@@ -210,20 +241,6 @@ const Home: React.FC = () => {
         }
     };
     
-    const handleLoadToForm = (item: HistoryItem) => {
-        setText(item.text);
-        setStyle(item.style || '');
-        setRate(item.rate);
-        setPitch(item.pitch);
-        setLocale(item.locale);
-        setTimeout(() => setVoice(item.voice), 100);
-        clearError();
-        setAudioUrl(null);
-        setCurrentPlayingId(null);
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    };
-
-
     // Derived State for Options
     const languageOptions = Array.from(languageMap.entries()).map(([name]) => ({ value: name, label: name }));
     const regionOptions = selectedLanguage ? languageMap.get(selectedLanguage)?.map(r => ({ value: r.locale, label: r.regionCode })) || [] : [];
@@ -423,10 +440,6 @@ const Home: React.FC = () => {
                                 currentPlayingId={currentPlayingId}
                                 onPlayItem={handlePlayHistoryItem}
                                 onRemoveItem={removeFromHistory}
-                                onClearAll={clearHistory}
-                                onLoadToForm={handleLoadToForm}
-                                onDownloadItem={downloadHistoryAudio}
-                                onRegenerateItem={(item) => {/* Regenerate logic */}}
                             />
                          </div>
                     </div>

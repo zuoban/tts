@@ -2,28 +2,20 @@ import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import type { HistoryItem } from '../../types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faTrash, faClock, faVolumeUp, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faClock, faVolumeUp } from '@fortawesome/free-solid-svg-icons';
 import { cn } from '../../utils/utils'; // Assuming existence or I'll use inline
 
 interface HistoryListProps {
   items: HistoryItem[];
   currentPlayingId: string | null;
-  onDownloadItem: (item: HistoryItem) => void;
   onRemoveItem: (id: string) => void;
-  onClearAll: () => void;
-  onRegenerateItem: (item: HistoryItem) => void;
-  onLoadToForm: (item: HistoryItem) => void;
   onPlayItem?: (item: HistoryItem) => void;
 }
 
 export const HistoryList: React.FC<HistoryListProps> = ({
   items,
   currentPlayingId,
-  onDownloadItem,
   onRemoveItem,
-  onClearAll,
-  onRegenerateItem,
-  onLoadToForm,
   onPlayItem,
 }) => {
   const [playError, setPlayError] = useState<string | null>(null);
@@ -140,24 +132,6 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 
               {/* Actions */}
               <div className="flex flex-col gap-1 flex-shrink-0">
-                <Button
-                  onClick={(e) => { e.stopPropagation(); onLoadToForm(item); }}
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                  title="加载到表单"
-                >
-                  <FontAwesomeIcon icon={faUpload} className="text-xs" />
-                </Button>
-                <Button
-                  onClick={(e) => { e.stopPropagation(); onDownloadItem(item); }}
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent"
-                  title="下载"
-                >
-                  <FontAwesomeIcon icon={faDownload} className="text-xs" />
-                </Button>
                 <Button
                   onClick={(e) => { e.stopPropagation(); onRemoveItem(item.id); }}
                   variant="ghost"
