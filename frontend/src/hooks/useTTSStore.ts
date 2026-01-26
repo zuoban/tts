@@ -42,6 +42,7 @@ interface TTSStore extends TTSState {
 
   // Utils
   clearError: () => void;
+  cleanupInvalidUrls: () => void;
 }
 
 const initialAudioState: AudioState = {
@@ -182,7 +183,7 @@ export const useTTSStore = create<TTSStore>()(
       loadVoices: async () => {
         try {
           const voices = await TTSApiService.getVoices();
-          const styles = Array.from(new Set(voices.flatMap(voice => voice.styles)));
+          const styles = Array.from(new Set(voices.flatMap(voice => voice.styles || [])));
           set({ voices, styles });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Failed to load voices' });

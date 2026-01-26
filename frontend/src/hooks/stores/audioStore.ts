@@ -6,7 +6,7 @@ import { audioManager } from '../../utils/audioResourceManager';
  * 音频状态接口
  * 管理音频播放相关的临时状态，不需要持久化
  */
-interface AudioStateStore {
+export interface AudioStateStore {
   // 音频 URL
   audioUrl: string | null;
 

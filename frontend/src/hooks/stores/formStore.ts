@@ -7,7 +7,7 @@ import { debouncedStorage } from '../../utils/storage';
  * 表单状态接口
  * 包含用户输入的表单数据，需要持久化到 localStorage
  */
-interface FormState {
+export interface FormState {
   // 表单字段
   text: string;
   voice: string;

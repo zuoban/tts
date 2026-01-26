@@ -4,7 +4,7 @@ import { create } from 'zustand';
  * UI 状态接口
  * 管理 UI 相关的临时状态，不需要持久化
  */
-interface UIState {
+export interface UIState {
   // 加载状态
   isLoading: boolean;
 
