@@ -81,7 +81,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
         </div>
       )}
 
-      <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+      <div className="space-y-2 max-h-[50vh] sm:max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {items.map((item) => (
           <div
             key={item.id}

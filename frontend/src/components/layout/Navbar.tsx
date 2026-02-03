@@ -26,7 +26,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
     <Link
       to={to}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-md transition-all text-sm font-medium",
+        "flex items-center gap-1.5 px-2.5 py-2 rounded-md transition-all text-xs sm:text-sm font-medium sm:gap-2 sm:px-3 whitespace-nowrap",
         isActive(to)
           ? activeColorClass
           : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </Link>
           </div>
 
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar -mx-2 px-2">
             <NavItem 
                 to="/" 
                 label="主页" 

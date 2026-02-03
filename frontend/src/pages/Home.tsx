@@ -284,21 +284,21 @@ const Home: React.FC = () => {
         <div className="min-h-screen bg-background relative flex flex-col font-sans">
             <Navbar />
 
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-1">
                 {error && (
                     <div className="mb-6">
                         <Alert type="error" message={error} onClose={() => setError('')} autoClose={5000} />
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-8">
                     {/* Left Panel: Controls */}
-                    <div className="xl:col-span-8 space-y-6">
+                    <div className="xl:col-span-8 space-y-4 sm:space-y-6">
                         
                         {/* Voice Selection Card */}
-                        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-primary"></span>
                                     快速选择
                                 </h3>
@@ -306,7 +306,7 @@ const Home: React.FC = () => {
                             </div>
                             
                             {/* Filters */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                                 <Select
                                     value={selectedLanguage}
                                     onChange={(e) => handleLanguageChange(e.target.value)}
@@ -342,13 +342,13 @@ const Home: React.FC = () => {
                         </div>
 
                          {/* Parameters Card */}
-                        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
-                             <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-5 sm:space-y-6">
+                             <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full bg-orange-500"></span>
                                 语音参数
                             </h3>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                                 <Slider
                                     label="语速"
                                     value={Number(rate)}
@@ -369,13 +369,13 @@ const Home: React.FC = () => {
                         </div>
 
                         {/* Text Input Card */}
-                        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-green-500"></span>
                                     文本内容
                                 </h3>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                      <Button variant="ghost" size="sm" onClick={() => setText('')} disabled={!text}>清空</Button>
                                      <Button variant="ghost" size="sm" onClick={handleImportReader} disabled={!text || !voice}>导入阅读</Button>
                                      <Button variant="ghost" size="sm" onClick={handleImportIfreetime} disabled={!text || !voice}>导入爱阅记</Button>
@@ -387,7 +387,7 @@ const Home: React.FC = () => {
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
                                 placeholder="输入文本..."
-                                rows={8}
+                                rows={7}
                                 showCharCount
                                 maxLength={5000}
                             />
@@ -427,9 +427,9 @@ const Home: React.FC = () => {
 
                     {/* Right Panel: History */}
                     <div className="xl:col-span-4 space-y-6">
-                         <div className="rounded-xl border border-border bg-card p-6 shadow-sm h-full max-h-[calc(100vh-100px)] flex flex-col">
+                         <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm h-auto sm:h-full max-h-[70vh] sm:max-h-[calc(100vh-120px)] flex flex-col">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold">历史记录</h3>
+                                <h3 className="text-base sm:text-lg font-semibold">历史记录</h3>
                                 {history.length > 0 && (
                                     <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={clearHistory}>
                                         清空

@@ -91,25 +91,25 @@ export default function Favorites() {
     <div className="min-h-screen bg-background font-sans">
       <Navbar />
 
-      <main className="container max-w-4xl mx-auto px-4 py-12">
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <main className="container max-w-4xl mx-auto px-4 py-6 sm:py-10 lg:py-12">
+        <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-2">收藏管理</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">收藏管理</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               管理您的收藏声音 <span className="text-primary/50 mx-2">/</span> {favorites.length} 个项目
             </p>
           </div>
 
           {favorites.length > 0 && (
-            <Button variant="destructive" size="sm" onClick={() => setClearConfirmOpen(true)}>
+            <Button variant="destructive" size="sm" className="w-full sm:w-auto" onClick={() => setClearConfirmOpen(true)}>
               清空所有
             </Button>
           )}
         </div>
 
-        <div className="bg-card rounded-xl border border-border shadow-sm min-h-[400px] p-6">
+        <div className="bg-card rounded-xl border border-border shadow-sm min-h-[320px] p-4 sm:p-6">
           {favorites.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-4">
+            <div className="h-full flex flex-col items-center justify-center py-16 sm:py-20 text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
                 <FontAwesomeIcon icon={faStar} className="w-8 h-8 text-muted-foreground/50" />
               </div>
@@ -124,7 +124,7 @@ export default function Favorites() {
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="favorites-list">
                 {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 sm:space-y-4">
                     {favorites.map((favorite, index) => (
                       <Draggable key={favorite.id} draggableId={favorite.id} index={index}>
                         {(provided, snapshot) => (
@@ -133,7 +133,7 @@ export default function Favorites() {
                             {...provided.draggableProps}
                             onClick={() => handleSelect(favorite)}
                             className={`
-                              group relative flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all
+                              group relative flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border cursor-pointer transition-all
                               ${snapshot.isDragging ? 'shadow-xl z-50 bg-card' : ''}
                               ${selectedId === favorite.id 
                                 ? 'bg-primary/5 border-primary' 
@@ -151,7 +151,7 @@ export default function Favorites() {
 
                             {/* Icon */}
                             <div className={`
-                              w-10 h-10 rounded-md flex items-center justify-center text-lg font-bold
+                              w-9 h-9 sm:w-10 sm:h-10 rounded-md flex items-center justify-center text-base sm:text-lg font-bold
                               ${favorite.gender === 'Female' 
                                 ? 'bg-pink-500/10 text-pink-500' 
                                 : 'bg-blue-500/10 text-blue-500'}
@@ -164,7 +164,7 @@ export default function Favorites() {
                               <h3 className={`font-medium truncate ${selectedId === favorite.id ? 'text-primary' : 'text-foreground'}`}>
                                 {favorite.localName || favorite.name}
                               </h3>
-                              <div className="flex items-center gap-2 mt-1">
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
                                 <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded bg-muted">
                                   {favorite.locale}
                                 </span>
@@ -177,11 +177,11 @@ export default function Favorites() {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                               <Button variant="ghost" size="icon" onClick={(e) => handleRemove(e, favorite)} className="text-muted-foreground hover:text-destructive">
+                            <div className="flex items-center gap-1.5 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                               <Button variant="ghost" size="icon" onClick={(e) => handleRemove(e, favorite)} className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-destructive">
                                   <FontAwesomeIcon icon={faTrash} />
                                </Button>
-                               <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
+                               <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 text-primary hover:bg-primary/10">
                                   <FontAwesomeIcon icon={faPlay} />
                                </Button>
                             </div>

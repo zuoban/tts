@@ -109,20 +109,20 @@ export default function Templates() {
   return (
     <div className="min-h-screen bg-background font-sans">
       <Navbar />
-      <main className="container max-w-4xl mx-auto px-4 py-12">
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <main className="container max-w-4xl mx-auto px-4 py-6 sm:py-10 lg:py-12">
+        <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-2">文本模板</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">文本模板</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               管理常用文本 <span className="text-primary/50 mx-2">/</span> {templates.length} 个模板
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
              <Input 
                 placeholder="搜索模板..." 
                 value={searchKeyword} 
                 onChange={e => setSearchKeyword(e.target.value)} 
-                className="w-full md:w-64"
+                className="w-full sm:w-64"
              />
              <Button onClick={openAddModal}>
                 <FontAwesomeIcon icon={faPlus} className="mr-2" /> 新建
@@ -130,21 +130,21 @@ export default function Templates() {
           </div>
         </div>
 
-        <div className="bg-card rounded-xl border border-border shadow-sm min-h-[400px] p-6">
+        <div className="bg-card rounded-xl border border-border shadow-sm min-h-[320px] p-4 sm:p-6">
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="templates-list">
                 {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3 sm:space-y-4">
                     {filteredTemplates.map((template, index) => (
                       <Draggable key={template.id} draggableId={template.id} index={index}>
                         {(provided, snapshot) => (
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className={`group relative rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md ${snapshot.isDragging ? 'shadow-xl z-50' : ''}`}
+                            className={`group relative rounded-lg border bg-card p-3 sm:p-4 transition-all hover:border-primary/50 hover:shadow-md ${snapshot.isDragging ? 'shadow-xl z-50' : ''}`}
                             style={provided.draggableProps.style}
                           >
-                            <div className="flex items-start gap-4">
+                            <div className="flex items-start gap-3 sm:gap-4">
                                 <div {...provided.dragHandleProps} className="mt-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing">
                                     <FontAwesomeIcon icon={faGripVertical} />
                                 </div>
@@ -152,17 +152,22 @@ export default function Templates() {
                                     <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">{template.title}</h3>
                                     <p className="text-sm text-muted-foreground line-clamp-2">{template.content}</p>
                                 </div>
-                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button variant="ghost" size="icon" onClick={() => openEditModal(template)}>
+                                <div className="flex gap-1.5 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => openEditModal(template)}>
                                         <FontAwesomeIcon icon={faPen} className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleRemove(template)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleRemove(template)}>
                                         <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
                                     </Button>
-                                    <Button size="sm" onClick={() => handleSelect(template)}>
-                                        选择
+                                    <Button size="sm" className="hidden sm:inline-flex" onClick={() => handleSelect(template)}>
+                                      选择
                                     </Button>
                                 </div>
+                            </div>
+                            <div className="mt-3 flex sm:hidden justify-end">
+                              <Button size="sm" className="w-full" onClick={() => handleSelect(template)}>
+                                选择
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -188,7 +193,7 @@ export default function Templates() {
 
       {(addModalOpen || editModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg">
+            <div className="w-full max-w-lg rounded-lg border bg-card p-4 sm:p-6 shadow-lg">
                 <h3 className="text-lg font-bold mb-4">{editingTemplate ? '编辑模板' : '新建模板'}</h3>
                 <div className="space-y-4">
                     <div className="space-y-2">
@@ -200,7 +205,7 @@ export default function Templates() {
                         <Textarea value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} placeholder="模板内容..." rows={6} />
                     </div>
                 </div>
-                <div className="mt-6 flex justify-end gap-3">
+                <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3">
                     <Button variant="outline" onClick={() => { setAddModalOpen(false); setEditModalOpen(false); }}>取消</Button>
                     <Button onClick={handleSaveTemplate}>保存</Button>
                 </div>
