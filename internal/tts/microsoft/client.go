@@ -106,10 +106,18 @@ func (c *Client) getEndpoint(ctx context.Context) (map[string]interface{}, error
 	// 更新缓存
 	c.endpointMu.Lock()
 	c.endpoint = endpoint
-	c.endpointExpiry = expTime.Add(-1 * time.Minute) // 提前1分钟过期
+	c.endpointExpiry = expTime.Add(-5 * time.Minute) // 提前5分钟过期
 	c.endpointMu.Unlock()
 
 	return endpoint, nil
+}
+
+// invalidateEndpoint 清空端点缓存，触发下次请求刷新
+func (c *Client) invalidateEndpoint() {
+	c.endpointMu.Lock()
+	c.endpoint = nil
+	c.endpointExpiry = time.Time{}
+	c.endpointMu.Unlock()
 }
 
 // ListVoices 获取可用的语音列表
@@ -255,6 +263,11 @@ func (c *Client) SynthesizeSpeech(ctx context.Context, req models.TTSRequest) (*
 
 // createTTSRequest 创建并执行TTS请求，返回HTTP响应
 func (c *Client) createTTSRequest(ctx context.Context, req models.TTSRequest) (*http.Response, error) {
+	return c.createTTSRequestWithRetry(ctx, req, false)
+}
+
+// createTTSRequestWithRetry 在认证失效时尝试刷新并重试一次
+func (c *Client) createTTSRequestWithRetry(ctx context.Context, req models.TTSRequest, retried bool) (*http.Response, error) {
 	// 参数验证
 	if req.Text == "" {
 		return nil, errors.New("文本不能为空")
@@ -329,8 +342,20 @@ func (c *Client) createTTSRequest(ctx context.Context, req models.TTSRequest) (*
 		// 获取响应体以便调试
 		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		log.Printf("TTS API错误: %s, 状态码: %d", string(body), resp.StatusCode)
-		return nil, fmt.Errorf("TTS API错误: %s, 状态码: %d", string(body), resp.StatusCode)
+		requestID := resp.Header.Get("x-ms-request-id")
+		errText := string(body)
+		log.Printf("TTS API错误: %s, 状态码: %d, x-ms-request-id: %s", errText, resp.StatusCode, requestID)
+
+		if !retried && (resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) {
+			log.Printf("TTS API返回 %d，刷新认证信息后重试一次", resp.StatusCode)
+			c.invalidateEndpoint()
+			return c.createTTSRequestWithRetry(ctx, req, true)
+		}
+
+		if requestID != "" {
+			return nil, fmt.Errorf("TTS API错误: %s, 状态码: %d, x-ms-request-id: %s", errText, resp.StatusCode, requestID)
+		}
+		return nil, fmt.Errorf("TTS API错误: %s, 状态码: %d", errText, resp.StatusCode)
 	}
 
 	return resp, nil

@@ -1102,7 +1102,7 @@ function validateApiKey(apiKey) {
 
 async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', rate = 0, pitch = 0, style = 'general', outputFormat='audio-24khz-48kbitrate-mono-mp3', download=false) {
   // get expiredAt from endpoint.t (jwt token)
-  if (!expiredAt || Date.now() / 1000 > expiredAt - 60) {
+  if (!expiredAt || Date.now() / 1000 > expiredAt - 300) {
     endpoint = await getEndpoint();
     const jwt = endpoint.t.split('.')[1];
     const decodedJwt = JSON.parse(atob(jwt));
@@ -1137,7 +1137,37 @@ async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', ra
     resp.headers.set('Content-Disposition', `attachment; filename="${uuid()}.mp3"`);
     return resp;
   } else {
-    return new Response(response.statusText, { status: response.status });
+    const errorText = await response.text();
+    console.error('TTS API错误:', response.status, errorText);
+    if (response.status === 400 || response.status === 401 || response.status === 403) {
+      endpoint = await getEndpoint();
+      const jwt = endpoint.t.split('.')[1];
+      const decodedJwt = JSON.parse(atob(jwt));
+      expiredAt = decodedJwt.exp;
+      const seconds = (expiredAt - Date.now() / 1000);
+      clientId = uuid();
+      console.log('getEndpoint retry, expiredAt:' + (seconds / 60) + 'm left');
+
+      headers['Authorization'] = endpoint.t;
+      const retryUrl = `https://${endpoint.r}.tts.speech.microsoft.com/cognitiveservices/v1`;
+      const retryResponse = await fetch(retryUrl, {
+        method: 'POST',
+        headers: headers,
+        body: ssml
+      });
+      if (retryResponse.ok) {
+        if (!download) {
+          return retryResponse;
+        }
+        const retryResp = new Response(retryResponse.body, retryResponse);
+        retryResp.headers.set('Content-Disposition', `attachment; filename="${uuid()}.mp3"`);
+        return retryResp;
+      }
+      const retryText = await retryResponse.text();
+      console.error('TTS API重试失败:', retryResponse.status, retryText);
+      return new Response(retryText || retryResponse.statusText, { status: retryResponse.status });
+    }
+    return new Response(errorText || response.statusText, { status: response.status });
   }
 }
 
