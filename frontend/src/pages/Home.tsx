@@ -378,6 +378,7 @@ const Home: React.FC = () => {
                                 <div className="flex gap-2">
                                      <Button variant="ghost" size="sm" onClick={() => setText('')} disabled={!text}>清空</Button>
                                      <Button variant="ghost" size="sm" onClick={handleImportReader} disabled={!text || !voice}>导入阅读</Button>
+                                     <Button variant="ghost" size="sm" onClick={handleImportIfreetime} disabled={!text || !voice}>导入爱阅记</Button>
                                 </div>
                             </div>
 
