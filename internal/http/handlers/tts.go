@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,22 +10,23 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 	"tts/internal/config"
 	"tts/internal/models"
 	"tts/internal/tts"
+	"tts/internal/tts/microsoft"
 	"tts/internal/utils"
+	"runtime"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )
-
-var cfg = config.Get()
 
 // truncateForLog 截断文本用于日志显示，同时显示开头和结尾
 func truncateForLog(text string, maxLength int) string {
@@ -42,8 +45,31 @@ func truncateForLog(text string, maxLength int) string {
 
 // audioMerge 音频合并
 func audioMerge(audioSegments [][]byte) ([]byte, error) {
+	return audioMergeWithFormat(audioSegments, "")
+}
+
+func audioMergeWithFormat(audioSegments [][]byte, format string) ([]byte, error) {
 	if len(audioSegments) == 0 {
 		return nil, fmt.Errorf("没有音频片段可合并")
+	}
+
+	if isMp3Format(format) {
+		var buf bytes.Buffer
+		for _, seg := range audioSegments {
+			if len(seg) == 0 {
+				continue
+			}
+			if _, err := buf.Write(seg); err != nil {
+				return nil, err
+			}
+		}
+		merged := buf.Bytes()
+		log.Printf("使用内存合并完成，总大小: %s", formatFileSize(len(merged)))
+		return merged, nil
+	}
+
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		return nil, fmt.Errorf("未找到 ffmpeg，请确认已安装并在 PATH 中: %w", err)
 	}
 
 	// 使用 ffmpeg 合并音频
@@ -73,8 +99,8 @@ func audioMerge(audioSegments [][]byte) ([]byte, error) {
 	outputFile := filepath.Join(tempDir, "output.mp3")
 
 	cmd := exec.Command("ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", listFile, "-c", "copy", outputFile)
-	if err := cmd.Run(); err != nil {
-		return nil, err
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("ffmpeg 合并失败: %w, output: %s", err, strings.TrimSpace(string(output)))
 	}
 
 	mergedData, err := os.ReadFile(outputFile)
@@ -97,6 +123,20 @@ func formatFileSize(size int) string {
 	default:
 		return fmt.Sprintf("%.2f GB", float64(size)/(1024.0*1024.0*1024.0))
 	}
+}
+
+func isMp3Format(format string) bool {
+	if format == "" {
+		return true
+	}
+	return strings.Contains(strings.ToLower(format), "mp3")
+}
+
+func contentTypeFromFormat(format string) string {
+	if ct, ok := microsoft.FormatContentTypeMap[format]; ok {
+		return ct
+	}
+	return "audio/mpeg"
 }
 
 // TTSHandler 处理TTS请求
@@ -151,6 +191,10 @@ func (h *TTSHandler) processTTSRequest(c *gin.Context, req models.TTSRequest, st
 
 	// 使用默认值填充空白参数
 	h.fillDefaultValues(&req)
+	if err := h.validateRatePitch(req); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// 检查文本长度
 	reqTextLength := utf8.RuneCountInString(req.Text)
@@ -185,7 +229,7 @@ func (h *TTSHandler) processTTSRequest(c *gin.Context, req models.TTSRequest, st
 	}
 
 	// 设置响应
-	c.Header("Content-Type", "audio/mpeg")
+	c.Header("Content-Type", resp.ContentType)
 	writeStart := time.Now()
 	if _, err := c.Writer.Write(resp.AudioContent); err != nil {
 		log.Printf("写入响应失败: %v", err)
@@ -197,6 +241,37 @@ func (h *TTSHandler) processTTSRequest(c *gin.Context, req models.TTSRequest, st
 	totalTime := time.Since(startTime)
 	log.Printf("%s请求总耗时: %v (解析: %v, 合成: %v, 写入: %v), 音频大小: %s",
 		requestType, totalTime, parseTime, synthTime, writeTime, formatFileSize(len(resp.AudioContent)))
+}
+
+func (h *TTSHandler) validateRatePitch(req models.TTSRequest) error {
+	if err := validatePercentField("rate", req.Rate); err != nil {
+		return err
+	}
+	if err := validatePercentField("pitch", req.Pitch); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validatePercentField(field string, value string) error {
+	if value == "" {
+		return nil
+	}
+
+	normalized := strings.TrimSpace(value)
+	if strings.HasSuffix(normalized, "%") {
+		normalized = strings.TrimSuffix(normalized, "%")
+	}
+
+	// 允许形如 "+10" "-10" "0"
+	n, err := strconv.Atoi(normalized)
+	if err != nil {
+		return fmt.Errorf("%s 参数非法，必须是 -100 到 100 的整数", field)
+	}
+	if n < -100 || n > 100 {
+		return fmt.Errorf("%s 参数超出范围，必须在 -100 到 100 之间", field)
+	}
+	return nil
 }
 
 // fillDefaultValues 填充默认值
@@ -359,9 +434,12 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 	segmentStart := time.Now()
 	text := req.Text
 
+	ctx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+
 	// 开始计时：分割文本
 	splitStart := time.Now()
-	sentences := splitTextBySentences(text)
+	sentences := splitTextBySentences(text, h.config)
 	segmentCount := len(sentences)
 	splitTime := time.Since(splitStart)
 
@@ -377,8 +455,18 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 	var wg sync.WaitGroup
 	var synthMutex sync.Mutex
 
-	// 限制并发数量
+	// 限制并发数量（自适应上限）
 	maxConcurrent := h.config.TTS.MaxConcurrent
+	if maxConcurrent <= 0 {
+		maxConcurrent = 1
+	}
+	cpu := runtime.GOMAXPROCS(0)
+	if cpu > 0 && maxConcurrent > cpu*4 {
+		maxConcurrent = cpu * 4
+	}
+	if maxConcurrent > segmentCount {
+		maxConcurrent = segmentCount
+	}
 	semaphore := make(chan struct{}, maxConcurrent)
 
 	// 合成阶段开始时间
@@ -393,9 +481,9 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 			select {
 			case semaphore <- struct{}{}: // 获取信号量
 				defer func() { <-semaphore }() // 释放信号量
-			case <-c.Request.Context().Done():
+			case <-ctx.Done():
 				select {
-				case errChan <- c.Request.Context().Err():
+				case errChan <- ctx.Err():
 				default:
 				}
 				return
@@ -412,7 +500,7 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 
 			startTime := time.Now()
 			// 合成该段音频
-			resp, err := h.ttsService.SynthesizeSpeech(c.Request.Context(), segReq)
+			resp, err := h.ttsService.SynthesizeSpeech(ctx, segReq)
 			synthDuration := time.Since(startTime)
 
 			if err != nil {
@@ -420,6 +508,7 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 				case errChan <- fmt.Errorf("句子 %d 合成失败: %w", index+1, err):
 				default:
 				}
+				cancel()
 				return
 			}
 
@@ -451,38 +540,38 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 		// 所有goroutine正常完成
 	case err := <-errChan:
 		// 发生错误
+		cancel()
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	case <-c.Request.Context().Done():
+	case <-ctx.Done():
 		// 请求被取消
+		cancel()
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "请求被取消"})
 		return
 	}
 
-	// 打印表格格式的合成结果
-	log.Println("句子合成结果表:")
-	log.Println("-------------------------------------------------------------")
-	log.Println("序号 | 长度  |    音频大小   |    耗时    | 内容")
-	log.Println("-------------------------------------------------------------")
+	// 打印结构化日志，便于聚合分析
 	for i := 0; i < segmentCount; i++ {
 		result := synthResults[i]
-		log.Printf("#%-3d | %4d | %12s | %10v | %s",
+		log.Printf("segment_result index=%d length=%d audio_size=%s duration_ms=%d content=%q",
 			i+1,
 			result.length,
 			formatFileSize(result.audioSize),
-			result.duration.Round(time.Millisecond),
+			result.duration.Milliseconds(),
 			result.content)
 	}
-	log.Println("-------------------------------------------------------------")
 
 	// 记录合成总耗时
 	synthesisTime := time.Since(synthesisStart)
-	log.Printf("所有分段合成总耗时: %v, 平均每段耗时: %v",
-		synthesisTime, synthesisTime/time.Duration(segmentCount))
+	log.Printf("segment_summary segments=%d total_ms=%d avg_ms=%d concurrency=%d",
+		segmentCount,
+		synthesisTime.Milliseconds(),
+		(synthesisTime/time.Duration(segmentCount)).Milliseconds(),
+		maxConcurrent)
 
 	// 合并音频
 	writeStart := time.Now()
-	audioData, err := audioMerge(results)
+	audioData, err := audioMergeWithFormat(results, h.config.TTS.DefaultFormat)
 	if err != nil {
 		log.Printf("合并音频失败: %v", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "音频合并失败: " + err.Error()})
@@ -490,7 +579,7 @@ func (h *TTSHandler) handleSegmentedTTS(c *gin.Context, req models.TTSRequest) {
 	}
 
 	// 设置响应内容类型并写入数据
-	c.Header("Content-Type", "audio/mpeg")
+	c.Header("Content-Type", contentTypeFromFormat(h.config.TTS.DefaultFormat))
 	if _, err := c.Writer.Write(audioData); err != nil {
 		log.Printf("写入响应失败: %v", err)
 		return
@@ -538,7 +627,7 @@ func (h *TTSHandler) HandleReader(context *gin.Context) {
 	api_key := context.Query("api_key")
 
 	baseUrl := utils.GetBaseURL(context)
-	basePath, err := utils.JoinURL(baseUrl, cfg.Server.BasePath)
+	basePath, err := utils.JoinURL(baseUrl, h.config.Server.BasePath)
 	if err != nil {
 		context.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -561,7 +650,7 @@ func (h *TTSHandler) HandleReader(context *gin.Context) {
 	}
 
 	// 只有配置了API密钥且请求提供了api_key参数时才添加
-	if cfg.TTS.ApiKey != "" && api_key != "" {
+	if h.config.TTS.ApiKey != "" && api_key != "" {
 		urlParams = append(urlParams, fmt.Sprintf("api_key=%s", api_key))
 	}
 
@@ -608,7 +697,7 @@ func (h *TTSHandler) HandleIFreeTime(context *gin.Context) {
 
 	// 获取基础URL
 	baseUrl := utils.GetBaseURL(context)
-	basePath, err := utils.JoinURL(baseUrl, cfg.Server.BasePath)
+	basePath, err := utils.JoinURL(baseUrl, h.config.Server.BasePath)
 	if err != nil {
 		context.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -677,7 +766,7 @@ func (h *TTSHandler) HandleIFreeTime(context *gin.Context) {
 }
 
 // splitTextBySentences 将文本按句子分割
-func splitTextBySentences(text string) []string {
+func splitTextBySentences(text string, cfg *config.Config) []string {
 	// 如果文本过短，直接作为一个句子返回
 	if utf8.RuneCountInString(text) < 100 {
 		return []string{text}
@@ -689,39 +778,44 @@ func splitTextBySentences(text string) []string {
 	// 首先按换行符分割
 	lines := utils.SplitAndFilterEmptyLines(text)
 
-	// 定义标点符号正则表达式，匹配常见的中文和英文句子结束符
-	punctuation := regexp.MustCompile(`([。！？；.!?；])`)
+	// 定义标点符号集合，匹配常见的中文和英文句子结束符
+	punctuation := map[rune]bool{
+		'。': true,
+		'！': true,
+		'？': true,
+		'；': true,
+		'.': true,
+		'!': true,
+		'?': true,
+		';': true,
+	}
 
-	// 按标点符号分割每个段落
+	// 按标点符号分割每个段落，保留分隔符
 	var sentences []string
 	for _, line := range lines {
-		// 使用正则表达式分割，但保留分隔符
-		parts := punctuation.Split(line, -1)
-
-		// 重新构建带有分隔符的句子
-		for i, part := range parts {
-			part = strings.TrimSpace(part)
-			if part == "" {
+		var current strings.Builder
+		runes := []rune(line)
+		for i, r := range runes {
+			current.WriteRune(r)
+			if !punctuation[r] {
 				continue
 			}
 
-			// 如果不是最后一部分，需要找到对应的分隔符并添加回去
-			if i < len(parts)-1 {
-				// 在原文中查找这个位置对应的分隔符
-				partEndIndex := strings.Index(line, part)
-				if partEndIndex != -1 {
-					separatorEndIndex := partEndIndex + len(part)
-					if separatorEndIndex < len(line) {
-						separator := string(line[separatorEndIndex])
-						// 验证是否是标点符号
-						if punctuation.MatchString(separator) {
-							part += separator
-						}
-					}
-				}
+			// 保护英文缩写 (e.g., "U.S.") 和小数 (e.g., "3.14")
+			if r == '.' && shouldSkipDotSplit(runes, i) {
+				continue
 			}
 
-			sentences = append(sentences, part)
+			part := strings.TrimSpace(current.String())
+			if part != "" {
+				sentences = append(sentences, part)
+			}
+			current.Reset()
+		}
+		// 处理未以标点结尾的剩余内容
+		remaining := strings.TrimSpace(current.String())
+		if remaining != "" {
+			sentences = append(sentences, remaining)
 		}
 	}
 
@@ -747,6 +841,27 @@ func splitTextBySentences(text string) []string {
 
 	log.Printf("分割后的句子数: %d → %d → %d", len(lines), len(sentences), len(finalSentences))
 	return finalSentences
+}
+
+func shouldSkipDotSplit(runes []rune, index int) bool {
+	if index <= 0 || index >= len(runes)-1 {
+		return false
+	}
+
+	prev := runes[index-1]
+	next := runes[index+1]
+
+	// 小数点：前后均为数字
+	if unicode.IsDigit(prev) && unicode.IsDigit(next) {
+		return true
+	}
+
+	// 英文缩写：A.B 或 A.B.C 形式
+	if unicode.IsLetter(prev) && unicode.IsLetter(next) {
+		return true
+	}
+
+	return false
 }
 
 // splitLongTextByLength 按长度强制分割长文本

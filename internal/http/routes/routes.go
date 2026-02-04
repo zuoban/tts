@@ -16,7 +16,7 @@ import (
 )
 
 // SetupRoutes 配置所有API路由
-func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error) {
+func SetupRoutes(cfg *config.Config, ttsService tts.Service, app interface{}) (*gin.Engine, error) {
 	// 创建Gin路由
 	router := gin.New()
 
@@ -26,8 +26,14 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error
 	configHandler := handlers.NewConfigHandler(ttsService, cfg)
 
 	// 应用中间件
-	router.Use(middleware.Logger()) // 日志中间件
-	router.Use(middleware.CORS())   // CORS中间件
+	router.Use(middleware.Logger())  // 日志中间件
+	router.Use(middleware.CORS(cfg)) // CORS中间件
+	router.Use(func(c *gin.Context) {
+		if app != nil {
+			c.Set("app", app)
+		}
+		c.Next()
+	})
 
 	// 应用基础路径前缀
 	var baseRouter *gin.RouterGroup
@@ -51,6 +57,8 @@ func SetupRoutes(cfg *config.Config, ttsService tts.Service) (*gin.Engine, error
 
 	// 设置配置API路由（无需认证）
 	apiV1.GET("/config", configHandler.HandleConfig)
+	// 热更新（需要认证）
+	apiV1.POST("/config/reload", authHandler, configHandler.HandleReload)
 
 	// 兼容性路由 - 保持现有第三方集成接口不变
 	baseRouter.POST("/tts", authHandler, ttsHandler.HandleTTS)

@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -51,6 +54,11 @@ func ExtractAPIKey(c *gin.Context) (string, string) {
 		}
 	}
 
+	// 1.1 支持 X-API-Key 请求头
+	if apiKey := c.GetHeader("X-API-Key"); apiKey != "" {
+		return apiKey, "header"
+	}
+
 	// 2. 从查询参数中获取 api_key
 	if apiKey := c.Query("api_key"); apiKey != "" {
 		return apiKey, "query"
@@ -62,11 +70,25 @@ func ExtractAPIKey(c *gin.Context) (string, string) {
 	}
 
 	// 4. 从请求体的 JSON 对象中获取 api_key
-	var jsonBody map[string]interface{}
-	if err := c.ShouldBindJSON(&jsonBody); err == nil {
-		if apiKey, exists := jsonBody["api_key"]; exists {
-			if keyStr, ok := apiKey.(string); ok && keyStr != "" {
-				return keyStr, "json"
+	// 注意：不能使用 ShouldBindJSON，避免消费掉 request body
+	if c.ContentType() == "application/json" {
+		raw, err := io.ReadAll(c.Request.Body)
+		if err == nil && len(raw) > 0 {
+			// 还原 body，避免影响后续处理器的绑定
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(raw))
+
+			var jsonBody map[string]interface{}
+			if err := json.Unmarshal(raw, &jsonBody); err == nil {
+				if apiKey, exists := jsonBody["api_key"]; exists {
+					if keyStr, ok := apiKey.(string); ok && keyStr != "" {
+						return keyStr, "json"
+					}
+				}
+			}
+		} else {
+			// 即使读取失败，也要尽量恢复 body，避免后续 handler 出现 EOF
+			if raw != nil {
+				c.Request.Body = io.NopCloser(bytes.NewBuffer(raw))
 			}
 		}
 	}

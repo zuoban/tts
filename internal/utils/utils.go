@@ -19,7 +19,9 @@ import (
 )
 
 var (
-	client = &http.Client{}
+	client = &http.Client{
+		Timeout: 10 * time.Second,
+	}
 )
 
 const (
@@ -69,21 +71,54 @@ func GetEndpoint() (map[string]interface{}, error) {
 		req.Header.Set(k, v)
 	}
 
-	headerJson, err := json.Marshal(&headers)
+	logHeaders := make(map[string]string, len(headers))
+	for k, v := range headers {
+		if k == "X-MT-Signature" {
+			logHeaders[k] = "REDACTED"
+			continue
+		}
+		logHeaders[k] = v
+	}
+	headerJson, err := json.Marshal(&logHeaders)
 	log.Printf("GetEndpoint -> url: %s, headers: %v\n", endpointURL, string(headerJson))
 
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("failed to do request: ", err)
-		return nil, err
+	var resp *http.Response
+	var lastErr error
+	for attempt := 1; attempt <= 3; attempt++ {
+		resp, lastErr = client.Do(req)
+		if lastErr != nil {
+			log.Printf("GetEndpoint 请求失败 (attempt %d/3): %v\n", attempt, lastErr)
+			time.Sleep(time.Duration(attempt) * 200 * time.Millisecond)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			status := resp.StatusCode
+			resp.Body.Close()
+
+			// 5xx 或 429 视为可重试
+			if status >= 500 || status == http.StatusTooManyRequests {
+				log.Printf("GetEndpoint 响应异常 (status %d, attempt %d/3), retrying...\n", status, attempt)
+				time.Sleep(time.Duration(attempt) * 200 * time.Millisecond)
+				continue
+			}
+
+			log.Println("failed to get endpoint, status code: ", status)
+			return nil, fmt.Errorf("failed to get endpoint, status code: %d", status)
+		}
+
+		break
+	}
+
+	if lastErr != nil {
+		return nil, lastErr
+	}
+
+	if resp == nil {
+		return nil, fmt.Errorf("failed to get endpoint: empty response")
 	}
 
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Println("failed to get endpoint, status code: ", resp.StatusCode)
-		return nil, fmt.Errorf("failed to get endpoint, status code: %d", resp.StatusCode)
-	}
 
 	var result map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
@@ -91,7 +126,11 @@ func GetEndpoint() (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	log.Println("GetEndpoint <- success get endpoint result: ", result)
+	if region, ok := result["r"]; ok {
+		log.Printf("GetEndpoint <- success, region: %v\n", region)
+	} else {
+		log.Println("GetEndpoint <- success")
+	}
 	return result, nil
 }
 

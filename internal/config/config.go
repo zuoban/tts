@@ -15,6 +15,7 @@ type Config struct {
 	Server ServerConfig `mapstructure:"server"`
 	TTS    TTSConfig    `mapstructure:"tts"`
 	SSML   SSMLConfig   `mapstructure:"ssml"`
+	CORS   CORSConfig   `mapstructure:"cors"`
 }
 
 // ServerConfig 包含HTTP服务器配置
@@ -23,6 +24,16 @@ type ServerConfig struct {
 	ReadTimeout  int    `mapstructure:"read_timeout"`
 	WriteTimeout int    `mapstructure:"write_timeout"`
 	BasePath     string `mapstructure:"base_path"`
+}
+
+// CORSConfig 包含跨域配置
+type CORSConfig struct {
+	AllowOrigins     []string `mapstructure:"allow_origins"`
+	AllowMethods     []string `mapstructure:"allow_methods"`
+	AllowHeaders     []string `mapstructure:"allow_headers"`
+	ExposeHeaders    []string `mapstructure:"expose_headers"`
+	AllowCredentials bool     `mapstructure:"allow_credentials"`
+	MaxAge           int      `mapstructure:"max_age"`
 }
 
 // TTSConfig 包含Microsoft TTS API配置
@@ -43,48 +54,77 @@ type TTSConfig struct {
 }
 
 var (
-	config Config
-	once   sync.Once
+	config   Config
+	configMu sync.RWMutex
+	once     sync.Once
 )
 
 // Load 从指定路径加载配置文件
 func Load(configPath string) (*Config, error) {
 	var err error
 	once.Do(func() {
-		v := viper.New()
-
-		// 配置 Viper
-		v.SetConfigName("config")
-		v.SetConfigType("yaml")
-		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-		v.AutomaticEnv() // 自动绑定环境变量
-
-		// 从配置文件加载
-		if configPath != "" {
-			v.SetConfigFile(configPath)
-			if err = v.ReadInConfig(); err != nil {
-				err = fmt.Errorf("加载配置文件失败: %w", err)
-				return
-			}
-		}
-
-		// 将配置绑定到结构体
-		if err = v.Unmarshal(&config); err != nil {
-			err = fmt.Errorf("解析配置失败: %w", err)
+		var loaded Config
+		loaded, err = loadConfig(configPath)
+		if err != nil {
 			return
 		}
+		configMu.Lock()
+		config = loaded
+		configMu.Unlock()
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	return Get(), nil
 }
 
 // Get 返回已加载的配置
 func Get() *Config {
-	return &config
+	configMu.RLock()
+	defer configMu.RUnlock()
+	clone := config
+	return &clone
+}
+
+// Reload 重新加载配置文件（支持热更新）
+func Reload(configPath string) (*Config, error) {
+	loaded, err := loadConfig(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	configMu.Lock()
+	config = loaded
+	configMu.Unlock()
+
+	return Get(), nil
+}
+
+func loadConfig(configPath string) (Config, error) {
+	v := viper.New()
+
+	// 配置 Viper
+	v.SetConfigName("config")
+	v.SetConfigType("yaml")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv() // 自动绑定环境变量
+
+	// 从配置文件加载
+	if configPath != "" {
+		v.SetConfigFile(configPath)
+		if err := v.ReadInConfig(); err != nil {
+			return Config{}, fmt.Errorf("加载配置文件失败: %w", err)
+		}
+	}
+
+	var loaded Config
+	if err := v.Unmarshal(&loaded); err != nil {
+		return Config{}, fmt.Errorf("解析配置失败: %w", err)
+	}
+
+	return loaded, nil
 }
 
 // TagPattern 定义标签模式及其名称

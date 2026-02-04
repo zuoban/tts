@@ -4,6 +4,20 @@ server:
   write_timeout: 60
   base_path: ""
 
+cors:
+  allow_origins:
+    - "*"
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "OPTIONS"
+  allow_headers:
+    - "Content-Type"
+    - "Authorization"
+  expose_headers: []
+  allow_credentials: false
+  max_age: 0
+
 tts:
   region: "eastasia"
   default_voice: "zh-CN-XiaoxiaoNeural"

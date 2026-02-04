@@ -77,3 +77,27 @@ func (h *ConfigHandler) HandleConfig(c *gin.Context) {
 		"styles":        styles,
 	})
 }
+
+// HandleReload 处理配置热重载请求
+func (h *ConfigHandler) HandleReload(c *gin.Context) {
+	app, ok := c.Get("app")
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "应用实例未注入"})
+		return
+	}
+
+	reloader, ok := app.(interface {
+		Reload() error
+	})
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "应用实例不支持重载"})
+		return
+	}
+
+	if err := reloader.Reload(); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
