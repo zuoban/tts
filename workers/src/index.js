@@ -71,7 +71,7 @@ async function handleRequest(request) {
   const requestUrl = new URL(request.url);
   const path = requestUrl.pathname;
 
-  if (path === '/tts') {
+  if (path === '/tts' || path === '/api/v1/tts') {
     // 从请求参数获取 API 密钥
     const apiKey = requestUrl.searchParams.get('api_key');
 
@@ -251,7 +251,7 @@ async function handleRequest(request) {
     return await handleOpenAITTS(request);
   }
 
-  if (path === '/voices') {
+  if (path === '/voices' || path === '/api/v1/voices') {
     const cacheUrl = new URL(request.url);
     cacheUrl.searchParams.set('__cache_version', 'voices-v2');
     const cacheRequest = new Request(cacheUrl.toString(), request);
