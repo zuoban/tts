@@ -35,3 +35,6 @@ tmp
 tts
 .conductor
 .claude
+
+supacode.json
+workers/.wrangler/

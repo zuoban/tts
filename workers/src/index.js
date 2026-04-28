@@ -4,7 +4,8 @@ let endpoint = null;
 // 添加缓存相关变量
 let voiceListCache = null;
 let voiceListCacheTime = null;
-const VOICE_CACHE_DURATION =4 *60 * 60 * 1000; // 4小时，单位毫秒
+let voiceListPromise = null;
+const VOICE_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时，单位毫秒
 
 // 定义需要保留的 SSML 标签模式
 const preserveTags = [
@@ -22,7 +23,7 @@ const preserveTags = [
   { name: 'mstts', pattern: /<mstts:[^>]*>|<\/mstts:[^>]*>/g }
 ];
 
-function uuid(){
+function uuid() {
   return crypto.randomUUID().replace(/-/g, '')
 }
 
@@ -35,7 +36,7 @@ function escapeSSML(ssml) {
 
   // 处理所有配置的标签
   for (const tag of preserveTags) {
-    processedSSML = processedSSML.replace(tag.pattern, function(match) {
+    processedSSML = processedSSML.replace(tag.pattern, function (match) {
       const placeholder = `__SSML_PLACEHOLDER_${tag.name}_${counter++}__`;
       placeholders.set(placeholder, match);
       return placeholder;
@@ -89,7 +90,7 @@ async function handleRequest(request) {
 
     const text = requestUrl.searchParams.get('t') || '';
     const voiceName = requestUrl.searchParams.get('v') || 'zh-CN-XiaoxiaoMultilingualNeural';
-    const rate =  Number(requestUrl.searchParams.get('r')) || 0;
+    const rate = Number(requestUrl.searchParams.get('r')) || 0;
     const pitch = Number(requestUrl.searchParams.get('p')) || 0;
     const style = requestUrl.searchParams.get('s') || 'general';
     const outputFormat = requestUrl.searchParams.get('o') || 'audio-24khz-48kbitrate-mono-mp3';
@@ -250,23 +251,34 @@ async function handleRequest(request) {
     return await handleOpenAITTS(request);
   }
 
-  if(path === '/voices') {
+  if (path === '/voices') {
+    const cacheUrl = new URL(request.url);
+    cacheUrl.searchParams.set('__cache_version', 'voices-v2');
+    const cacheRequest = new Request(cacheUrl.toString(), request);
+    const cachedResponse = await caches.default.match(cacheRequest);
+    if (cachedResponse) {
+      console.log('使用边缘缓存的语音列表响应');
+      return cachedResponse;
+    }
+
     const l = (requestUrl.searchParams.get('l') || '').toLowerCase();
-    const f = requestUrl.searchParams.get('f');
     let response = await voiceList();
 
-    if(l.length > 0) {
+    if (l.length > 0) {
       response = response.filter(item => item.Locale.toLowerCase().includes(l));
     }
 
-    return new Response(JSON.stringify(response), {
-      headers:{
-      'Content-Type': 'application/json; charset=utf-8'
+    const voicesResponse = new Response(JSON.stringify(response), {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=86400'
       }
     });
+    await caches.default.put(cacheRequest, voicesResponse.clone());
+    return voicesResponse;
   }
 
-  const baseUrl = request.url.split('://')[0] + "://" +requestUrl.host;
+  const baseUrl = request.url.split('://')[0] + "://" + requestUrl.host;
   return new Response(`
   <!DOCTYPE html>
   <html lang="zh-CN">
@@ -974,7 +986,7 @@ async function handleRequest(request) {
     </script>
   </body>
   </html>
-  `, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8'}});
+  `, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
 
 addEventListener('fetch', event => {
@@ -1039,9 +1051,14 @@ function getSsml(text, voiceName, rate, pitch, style = 'general') {
 function voiceList() {
   // 检查缓存是否有效
   if (voiceListCache && voiceListCacheTime && (Date.now() - voiceListCacheTime) < VOICE_CACHE_DURATION) {
-    console.log('使用缓存的语音列表数据，剩余有效���：',
+    console.log('使用缓存的语音列表数据，剩余有效时间：',
       Math.round((VOICE_CACHE_DURATION - (Date.now() - voiceListCacheTime)) / 60000), '分钟');
     return Promise.resolve(voiceListCache);
+  }
+
+  if (voiceListPromise) {
+    console.log('复用正在获取的语音列表请求');
+    return voiceListPromise;
   }
 
   console.log('获取新的语音列表数据');
@@ -1053,16 +1070,37 @@ function voiceList() {
     'Referer': 'https://azure.microsoft.com'
   };
 
-  return fetch('https://eastus.api.speech.microsoft.com/cognitiveservices/voices/list', {
+  voiceListPromise = fetch('https://eastus.api.speech.microsoft.com/cognitiveservices/voices/list', {
     headers: headers,
   })
-  .then(res => res.json())
-  .then(data => {
-    // 更新缓存
-    voiceListCache = data;
-    voiceListCacheTime = Date.now();
-    return data;
-  });
+    .then(async res => {
+      if (!res.ok) {
+        throw new Error(`获取语音列表失败: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (!Array.isArray(data)) {
+        throw new Error('获取语音列表失败: 响应格式异常');
+      }
+
+      // 更新缓存
+      voiceListCache = data;
+      voiceListCacheTime = Date.now();
+      return data;
+    })
+    .catch(error => {
+      if (voiceListCache) {
+        console.error('刷新语音列表失败，继续使用旧缓存:', error);
+        return voiceListCache;
+      }
+      throw error;
+    })
+    .finally(() => {
+      voiceListPromise = null;
+    });
+
+  return voiceListPromise;
 }
 
 async function hmacSha256(key, data) {
@@ -1074,7 +1112,7 @@ async function hmacSha256(key, data) {
     ['sign']
   );
   const signature = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(data));
-return new Uint8Array(signature);
+  return new Uint8Array(signature);
 }
 
 async function base64ToBytes(base64) {
@@ -1100,7 +1138,7 @@ function validateApiKey(apiKey) {
   return apiKey === expectedApiKey;
 }
 
-async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', rate = 0, pitch = 0, style = 'general', outputFormat='audio-24khz-48kbitrate-mono-mp3', download=false) {
+async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', rate = 0, pitch = 0, style = 'general', outputFormat = 'audio-24khz-48kbitrate-mono-mp3', download = false) {
   // get expiredAt from endpoint.t (jwt token)
   if (!expiredAt || Date.now() / 1000 > expiredAt - 300) {
     endpoint = await getEndpoint();
@@ -1109,10 +1147,10 @@ async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', ra
     expiredAt = decodedJwt.exp;
     const seconds = (expiredAt - Date.now() / 1000);
     clientId = uuid();
-    console.log('getEndpoint, expiredAt:' + (seconds/ 60) + 'm left')
+    console.log('getEndpoint, expiredAt:' + (seconds / 60) + 'm left')
   } else {
     const seconds = (expiredAt - Date.now() / 1000);
-    console.log('expiredAt:' + (seconds/ 60) + 'm left')
+    console.log('expiredAt:' + (seconds / 60) + 'm left')
   }
 
   const url = `https://${endpoint.r}.tts.speech.microsoft.com/cognitiveservices/v1`;
@@ -1129,7 +1167,7 @@ async function getVoice(text, voiceName = 'zh-CN-XiaoxiaoMultilingualNeural', ra
     headers: headers,
     body: ssml
   });
-  if(response.ok) {
+  if (response.ok) {
     if (!download) {
       return response;
     }
@@ -1244,7 +1282,7 @@ async function handleOpenAITTS(request) {
       'audio-24khz-48kbitrate-mono-mp3';
 
     // 调用 TTS API
-    const ttsResponse = await getVoice(text, voiceName, rate, 0,requestData.model ,outputFormat, false);
+    const ttsResponse = await getVoice(text, voiceName, rate, 0, requestData.model, outputFormat, false);
 
     return ttsResponse;
   } catch (error) {
